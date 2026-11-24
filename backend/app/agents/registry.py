@@ -8,6 +8,8 @@ from backend.app.agents.base import BaseAgent
 from backend.app.agents.departments import (
     CEOInterfaceAgent, COOAgent,
     DarshanDirectorAgent, ShrinithiScriptAgent, VaishnaviDesignAgent, ShreyankEditorAgent,
+    AnanyaMarketingAgent, RohitSocialAgent,
+    TarunQAAgent, KavyaComplianceAgent,
     IffahDocAgent, JiyaResearchAgent, SrijanaQualityAgent,
     PrathamCTOAgent, MallikaTechAgent, VaibhavDevOpsAgent, FaazilSysAdminAgent
 )
@@ -28,6 +30,14 @@ class AgentRegistry:
             ShrinithiScriptAgent(),
             VaishnaviDesignAgent(),
             ShreyankEditorAgent(),
+
+            # Floor 2: Marketing & Growth Operations
+            AnanyaMarketingAgent(),
+            RohitSocialAgent(),
+
+            # Floor 3: AI Video QA & Autonomous Testing Lab
+            TarunQAAgent(),
+            KavyaComplianceAgent(),
 
             # Floor 4: Documentation & Campus Department
             IffahDocAgent(),

@@ -164,6 +164,103 @@ class ShreyankEditorAgent(BaseAgent):
         }
 
 
+# --- FLOOR 2: MARKETING & GROWTH OPERATIONS ---
+
+class AnanyaMarketingAgent(BaseAgent):
+    """Ananya: Lead Campaign & Audience Growth Strategist."""
+    def __init__(self):
+        super().__init__(
+            agent_id="ananya_marketing",
+            name="Ananya",
+            department="Marketing & Campaign Management",
+            role="Lead Campaign & Audience Growth Strategist",
+            floor=2,
+            permission_level=2,
+            manager_id="Arjun (CEO)",
+            avatar_file="ananya_marketing.png"
+        )
+
+    async def execute(self, task_context: Dict[str, Any]) -> Dict[str, Any]:
+        campaign = task_context.get("campaign_name", "UiPath AJIET Community Growth")
+        return {
+            "campaign": campaign,
+            "channel_strategy": ["YouTube Shorts", "Instagram Reels", "LinkedIn Automation Highlights"],
+            "target_ctr": "8.4%",
+            "status": "SCHEDULED"
+        }
+
+
+class RohitSocialAgent(BaseAgent):
+    """Rohit: YouTube & Social Media Operations Lead."""
+    def __init__(self):
+        super().__init__(
+            agent_id="rohit_social",
+            name="Rohit",
+            department="Marketing & Campaign Management",
+            role="YouTube & Social Media Operations Lead",
+            floor=2,
+            permission_level=2,
+            manager_id="Ananya (Marketing Lead)",
+            avatar_file="rohit_social.png"
+        )
+
+    async def execute(self, task_context: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "platform_sync": "CONNECTED",
+            "scheduled_posts": 4,
+            "analytics_summary": "1,450 new student impressions across AJIET campus"
+        }
+
+
+# --- FLOOR 3: AI VIDEO QA & AUTONOMOUS TESTING LAB ---
+
+class TarunQAAgent(BaseAgent):
+    """Tarun: Lead Video Defect Inspector & QA Specialist."""
+    def __init__(self):
+        super().__init__(
+            agent_id="tarun_qa",
+            name="Tarun",
+            department="AI Video Quality & QA Lab",
+            role="Lead Video Defect Inspector & QA Specialist",
+            floor=3,
+            permission_level=2,
+            manager_id="Arjun (CEO)",
+            avatar_file="tarun_qa.png"
+        )
+
+    async def execute(self, task_context: Dict[str, Any]) -> Dict[str, Any]:
+        project_id = task_context.get("project_id", "test_proj_01")
+        return {
+            "project_id": project_id,
+            "inspection_station": "Floor 3 QA Lab",
+            "visual_defect_score": 96.5,
+            "status": "CERTIFIED_SAFE"
+        }
+
+
+class KavyaComplianceAgent(BaseAgent):
+    """Kavya: Audio, Subtitle & Margin Compliance Inspector."""
+    def __init__(self):
+        super().__init__(
+            agent_id="kavya_compliance",
+            name="Kavya",
+            department="AI Video Quality & QA Lab",
+            role="Audio, Subtitle & Margin Compliance Inspector",
+            floor=3,
+            permission_level=2,
+            manager_id="Tarun (QA Lead)",
+            avatar_file="kavya_compliance.png"
+        )
+
+    async def execute(self, task_context: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "subtitle_margins": "SAFE_ZONE_VERIFIED",
+            "audio_clipping": "NONE_DETECTED",
+            "loudness_lufs": -14.2,
+            "compliance_pass": True
+        }
+
+
 # --- FLOOR 4: DOCUMENTATION & CAMPUS OPERATIONS ---
 
 class IffahDocAgent(BaseAgent):

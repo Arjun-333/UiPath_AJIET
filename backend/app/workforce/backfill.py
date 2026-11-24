@@ -21,6 +21,8 @@ LOGGER = logging.getLogger(__name__)
 DEFAULT_DEPARTMENT_TOOLS = {
     "Executive Management": ["workflow_orchestrator", "ceo_command_parser", "roster_inspector"],
     "Creative & Video Production": ["video_renderer", "tts_engine", "subtitle_generator", "thumbnail_generator", "ffmpeg"],
+    "Marketing & Campaign Management": ["campaign_planner", "copywriter", "analytics_tracker", "social_scheduler", "seo_analyzer"],
+    "AI Video Quality & QA Lab": ["video_qa_inspector", "subtitle_margin_checker", "audio_spectrum_evaluator", "compliance_checker"],
     "Documentation & Campus": ["uipath_doc_retriever", "taxonomy_parser", "video_qa_inspector", "compliance_checker"],
     "Technology & Infrastructure": ["server_telemetry", "database_monitor", "docker_runner", "git_tool"]
 }

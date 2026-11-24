@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Agent, AgentMessage, AgentTransitEvent } from '../types';
 import { 
-  Building2, ZoomIn, ZoomOut, Maximize2, Coffee, Laptop, 
-  Sparkles, Layers, MessageSquare 
+  Building2, Users, Coffee, Laptop, Sparkles, MessageSquare, 
+  ChevronRight, ZoomIn, ZoomOut, Maximize2, Layers, Compass, ArrowUp, ArrowDown
 } from 'lucide-react';
 
 interface Props {
@@ -16,11 +16,13 @@ interface Props {
   pendingTransit?: AgentTransitEvent | null;
 }
 
-const FLOOR_CONFIG = [
-  { floor: 0, name: "Floor 0: Executive Suite", subtitle: "Arjun's CEO Suite, Marcus Vance (COO) & AURI", theme: "executive", badge: "EXECUTIVE" },
-  { floor: 1, name: "Floor 1: Media & Creative Studio", subtitle: "Darshan, Shrinithi, Vaishnavi & Shreyank", theme: "creative", badge: "MEDIA PRODUCTION" },
+export const FLOOR_CONFIG = [
+  { floor: 0, name: "Floor 0: Executive Suite", subtitle: "Arjun's CEO Suite, Marcus Vance (COO) & AURI Mascot", theme: "executive", badge: "EXECUTIVE" },
+  { floor: 1, name: "Floor 1: Media & Creative Studio", subtitle: "Darshan, Shrinithi, Vaishnavi & Shreyank (Video Production)", theme: "creative", badge: "MEDIA PRODUCTION" },
+  { floor: 2, name: "Floor 2: Marketing & Growth Operations", subtitle: "Ananya & Rohit (Campaigns, Shorts & Campus Growth)", theme: "marketing", badge: "MARKETING & GROWTH" },
+  { floor: 3, name: "Floor 3: AI Video QA & Testing Lab", subtitle: "Tarun & Kavya (Autonomous Defect Detection & Repair)", theme: "qa_lab", badge: "VIDEO QA & TESTING" },
   { floor: 4, name: "Floor 4: Documentation & Campus Hub", subtitle: "Iffah, Jiya & Srijana (Campus Outreach & Compliance)", theme: "admin", badge: "OUTREACH & DOCS" },
-  { floor: 5, name: "Floor 5: Technology & Infrastructure", subtitle: "Pratham, Mallika, Vaibhav & Faazil (Systems & DB)", theme: "tech", badge: "TECH & CLOUD" }
+  { floor: 5, name: "Floor 5: Technology & Infrastructure", subtitle: "Pratham, Mallika, Vaibhav & Faazil (Systems, DevOps & DB)", theme: "tech", badge: "TECH & CLOUD" }
 ];
 
 interface CharacterSim {
@@ -64,7 +66,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
   const [viewMode, setViewMode] = useState<'multi_tower' | 'floor_focus'>('multi_tower');
   const simRef = useRef<CharacterSim[]>([]);
   const animFrameRef = useRef<number>(0);
-  const [activeActionLog, setActiveActionLog] = useState<string>("Autonomous corporate workforce operational.");
+  const [activeActionLog, setActiveActionLog] = useState<string>("Autonomous corporate workforce operational across all 6 campus floors.");
 
   // Isometric Grid Settings
   const TILE_W = 56;
@@ -82,22 +84,28 @@ export const VirtualHeadquarters: React.FC<Props> = ({
     return imgCache.current[src];
   };
 
-  // Home desk coordinates for all personnel across floors
+  // Home desk coordinates for all personnel across all 6 floors
   const ALL_PERSONNEL_DESKS = [
-    // Floor 0 - Executive
+    // Floor 0 - Executive (Ground Left)
     { agent_id: 'arjun_ceo', name: 'Arjun', role: 'Founder & CEO', floor: 0, x: 2, y: 3, chairColor: '#ea580c', isAuri: false },
     { agent_id: 'auri_ceo_interface', name: 'AURI', role: 'Mascot & CEO Interface', floor: 0, x: 4, y: 3, chairColor: '#0284c7', isAuri: true },
     { agent_id: 'coo_01', name: 'Marcus Vance', role: 'COO', floor: 0, x: 5, y: 4, chairColor: '#475569', isAuri: false },
-    // Floor 1 - Media Studio
+    // Floor 1 - Media Studio (Ground Right)
     { agent_id: 'darshan_director', name: 'Darshan', role: 'Video Director', floor: 1, x: 2, y: 4, chairColor: '#ea580c', isAuri: false },
     { agent_id: 'shrinithi_script', name: 'Shrinithi', role: 'Scriptwriter', floor: 1, x: 4, y: 4, chairColor: '#0284c7', isAuri: false },
     { agent_id: 'vaishnavi_design', name: 'Vaishnavi', role: 'Thumbnail Designer', floor: 1, x: 6, y: 4, chairColor: '#dc2626', isAuri: false },
     { agent_id: 'shreyank_editor', name: 'Shreyank', role: 'Motion Graphics', floor: 1, x: 5, y: 6, chairColor: '#10b981', isAuri: false },
-    // Floor 4 - Documentation & Campus Hub
+    // Floor 2 - Marketing & Growth Operations (Mid Left)
+    { agent_id: 'ananya_marketing', name: 'Ananya', role: 'Growth Strategist', floor: 2, x: 3, y: 4, chairColor: '#10b981', isAuri: false },
+    { agent_id: 'rohit_social', name: 'Rohit', role: 'Social & YouTube Lead', floor: 2, x: 5, y: 5, chairColor: '#ec4899', isAuri: false },
+    // Floor 3 - AI Video QA & Testing Lab (Mid Right)
+    { agent_id: 'tarun_qa', name: 'Tarun', role: 'Lead Defect Inspector', floor: 3, x: 3, y: 4, chairColor: '#f59e0b', isAuri: false },
+    { agent_id: 'kavya_compliance', name: 'Kavya', role: 'Subtitle & Audio QA', floor: 3, x: 5, y: 5, chairColor: '#8b5cf6', isAuri: false },
+    // Floor 4 - Documentation & Campus Hub (Top Left)
     { agent_id: 'iffah_doc', name: 'Iffah', role: 'Campus Outreach Lead', floor: 4, x: 2, y: 4, chairColor: '#9333ea', isAuri: false },
     { agent_id: 'jiya_research', name: 'Jiya', role: 'Technical Docs', floor: 4, x: 4, y: 4, chairColor: '#0284c7', isAuri: false },
     { agent_id: 'srijana_quality', name: 'Srijana', role: 'Quality Inspector', floor: 4, x: 6, y: 4, chairColor: '#10b981', isAuri: false },
-    // Floor 5 - Technology & Infrastructure
+    // Floor 5 - Technology & Infrastructure (Top Right)
     { agent_id: 'pratham_cto', name: 'Pratham', role: 'CTO & Tech Lead', floor: 5, x: 2, y: 4, chairColor: '#0284c7', isAuri: false },
     { agent_id: 'mallika_tech', name: 'Mallika', role: 'API & DB Lead', floor: 5, x: 4, y: 4, chairColor: '#10b981', isAuri: false },
     { agent_id: 'vaibhav_devops', name: 'Vaibhav', role: 'DevOps & Security', floor: 5, x: 6, y: 4, chairColor: '#f59e0b', isAuri: false },
@@ -107,7 +115,6 @@ export const VirtualHeadquarters: React.FC<Props> = ({
   // Persistent Initialization & Smooth Task Assignment Updates
   useEffect(() => {
     if (simRef.current.length === 0) {
-      // First-time mount initialization
       const list: CharacterSim[] = ALL_PERSONNEL_DESKS.map(d => {
         const real = agents.find(a => a.agent_id === d.agent_id);
         return {
@@ -135,31 +142,31 @@ export const VirtualHeadquarters: React.FC<Props> = ({
       });
       simRef.current = list;
     } else {
-      // Smoothly update real status WITHOUT resetting agent positions
       simRef.current.forEach(sim => {
         const real = agents.find(a => a.agent_id === sim.agent_id);
         if (real?.avatar_file) sim.avatar_file = real.avatar_file;
 
         if (real?.status === 'working') {
-          // If work is assigned midway during a walk or break, smoothly return to desk naturally!
           if (sim.currentFloor !== sim.homeFloor) {
             if (sim.state !== 'escalator_transit') {
               sim.state = 'escalator_transit';
               sim.transitFromFloor = sim.currentFloor;
               sim.transitToFloor = sim.homeFloor;
               sim.transitProgress = 0.0;
-              sim.bubbleText = "⚡ Work assigned! Escalator to desk";
+              sim.bubbleText = "⚡ Work assigned! Taking stairs home";
               sim.bubbleTimer = 110;
-              sim.bubbleEmoji = "🔥";
             }
           } else if (Math.hypot(sim.curX - sim.deskX, sim.curY - sim.deskY) > 0.1) {
-            // Smoothly walk back to desk
             sim.targetX = sim.deskX;
             sim.targetY = sim.deskY;
             sim.state = 'walking';
-            sim.bubbleText = "⚡ Work assigned! Heading back to desk";
+            sim.bubbleText = "⚡ Task active! Walking to desk";
             sim.bubbleTimer = 90;
-            sim.bubbleEmoji = "🔥";
+          } else {
+            sim.curX = sim.deskX;
+            sim.curY = sim.deskY;
+            sim.state = 'working_at_desk';
+            sim.facing = 'SE';
           }
         }
       });
@@ -175,53 +182,77 @@ export const VirtualHeadquarters: React.FC<Props> = ({
       sim.transitFromFloor = pendingTransit.from_floor;
       sim.transitToFloor = pendingTransit.to_floor;
       sim.transitProgress = 0.0;
-      sim.bubbleText = `Escalator to Floor ${pendingTransit.to_floor}!`;
+      sim.bubbleText = `Stairs to Floor ${pendingTransit.to_floor}!`;
       sim.bubbleEmoji = "🚶";
       sim.bubbleTimer = 160;
-      setActiveActionLog(`${sim.name} taking escalator: Floor ${pendingTransit.from_floor} ➔ Floor ${pendingTransit.to_floor} (${pendingTransit.purpose})`);
+      setActiveActionLog(`${sim.name} taking stairs: Floor ${pendingTransit.from_floor} ➔ Floor ${pendingTransit.to_floor} (${pendingTransit.purpose})`);
     }
   }, [pendingTransit]);
 
   // Handle incoming message bubbles
   useEffect(() => {
     if (recentMessages.length > 0) {
-      const latest = recentMessages[recentMessages.length - 1];
-      const senderSim = simRef.current.find(s => s.agent_id === latest.sender_id);
+      const lastMsg = recentMessages[recentMessages.length - 1];
+      const senderSim = simRef.current.find(s => s.agent_id === lastMsg.sender_id);
       if (senderSim) {
-        senderSim.bubbleText = latest.content.length > 28 ? latest.content.substring(0, 26) + "..." : latest.content;
-        senderSim.bubbleTimer = 120;
+        senderSim.bubbleText = lastMsg.content.length > 32 ? lastMsg.content.slice(0, 32) + '...' : lastMsg.content;
         senderSim.bubbleEmoji = "💬";
+        senderSim.bubbleTimer = 180;
       }
     }
   }, [recentMessages]);
 
-  // Trigger company-wide break
+  // Interactive Quick Command: Trigger Team Coffee Break
   const handleTriggerTeamBreak = () => {
     simRef.current.forEach((sim, idx) => {
-      if (sim.state !== 'escalator_transit') {
-        const breakSpotX = idx % 2 === 0 ? 1.5 : 5.5;
-        const breakSpotY = idx % 2 === 0 ? 2.5 : 1.5;
-        sim.targetX = breakSpotX;
-        sim.targetY = breakSpotY;
-        sim.state = 'walking';
-        sim.bubbleText = idx % 2 === 0 ? "☕ Coffee break!" : "🛋️ Sofa break!";
-        sim.bubbleTimer = 120;
-      }
+      const isCoffee = idx % 2 === 0;
+      sim.state = 'walking';
+      sim.targetX = isCoffee ? 1.5 : 5.5;
+      sim.targetY = isCoffee ? 2.5 : 1.5;
+      sim.bubbleText = isCoffee ? "☕ Coffee break time!" : "🛋️ Heading to lounge!";
+      sim.bubbleTimer = 120;
     });
-    setActiveActionLog("☕ Team break called! All agents heading to lounge areas.");
+    setActiveActionLog("☕ Team break activated: Staff gathering at department refreshment bars.");
   };
 
+  // Interactive Quick Command: Summon All to Desks
   const handleSummonToDesks = () => {
     simRef.current.forEach(sim => {
-      if (sim.state !== 'escalator_transit') {
+      if (sim.currentFloor !== sim.homeFloor) {
+        sim.state = 'escalator_transit';
+        sim.transitFromFloor = sim.currentFloor;
+        sim.transitToFloor = sim.homeFloor;
+        sim.transitProgress = 0.0;
+        sim.bubbleText = `Stairs back to Floor ${sim.homeFloor}!`;
+        sim.bubbleTimer = 120;
+      } else {
+        sim.state = 'walking';
         sim.targetX = sim.deskX;
         sim.targetY = sim.deskY;
-        sim.state = 'walking';
         sim.bubbleText = "💻 Heading back to desk!";
         sim.bubbleTimer = 100;
       }
     });
     setActiveActionLog("💻 All employees returning to workstations.");
+  };
+
+  // Navigate using stairs directly
+  const handleUseStairs = (targetFloor: number) => {
+    if (targetFloor < 0 || targetFloor > 5) return;
+    const fromFloor = activeFloor;
+    setActiveFloor(targetFloor);
+    setActiveActionLog(`🪜 Used campus stairs: Floor ${fromFloor} ➔ Floor ${targetFloor} (${FLOOR_CONFIG[targetFloor]?.name})`);
+
+    // Animate active floor agent taking stairs
+    const mover = simRef.current.find(s => s.currentFloor === fromFloor);
+    if (mover) {
+      mover.state = 'escalator_transit';
+      mover.transitFromFloor = fromFloor;
+      mover.transitToFloor = targetFloor;
+      mover.transitProgress = 0.0;
+      mover.bubbleText = `🪜 Taking stairs to Floor ${targetFloor}!`;
+      mover.bubbleTimer = 120;
+    }
   };
 
   // Main Canvas Render & AI Update Loop
@@ -233,16 +264,21 @@ export const VirtualHeadquarters: React.FC<Props> = ({
 
     let tick = 0;
 
-    // Floor Center Anchors in Multi-Tier Tower View
-    const TOWER_FLOORS = {
-      0: { name: "Floor 0: Executive Suite", x: 420, y: 130, gridW: 6, gridH: 6, color: '#1e293b', labelColor: '#f97316' },
-      1: { name: "Floor 1: Media Studio", x: 860, y: 240, gridW: 8, gridH: 7, color: '#b91c1c', labelColor: '#38bdf8' },
-      4: { name: "Floor 4: Campus Outreach", x: 360, y: 460, gridW: 8, gridH: 7, color: '#7c3aed', labelColor: '#c084fc' },
-      5: { name: "Floor 5: Tech Infrastructure", x: 820, y: 550, gridW: 8, gridH: 7, color: '#0f172a', labelColor: '#34d399' }
+    // Floor Center Anchors in Architectural Multi-Tier Campus Layout
+    // Bottom: Ground Level (Floor 0 & 1)
+    // Middle: Mid Level (Floor 2 & 3)
+    // Top: Penthouse / Cloud Level (Floor 4 & 5)
+    const TOWER_FLOORS: Record<number, { name: string; x: number; y: number; gridW: number; gridH: number; color: string; labelColor: string }> = {
+      0: { name: "Floor 0: Executive Suite", x: 330, y: 570, gridW: 7, gridH: 6, color: '#1e293b', labelColor: '#f97316' },
+      1: { name: "Floor 1: Media Studio", x: 890, y: 570, gridW: 7, gridH: 6, color: '#b91c1c', labelColor: '#38bdf8' },
+      2: { name: "Floor 2: Marketing & Growth", x: 330, y: 360, gridW: 7, gridH: 6, color: '#065f46', labelColor: '#34d399' },
+      3: { name: "Floor 3: Video QA Lab", x: 890, y: 360, gridW: 7, gridH: 6, color: '#78350f', labelColor: '#fbbf24' },
+      4: { name: "Floor 4: Campus Outreach", x: 330, y: 150, gridW: 7, gridH: 6, color: '#581c87', labelColor: '#c084fc' },
+      5: { name: "Floor 5: Tech Infrastructure", x: 890, y: 150, gridW: 7, gridH: 6, color: '#0f172a', labelColor: '#38bdf8' }
     };
 
-    const toTowerScreen = (fl: 0 | 1 | 4 | 5, gx: number, gy: number, gz: number = 0) => {
-      const base = TOWER_FLOORS[fl];
+    const toTowerScreen = (fl: number, gx: number, gy: number, gz: number = 0) => {
+      const base = TOWER_FLOORS[fl] || TOWER_FLOORS[0];
       const sx = base.x + (gx - gy) * (TILE_W / 2);
       const sy = base.y + (gx + gy) * (TILE_H / 2) - gz;
       return { x: sx, y: sy };
@@ -253,86 +289,72 @@ export const VirtualHeadquarters: React.FC<Props> = ({
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // ==========================================
-      // SHARED AGENT AI MOTION UPDATE (Runs every frame without position resets)
+      // SHARED AGENT AI MOTION UPDATE
       // ==========================================
       const simList = simRef.current;
       simList.forEach(sim => {
         const realAgent = agents.find(a => a.agent_id === sim.agent_id);
         const isRealWorking = realAgent?.status === 'working';
 
-        // 1. If assigned real work
         if (isRealWorking) {
           if (sim.currentFloor !== sim.homeFloor) {
-            // Must return home via escalator
             if (sim.state !== 'escalator_transit') {
               sim.state = 'escalator_transit';
               sim.transitFromFloor = sim.currentFloor;
               sim.transitToFloor = sim.homeFloor;
               sim.transitProgress = 0.0;
-              sim.bubbleText = "⚡ Task active! Escalator home";
+              sim.bubbleText = "⚡ Task active! Stairs home";
               sim.bubbleTimer = 90;
             }
           } else if (Math.hypot(sim.curX - sim.deskX, sim.curY - sim.deskY) > 0.1) {
-            // Walk smoothly back to desk
             sim.targetX = sim.deskX;
             sim.targetY = sim.deskY;
             sim.state = 'walking';
           } else {
-            // At desk working
             sim.curX = sim.deskX;
             sim.curY = sim.deskY;
             sim.state = 'working_at_desk';
             sim.facing = 'SE';
           }
         } else {
-          // 2. Idle autonomous life behaviors with NATURAL timing (no sudden resets)
           sim.subStateTimer--;
           if (sim.subStateTimer <= 0) {
-            sim.subStateTimer = Math.floor(Math.random() * 240) + 200; // 7 to 14 seconds between decisions
+            sim.subStateTimer = Math.floor(Math.random() * 240) + 200;
 
             if (sim.state === 'working_at_desk') {
               const roll = Math.random();
               if (roll < 0.3) {
-                // Walk to coffee counter
                 sim.targetX = 1.5;
                 sim.targetY = 2.5;
                 sim.state = 'walking';
                 sim.bubbleText = "☕ Grabbing coffee";
                 sim.bubbleTimer = 90;
               } else if (roll < 0.55) {
-                // Walk to sofa lounge
                 sim.targetX = 5.5;
                 sim.targetY = 1.5;
                 sim.state = 'walking';
                 sim.bubbleText = "🛋️ Taking a break";
                 sim.bubbleTimer = 90;
               } else if (roll < 0.75) {
-                // Visit another floor via escalator
-                let destFloor: number = sim.homeFloor;
-                if (sim.homeFloor === 0) destFloor = 1;
-                else if (sim.homeFloor === 1) destFloor = 4;
-                else if (sim.homeFloor === 4) destFloor = 1;
-                else destFloor = 0;
-
+                // Cross floor visit via stairs
+                const destFloor = (sim.homeFloor + 1) % 6;
                 sim.state = 'escalator_transit';
                 sim.transitFromFloor = sim.homeFloor;
                 sim.transitToFloor = destFloor;
                 sim.transitProgress = 0.0;
-                sim.bubbleText = `Visiting Floor ${destFloor}`;
+                sim.bubbleText = `Stairs to Floor ${destFloor}`;
                 sim.bubbleTimer = 140;
-                setActiveActionLog(`${sim.name} taking escalator to Floor ${destFloor} for peer sync.`);
+                setActiveActionLog(`${sim.name} taking stairs to Floor ${destFloor} for peer sync.`);
               } else {
-                // Stay and work
                 sim.state = 'working_at_desk';
               }
             } else if (sim.state === 'drinking_coffee' || sim.state === 'sitting_on_sofa' || sim.state === 'visiting_colleague') {
-              // Return naturally to workstation
               if (sim.currentFloor !== sim.homeFloor) {
                 sim.state = 'escalator_transit';
                 sim.transitFromFloor = sim.currentFloor;
                 sim.transitToFloor = sim.homeFloor;
                 sim.transitProgress = 0.0;
-                sim.bubbleText = `Returning to Floor ${sim.homeFloor}`;
+                sim.bubbleText = `Stairs back to Floor ${sim.homeFloor}`;
                 sim.bubbleTimer = 110;
               } else {
                 sim.targetX = sim.deskX;
@@ -345,9 +367,9 @@ export const VirtualHeadquarters: React.FC<Props> = ({
           }
         }
 
-        // Handle Escalator Transit Movement
+        // Handle Staircase / Escalator Transit
         if (sim.state === 'escalator_transit' && sim.transitFromFloor !== undefined && sim.transitToFloor !== undefined) {
-          sim.transitProgress = (sim.transitProgress || 0) + 0.012;
+          sim.transitProgress = (sim.transitProgress || 0) + 0.015;
           if (sim.transitProgress >= 1.0) {
             sim.currentFloor = sim.transitToFloor;
             sim.state = sim.currentFloor === sim.homeFloor ? 'working_at_desk' : 'visiting_colleague';
@@ -359,7 +381,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
           }
         }
 
-        // Handle Normal Walking Interpolation
+        // Handle Walking Interpolation
         if (sim.state === 'walking') {
           const dx = sim.targetX - sim.curX;
           const dy = sim.targetY - sim.curY;
@@ -372,7 +394,6 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             sim.facing = dx >= 0 ? 'SE' : 'SW';
             sim.walkCycle = (sim.walkCycle + 0.25) % 4;
           } else {
-            // Arrived naturally at destination
             sim.curX = sim.targetX;
             sim.curY = sim.targetY;
             sim.walkCycle = 0;
@@ -405,19 +426,34 @@ export const VirtualHeadquarters: React.FC<Props> = ({
         ctx.fillStyle = '#060a12';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // 1. Draw Escalators
-        const drawEscalator = (fromFl: 0 | 1 | 4 | 5, fromX: number, fromY: number, toFl: 0 | 1 | 4 | 5, toX: number, toY: number, label: string) => {
+        // Architectural Central Spine Background
+        ctx.strokeStyle = '#1e293b44';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(600, 80, 40, 600);
+
+        // 1. Draw Grand Architectural Connecting Staircases
+        const drawGrandStairs = (fromFl: number, fromX: number, fromY: number, toFl: number, toX: number, toY: number, label: string) => {
           const pStart = toTowerScreen(fromFl, fromX, fromY);
           const pEnd = toTowerScreen(toFl, toX, toY);
 
+          // Shadow
+          ctx.strokeStyle = '#00000088';
+          ctx.lineWidth = 28;
+          ctx.beginPath();
+          ctx.moveTo(pStart.x, pStart.y + 8);
+          ctx.lineTo(pEnd.x, pEnd.y + 8);
+          ctx.stroke();
+
+          // Outer Beam
           ctx.strokeStyle = '#1e293b';
-          ctx.lineWidth = 26;
+          ctx.lineWidth = 24;
           ctx.lineCap = 'round';
           ctx.beginPath();
           ctx.moveTo(pStart.x, pStart.y);
           ctx.lineTo(pEnd.x, pEnd.y);
           ctx.stroke();
 
+          // Tread track
           ctx.strokeStyle = '#eab308';
           ctx.lineWidth = 14;
           ctx.stroke();
@@ -429,12 +465,12 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             const sx = pStart.x + (pEnd.x - pStart.x) * ratio;
             const sy = pStart.y + (pEnd.y - pStart.y) * ratio;
             ctx.fillStyle = '#713f12';
-            ctx.fillRect(sx - 5, sy - 2, 10, 3);
+            ctx.fillRect(sx - 6, sy - 2.5, 12, 4);
           }
 
-          // Handrails
-          ctx.strokeStyle = '#0284c7';
-          ctx.lineWidth = 3;
+          // Glass Safety Railings
+          ctx.strokeStyle = '#00f0ffaa';
+          ctx.lineWidth = 2.5;
           ctx.beginPath();
           ctx.moveTo(pStart.x - 12, pStart.y - 12);
           ctx.lineTo(pEnd.x - 12, pEnd.y - 12);
@@ -442,22 +478,39 @@ export const VirtualHeadquarters: React.FC<Props> = ({
           ctx.lineTo(pEnd.x + 12, pEnd.y - 12);
           ctx.stroke();
 
-          ctx.fillStyle = '#ffffff';
-          ctx.font = 'bold 9px monospace';
+          // Clickable Interactive Badge
           const midX = (pStart.x + pEnd.x) / 2;
           const midY = (pStart.y + pEnd.y) / 2 - 8;
-          ctx.fillText(`⚡ ${label}`, midX - 26, midY);
+          ctx.fillStyle = '#0f172aee';
+          ctx.fillRect(midX - 38, midY - 9, 76, 18);
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(midX - 38, midY - 9, 76, 18);
+
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 8.5px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(`🪜 ${label}`, midX, midY + 3.5);
         };
 
-        drawEscalator(0, 5, 5, 1, 1, 1, "F0 ➔ F1");
-        drawEscalator(1, 2, 6, 4, 6, 1, "F1 ➔ F4");
-        drawEscalator(4, 7, 5, 5, 1, 2, "F4 ➔ F5");
+        // Connect consecutive floors with grand central stairs
+        drawGrandStairs(0, 5, 3, 1, 1, 3, "Stairs: F0 ➔ F1");
+        drawGrandStairs(1, 2, 1, 2, 5, 4, "Stairs: F1 ➔ F2");
+        drawGrandStairs(2, 5, 3, 3, 1, 3, "Stairs: F2 ➔ F3");
+        drawGrandStairs(3, 2, 1, 4, 5, 4, "Stairs: F3 ➔ F4");
+        drawGrandStairs(4, 5, 3, 5, 1, 3, "Stairs: F4 ➔ F5");
 
-        // 2. Draw Floor Plates with Distinct Departmental Styling & Colors
-        const floorsToDraw: (0 | 1 | 4 | 5)[] = [0, 1, 4, 5];
+        // 2. Draw Floor Plates for ALL 6 FLOORS
+        const floorsToDraw = [0, 1, 2, 3, 4, 5];
         floorsToDraw.forEach(fl => {
           const cfg = TOWER_FLOORS[fl];
           const isSelected = activeFloor === fl;
+
+          // Base Foundation Shadow
+          ctx.fillStyle = '#00000066';
+          ctx.beginPath();
+          ctx.ellipse(cfg.x, cfg.y + 70, 160, 48, 0, 0, Math.PI * 2);
+          ctx.fill();
 
           // Departmental Floor Tiles
           for (let x = 0; x < cfg.gridW; x++) {
@@ -472,16 +525,22 @@ export const VirtualHeadquarters: React.FC<Props> = ({
 
               const alt = (x + y) % 2 === 0;
               if (fl === 0) {
-                // Executive Rich Mahogany Parquet
+                // Executive Rich Mahogany
                 ctx.fillStyle = alt ? '#78350f' : '#92400e';
               } else if (fl === 1) {
-                // Media Warm Birch Wood Planks
+                // Media Warm Birch Planks
                 ctx.fillStyle = alt ? '#d97706' : '#b45309';
+              } else if (fl === 2) {
+                // Marketing Emerald Ceramic Herringbone
+                ctx.fillStyle = alt ? '#065f46' : '#047857';
+              } else if (fl === 3) {
+                // Video QA Precision Lab Slate
+                ctx.fillStyle = alt ? '#1e293b' : '#334155';
               } else if (fl === 4) {
-                // Documentation Scandinavian Light Chalk Tiles
+                // Documentation Scandinavian Chalk Tiles
                 ctx.fillStyle = alt ? '#f1f5f9' : '#e2e8f0';
               } else {
-                // Tech Cyber Dark Anti-Static Server Grid
+                // Tech Cyber Anti-Static Server Grid
                 ctx.fillStyle = alt ? '#090d16' : '#1e293b';
               }
 
@@ -492,17 +551,15 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             }
           }
 
-          // Departmental Floor Rugs & Floor Accents
+          // Departmental Rugs & Floor Accents
           if (fl === 0) {
             // Executive Crimson & Gold Runner Rug
-            const rStart = toTowerScreen(0, 1.5, 1.5);
-            const rEnd = toTowerScreen(0, 4.5, 3.5);
-            ctx.fillStyle = '#991b1b';
-            ctx.beginPath();
             const rp0 = toTowerScreen(0, 1.5, 1.5);
             const rp1 = toTowerScreen(0, 4.5, 1.5);
             const rp2 = toTowerScreen(0, 4.5, 3.5);
             const rp3 = toTowerScreen(0, 1.5, 3.5);
+            ctx.fillStyle = '#991b1b';
+            ctx.beginPath();
             ctx.moveTo(rp0.x, rp0.y + TILE_H / 2);
             ctx.lineTo(rp1.x + TILE_W / 2, rp1.y + TILE_H / 2);
             ctx.lineTo(rp2.x, rp2.y + TILE_H);
@@ -517,9 +574,36 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             const cPos = toTowerScreen(1, 3.5, 3.5);
             ctx.fillStyle = '#0284c799';
             ctx.beginPath();
-            ctx.ellipse(cPos.x, cPos.y + 10, 42, 20, 0, 0, Math.PI * 2);
+            ctx.ellipse(cPos.x, cPos.y + 10, 36, 18, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          } else if (fl === 2) {
+            // Marketing Coral Analytics Growth Rug
+            const rp0 = toTowerScreen(2, 2.0, 2.0);
+            const rp1 = toTowerScreen(2, 5.0, 2.0);
+            const rp2 = toTowerScreen(2, 5.0, 4.0);
+            const rp3 = toTowerScreen(2, 2.0, 4.0);
+            ctx.fillStyle = '#f43f5e55';
+            ctx.beginPath();
+            ctx.moveTo(rp0.x, rp0.y + TILE_H / 2);
+            ctx.lineTo(rp1.x + TILE_W / 2, rp1.y + TILE_H / 2);
+            ctx.lineTo(rp2.x, rp2.y + TILE_H);
+            ctx.lineTo(rp3.x - TILE_W / 2, rp3.y + TILE_H / 2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#fb7185';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          } else if (fl === 3) {
+            // Video QA Precision Amber Target Mat
+            const cPos = toTowerScreen(3, 3.5, 3.5);
+            ctx.fillStyle = '#f59e0b55';
+            ctx.beginPath();
+            ctx.ellipse(cPos.x, cPos.y + 10, 36, 18, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#fbbf24';
             ctx.lineWidth = 1.5;
             ctx.stroke();
           } else if (fl === 4) {
@@ -544,159 +628,93 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             const pC = toTowerScreen(5, 3.5, 3.5);
             ctx.strokeStyle = '#00f0ffaa';
             ctx.lineWidth = 2;
-            ctx.beginPath();
             ctx.strokeRect(pC.x - 30, pC.y - 10, 60, 20);
           }
 
-          // Departmental Break Lounge & Coffee Station Props
-          // 1. Sofa at (5.5, 1.5)
+          // Departmental Lounge Props
           const sofaPos = toTowerScreen(fl, 5.5, 1.5);
-          ctx.fillStyle = fl === 0 ? '#1e293b' : fl === 1 ? '#0284c7' : fl === 4 ? '#7c3aed' : '#334155';
+          ctx.fillStyle = fl === 0 ? '#1e293b' : fl === 1 ? '#0284c7' : fl === 2 ? '#047857' : fl === 3 ? '#b45309' : fl === 4 ? '#7c3aed' : '#334155';
           ctx.fillRect(sofaPos.x - 14, sofaPos.y - 12, 28, 12);
-          ctx.fillStyle = '#0f172a';
-          ctx.fillRect(sofaPos.x - 14, sofaPos.y - 14, 28, 3);
 
-          // 2. Coffee Bar at (1.5, 2.5)
           const coffeePos = toTowerScreen(fl, 1.5, 2.5);
           ctx.fillStyle = '#475569';
-          ctx.fillRect(coffeePos.x - 10, coffeePos.y - 14, 20, 14);
-          ctx.fillStyle = '#94a3b8';
-          ctx.fillRect(coffeePos.x - 6, coffeePos.y - 20, 12, 8); // Espresso / cooler
-          ctx.fillStyle = '#eab308';
-          ctx.fillRect(coffeePos.x - 2, coffeePos.y - 16, 4, 3); // Mug
+          ctx.fillRect(coffeePos.x - 9, coffeePos.y - 12, 18, 12);
 
-          // Floor-specific unique prop in tower view
-          if (fl === 5) {
-            // Mini Server Racks
-            const srvPos = toTowerScreen(5, 1.2, 0.8);
+          // Workstations for this floor
+          ALL_PERSONNEL_DESKS.filter(d => d.floor === fl).forEach(desk => {
+            const dp = toTowerScreen(fl, desk.x, desk.y);
             ctx.fillStyle = '#0f172a';
-            ctx.fillRect(srvPos.x - 12, srvPos.y - 24, 24, 22);
-            ctx.fillStyle = tick % 16 < 8 ? '#10b981' : '#00e5ff';
-            ctx.fillRect(srvPos.x - 9, srvPos.y - 20, 4, 3);
-            ctx.fillStyle = tick % 20 < 10 ? '#f59e0b' : '#ef4444';
-            ctx.fillRect(srvPos.x - 2, srvPos.y - 20, 4, 3);
-          } else if (fl === 1) {
-            // Mini Studio Camera on Tripod
-            const camPos = toTowerScreen(1, 1.5, 5.0);
-            ctx.strokeStyle = '#0f172a';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(camPos.x, camPos.y);
-            ctx.lineTo(camPos.x - 5, camPos.y + 10);
-            ctx.moveTo(camPos.x, camPos.y);
-            ctx.lineTo(camPos.x + 5, camPos.y + 10);
-            ctx.stroke();
-            ctx.fillStyle = '#1e293b';
-            ctx.fillRect(camPos.x - 6, camPos.y - 8, 12, 8);
-            ctx.fillStyle = '#ef4444'; // REC tally
-            ctx.fillRect(camPos.x + 4, camPos.y - 6, 3, 3);
-          } else if (fl === 4) {
-            // Mini Office Laser Copier
-            const copPos = toTowerScreen(4, 6.5, 2.5);
-            ctx.fillStyle = '#e2e8f0';
-            ctx.fillRect(copPos.x - 10, copPos.y - 14, 20, 14);
-            ctx.fillStyle = '#10b981';
-            ctx.fillRect(copPos.x + 4, copPos.y - 12, 3, 3);
-          } else if (fl === 0) {
-            // Mini Potted Ficus Plant
-            const pltPos = toTowerScreen(0, 0.8, 0.8);
-            ctx.fillStyle = '#d97706';
-            ctx.fillRect(pltPos.x - 5, pltPos.y - 6, 10, 8);
-            ctx.fillStyle = '#15803d';
-            ctx.beginPath();
-            ctx.arc(pltPos.x, pltPos.y - 12, 7, 0, Math.PI * 2);
-            ctx.fill();
-          }
+            ctx.fillRect(dp.x - 14, dp.y - 10, 28, 10);
+            ctx.fillStyle = desk.chairColor;
+            ctx.fillRect(dp.x - 6, dp.y - 4, 12, 4);
 
-          // Floor Label Tag
-          const tagP = toTowerScreen(fl, 0, 0, 45);
-          ctx.fillStyle = '#0f172aee';
-          ctx.fillRect(tagP.x - 70, tagP.y - 12, 140, 24);
-          ctx.strokeStyle = cfg.labelColor;
-          ctx.lineWidth = isSelected ? 2 : 1;
-          ctx.strokeRect(tagP.x - 70, tagP.y - 12, 140, 24);
+            // Glowing Monitor
+            ctx.fillStyle = fl === 5 ? '#00f0ff' : fl === 3 ? '#f59e0b' : '#38bdf8';
+            ctx.fillRect(dp.x - 6, dp.y - 18, 12, 8);
+          });
+
+          // Floating Floor Badge & Title
+          const headerP = toTowerScreen(fl, cfg.gridW / 2, 0);
+          ctx.fillStyle = isSelected ? '#ea580c' : '#0f172aee';
+          ctx.beginPath();
+          ctx.roundRect(headerP.x - 84, headerP.y - 28, 168, 22, 6);
+          ctx.fill();
+          ctx.strokeStyle = isSelected ? '#fed7aa' : cfg.labelColor;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
 
           ctx.font = 'bold 9.5px monospace';
-          ctx.fillStyle = cfg.labelColor;
+          ctx.fillStyle = isSelected ? '#ffffff' : cfg.labelColor;
           ctx.textAlign = 'center';
-          ctx.fillText(cfg.name, tagP.x, tagP.y + 4);
+          ctx.fillText(cfg.name, headerP.x, headerP.y - 14);
         });
 
-        // 3. Render Desks & Furniture
-        ALL_PERSONNEL_DESKS.forEach(desk => {
-          const fl = desk.floor as (0 | 1 | 4 | 5);
-          const pos = toTowerScreen(fl, desk.x, desk.y);
-
-          // Departmental Desk Surfaces
-          ctx.fillStyle = fl === 0 ? '#78350f' : fl === 1 ? '#b45309' : fl === 4 ? '#e2e8f0' : '#1e293b';
-          ctx.fillRect(pos.x - 16, pos.y - 12, 32, 14);
-          ctx.fillStyle = fl === 0 ? '#92400e' : fl === 1 ? '#d97706' : fl === 4 ? '#f8fafc' : '#334155';
-          ctx.fillRect(pos.x - 16, pos.y - 14, 32, 3);
-
-          // Monitors
-          ctx.fillStyle = '#0f172a';
-          ctx.fillRect(pos.x - 8, pos.y - 30, 16, 12);
-          ctx.fillStyle = fl === 5 ? (tick % 16 < 8 ? '#22c55e' : '#00e5ff') : (tick % 16 < 8 ? '#00e5ff' : '#6ee7b7');
-          ctx.fillRect(pos.x - 6, pos.y - 28, 12, 8);
-
-          // Chair
-          ctx.fillStyle = desk.chairColor;
-          ctx.fillRect(pos.x - 6, pos.y - 6, 12, 4);
-        });
-
-        // 4. Render Characters in Tower View
+        // 3. Draw Characters across all floors in Multi-Tower View
         simList.forEach(sim => {
           let charPos = { x: 0, y: 0 };
+
           if (sim.state === 'escalator_transit' && sim.transitFromFloor !== undefined && sim.transitToFloor !== undefined) {
-            const pFrom = toTowerScreen(sim.transitFromFloor as any, 5, 5);
-            const pTo = toTowerScreen(sim.transitToFloor as any, 2, 2);
-            const prog = sim.transitProgress || 0;
+            const pFrom = toTowerScreen(sim.transitFromFloor, 3, 3);
+            const pTo = toTowerScreen(sim.transitToFloor, 3, 3);
+            const p = sim.transitProgress || 0;
             charPos = {
-              x: pFrom.x + (pTo.x - pFrom.x) * prog,
-              y: pFrom.y + (pTo.y - pFrom.y) * prog - 12
+              x: pFrom.x + (pTo.x - pFrom.x) * p,
+              y: pFrom.y + (pTo.y - pFrom.y) * p - Math.sin(p * Math.PI) * 16
             };
           } else {
-            const fl = sim.currentFloor as (0 | 1 | 4 | 5);
-            charPos = toTowerScreen(fl, sim.curX, sim.curY);
+            charPos = toTowerScreen(sim.currentFloor, sim.curX, sim.curY);
           }
 
           const isWorking = sim.state === 'working_at_desk';
           const isWalking = sim.state === 'walking';
           const bounceY = isWalking ? Math.sin(sim.walkCycle * Math.PI) * 2.5 : 0;
-          const yOffset = (isWorking ? -16 : -22) + bounceY;
+          const yOffset = (isWorking ? -10 : -14) + bounceY;
 
-          ctx.fillStyle = '#00000055';
+          // Shadow
+          ctx.fillStyle = '#00000066';
           ctx.beginPath();
-          ctx.ellipse(charPos.x, charPos.y, 11, 5, 0, 0, Math.PI * 2);
+          ctx.ellipse(charPos.x, charPos.y, 8, 4, 0, 0, Math.PI * 2);
           ctx.fill();
 
           if (sim.isAuri) {
             const auriImg = getImage(`/assets/sprites/orbi/orbi_${isWorking ? 'working' : (orbiState || 'idle')}.gif`);
             if (auriImg.complete && auriImg.naturalWidth > 0) {
-              ctx.drawImage(auriImg, charPos.x - 18, charPos.y + yOffset - 12, 36, 36);
+              ctx.drawImage(auriImg, charPos.x - 14, charPos.y + yOffset - 10, 28, 28);
             } else {
               ctx.fillStyle = '#ff6600';
-              ctx.fillRect(charPos.x - 10, charPos.y + yOffset - 10, 20, 18);
+              ctx.fillRect(charPos.x - 7, charPos.y + yOffset - 7, 14, 14);
             }
           } else {
-            const empImg = getImage(`/assets/sprites/employees/${sim.avatar_file}`);
-            if (empImg.complete && empImg.naturalWidth > 0) {
-              if (sim.facing === 'SW') {
-                ctx.save();
-                ctx.translate(charPos.x, charPos.y + yOffset);
-                ctx.scale(-1, 1);
-                ctx.drawImage(empImg, -14, -10, 28, 32);
-                ctx.restore();
-              } else {
-                ctx.drawImage(empImg, charPos.x - 14, charPos.y + yOffset - 10, 28, 32);
-              }
+            const spriteImg = getImage(`/assets/sprites/agents/${sim.avatar_file}`);
+            if (spriteImg.complete && spriteImg.naturalWidth > 0) {
+              ctx.drawImage(spriteImg, charPos.x - 12, charPos.y + yOffset - 12, 24, 24);
             } else {
-              ctx.fillStyle = '#ea580c';
-              ctx.fillRect(charPos.x - 7, charPos.y + yOffset, 14, 16);
+              ctx.fillStyle = '#0284c7';
+              ctx.fillRect(charPos.x - 6, charPos.y + yOffset - 10, 12, 12);
             }
           }
 
-          // Name Badge
+          // Mini Name Tag
           ctx.fillStyle = '#0f172aee';
           ctx.fillRect(charPos.x - 24, charPos.y + 4, 48, 13);
           ctx.strokeStyle = '#475569';
@@ -706,7 +724,6 @@ export const VirtualHeadquarters: React.FC<Props> = ({
           ctx.textAlign = 'center';
           ctx.fillText(sim.name, charPos.x, charPos.y + 13);
 
-          // Speech Bubble
           if (sim.bubbleText) {
             ctx.fillStyle = '#ffffff';
             ctx.strokeStyle = '#0f172a';
@@ -728,7 +745,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
 
       } else {
         // ==========================================
-        // VIEW MODE: SINGLE FLOOR FOCUS (Vibrant Departmental Theming & Props)
+        // VIEW MODE: SINGLE FLOOR FOCUS (All 6 Floors Decorated with Real Stairs)
         // ==========================================
         const originX = canvas.width / 2;
         const originY = 110;
@@ -739,7 +756,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
           return { x: sx, y: sy };
         };
 
-        // 1. LEFT WALL WITH DEPARTMENTAL PALETTES & TEXTURES
+        // 1. LEFT WALL WITH DEPARTMENTAL PALETTES
         const lp0 = toScreen(0, 0, 170);
         const lp1 = toScreen(0, FOCUS_GRID, 170);
         const lp2 = toScreen(0, FOCUS_GRID, 0);
@@ -753,120 +770,24 @@ export const VirtualHeadquarters: React.FC<Props> = ({
         ctx.closePath();
 
         if (activeFloor === 0) {
-          // Executive Midnight Slate Wall with Mahogany Baseboard
           ctx.fillStyle = '#0f172a';
-          ctx.fill();
-          ctx.strokeStyle = '#1e293b';
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          // Mahogany baseboard
-          const bb0 = toScreen(0, 0, 18);
-          const bb1 = toScreen(0, FOCUS_GRID, 18);
-          ctx.strokeStyle = '#78350f';
-          ctx.lineWidth = 6;
-          ctx.beginPath();
-          ctx.moveTo(bb0.x, bb0.y);
-          ctx.lineTo(bb1.x, bb1.y);
-          ctx.stroke();
-
-          // Executive Gold Framed Plaque / Charter
-          const plP = toScreen(0, 3.5, 95);
-          ctx.fillStyle = '#78350f';
-          ctx.fillRect(plP.x - 22, plP.y - 16, 44, 32);
-          ctx.strokeStyle = '#eab308';
-          ctx.lineWidth = 2.5;
-          ctx.strokeRect(plP.x - 22, plP.y - 16, 44, 32);
-          ctx.fillStyle = '#fef08a';
-          ctx.fillRect(plP.x - 18, plP.y - 12, 36, 24);
-          ctx.fillStyle = '#854d0e';
-          ctx.font = 'bold 6.5px monospace';
-          ctx.fillText("UiPath AJIET", plP.x, plP.y);
-          ctx.font = '5px monospace';
-          ctx.fillText("CHARTER", plP.x, plP.y + 7);
-
         } else if (activeFloor === 1) {
-          // Media Exposed Red Brick Wall
-          ctx.fillStyle = '#9a3412';
-          ctx.fill();
-          ctx.strokeStyle = '#7c2d12';
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          // Brick pattern lines
-          ctx.strokeStyle = '#fed7aa44';
-          ctx.lineWidth = 1;
-          for (let z = 20; z < 160; z += 16) {
-            const bL0 = toScreen(0, 0, z);
-            const bL1 = toScreen(0, FOCUS_GRID, z);
-            ctx.beginPath();
-            ctx.moveTo(bL0.x, bL0.y);
-            ctx.lineTo(bL1.x, bL1.y);
-            ctx.stroke();
-          }
-
-          // Soundproof Acoustic Foam Panels
-          const afP = toScreen(0, 4.0, 95);
+          ctx.fillStyle = '#ea580c';
+        } else if (activeFloor === 2) {
+          ctx.fillStyle = '#0f766e';
+        } else if (activeFloor === 3) {
           ctx.fillStyle = '#1e293b';
-          ctx.fillRect(afP.x - 26, afP.y - 20, 52, 40);
-          ctx.strokeStyle = '#334155';
-          ctx.strokeRect(afP.x - 26, afP.y - 20, 52, 40);
-          ctx.fillStyle = '#0284c7';
-          ctx.font = 'bold 7px monospace';
-          ctx.fillText("ACOUSTIC SOUNDSTAGE", afP.x, afP.y);
-
         } else if (activeFloor === 4) {
-          // Documentation Scandinavian Sage Green Wall
-          ctx.fillStyle = '#047857';
-          ctx.fill();
-          ctx.strokeStyle = '#065f46';
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          // Campus Hackathon Purple Banner
-          const banP = toScreen(0, 3.8, 100);
-          ctx.fillStyle = '#7c3aed';
-          ctx.fillRect(banP.x - 34, banP.y - 18, 68, 36);
-          ctx.strokeStyle = '#c084fc';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(banP.x - 34, banP.y - 18, 68, 36);
-          ctx.fillStyle = '#ffffff';
-          ctx.font = 'bold 7px monospace';
-          ctx.fillText("UiPath COMMUNITY", banP.x, banP.y - 4);
-          ctx.fillStyle = '#fde047';
-          ctx.font = 'bold 6.5px monospace';
-          ctx.fillText("AJIET HACKATHON", banP.x, banP.y + 7);
-
+          ctx.fillStyle = '#f1f5f9';
         } else {
-          // Tech Cyber Obsidian Wall with Neon Data Conduits
           ctx.fillStyle = '#090d16';
-          ctx.fill();
-          ctx.strokeStyle = '#0284c7';
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          // Glowing Electric Cyan Neon Conduit Traces
-          const c0 = toScreen(0, 0, 80);
-          const c1 = toScreen(0, FOCUS_GRID, 80);
-          ctx.strokeStyle = '#00f0ff';
-          ctx.lineWidth = 2.5;
-          ctx.beginPath();
-          ctx.moveTo(c0.x, c0.y);
-          ctx.lineTo(c1.x, c1.y);
-          ctx.stroke();
-
-          // Vertical drop lines
-          const vd0 = toScreen(0, 4.0, 150);
-          const vd1 = toScreen(0, 4.0, 20);
-          ctx.strokeStyle = '#0284c7aa';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(vd0.x, vd0.y);
-          ctx.lineTo(vd1.x, vd1.y);
-          ctx.stroke();
         }
+        ctx.fill();
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 2;
+        ctx.stroke();
 
-        // 2. RIGHT WALL WITH WINDOW & WALL PROPS
+        // 2. RIGHT WALL
         const rp0 = toScreen(0, 0, 170);
         const rp1 = toScreen(FOCUS_GRID, 0, 170);
         const rp2 = toScreen(FOCUS_GRID, 0, 0);
@@ -882,104 +803,93 @@ export const VirtualHeadquarters: React.FC<Props> = ({
         if (activeFloor === 0) {
           ctx.fillStyle = '#1e293b';
         } else if (activeFloor === 1) {
-          ctx.fillStyle = '#c2410c'; // Warm terracotta
+          ctx.fillStyle = '#c2410c';
+        } else if (activeFloor === 2) {
+          ctx.fillStyle = '#115e59';
+        } else if (activeFloor === 3) {
+          ctx.fillStyle = '#0f172a';
         } else if (activeFloor === 4) {
-          ctx.fillStyle = '#f8fafc'; // Crisp chalk wall
+          ctx.fillStyle = '#f8fafc';
         } else {
-          ctx.fillStyle = '#0f172a'; // Tech slate
+          ctx.fillStyle = '#0f172a';
         }
         ctx.fill();
         ctx.strokeStyle = '#334155';
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Right Wall Specific Props
-        if (activeFloor === 4) {
-          // Agile Kanban Whiteboard on Right Wall (Floor 4)
+        // Wall Displays based on Floor
+        if (activeFloor === 2) {
+          // Marketing Campaign Funnel & Growth Metrics Display
+          const mktP = toScreen(7.0, 0, 85);
+          ctx.fillStyle = '#022c22';
+          ctx.fillRect(mktP.x - 48, mktP.y - 25, 96, 50);
+          ctx.strokeStyle = '#10b981';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(mktP.x - 48, mktP.y - 25, 96, 50);
+
+          ctx.fillStyle = '#34d399';
+          ctx.font = 'bold 7px monospace';
+          ctx.fillText("GROWTH FUNNEL: +24.8% CTR", mktP.x, mktP.y - 14);
+
+          ctx.fillStyle = '#f43f5e';
+          ctx.fillRect(mktP.x - 40, mktP.y + 4, 20, 12);
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillRect(mktP.x - 15, mktP.y - 2, 20, 18);
+          ctx.fillStyle = '#10b981';
+          ctx.fillRect(mktP.x + 10, mktP.y - 8, 20, 24);
+        } else if (activeFloor === 3) {
+          // Video QA Defect & Spectrum Hologram Monitor
+          const qaP = toScreen(7.0, 0, 85);
+          ctx.fillStyle = '#1c1917';
+          ctx.fillRect(qaP.x - 48, qaP.y - 25, 96, 50);
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(qaP.x - 48, qaP.y - 25, 96, 50);
+
+          ctx.fillStyle = '#fbbf24';
+          ctx.font = 'bold 7px monospace';
+          ctx.fillText("NEMOTRON QA: 0 DEFECTS", qaP.x, qaP.y - 14);
+
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(qaP.x - 40, qaP.y + 8);
+          for (let i = 0; i < 8; i++) {
+            const h = ((tick + i * 2) % 6 < 3 ? 14 : 4);
+            ctx.lineTo(qaP.x - 40 + i * 10, qaP.y + 8 - h);
+          }
+          ctx.stroke();
+        } else if (activeFloor === 4) {
+          // Sprint Kanban Whiteboard
           const wbP = toScreen(7.0, 0, 85);
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(wbP.x - 45, wbP.y - 25, 90, 50);
           ctx.strokeStyle = '#94a3b8';
           ctx.lineWidth = 3;
           ctx.strokeRect(wbP.x - 45, wbP.y - 25, 90, 50);
-
-          // Header
           ctx.fillStyle = '#0f172a';
           ctx.font = 'bold 6.5px monospace';
           ctx.fillText("SPRINT KANBAN BOARD", wbP.x, wbP.y - 15);
-
-          // 3 Columns: To Do, In Progress, Done
-          ctx.strokeStyle = '#cbd5e1';
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(wbP.x - 15, wbP.y - 12); ctx.lineTo(wbP.x - 15, wbP.y + 20);
-          ctx.moveTo(wbP.x + 15, wbP.y - 12); ctx.lineTo(wbP.x + 15, wbP.y + 20);
-          ctx.stroke();
-
-          // Sticky Notes (Yellow, Pink, Cyan)
           ctx.fillStyle = '#fde047'; ctx.fillRect(wbP.x - 38, wbP.y - 8, 8, 8);
-          ctx.fillStyle = '#f472b6'; ctx.fillRect(wbP.x - 38, wbP.y + 4, 8, 8);
-          ctx.fillStyle = '#38bdf8'; ctx.fillRect(wbP.x - 8, wbP.y - 6, 8, 8);
           ctx.fillStyle = '#4ade80'; ctx.fillRect(wbP.x + 22, wbP.y - 4, 8, 8);
         } else if (activeFloor === 5) {
-          // NOC Real-Time Monitoring Wall Display (Floor 5)
+          // NOC Real-Time Monitoring Wall
           const nocP = toScreen(7.0, 0, 85);
           ctx.fillStyle = '#060a12';
           ctx.fillRect(nocP.x - 48, nocP.y - 25, 96, 50);
           ctx.strokeStyle = '#00f0ff';
           ctx.lineWidth = 2;
           ctx.strokeRect(nocP.x - 48, nocP.y - 25, 96, 50);
-
           ctx.fillStyle = '#22c55e';
           ctx.font = 'bold 7px monospace';
           ctx.fillText("NOC CLOUD TELEMETRY: 99.99%", nocP.x, nocP.y - 14);
-
-          // Metric spikes
-          ctx.strokeStyle = '#22c55e';
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.moveTo(nocP.x - 40, nocP.y + 10);
-          for (let i = 0; i < 8; i++) {
-            const h = (i % 2 === 0 ? 12 : 4) + ((tick + i * 3) % 8);
-            ctx.lineTo(nocP.x - 40 + i * 10, nocP.y + 10 - h);
-          }
-          ctx.stroke();
-        } else {
-          // Window for Floor 0 & 1
-          const win0 = toScreen(FOCUS_GRID * 0.22, 0, 140);
-          const win1 = toScreen(FOCUS_GRID * 0.85, 0, 140);
-          const win2 = toScreen(FOCUS_GRID * 0.85, 0, 45);
-          const win3 = toScreen(FOCUS_GRID * 0.22, 0, 45);
-
-          ctx.fillStyle = activeFloor === 0 ? '#38bdf8' : '#7dd3fc';
-          ctx.beginPath();
-          ctx.moveTo(win0.x, win0.y);
-          ctx.lineTo(win1.x, win1.y);
-          ctx.lineTo(win2.x, win2.y);
-          ctx.lineTo(win3.x, win3.y);
-          ctx.closePath();
-          ctx.fill();
-
-          // Window frame & mullions
-          ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = 4;
-          ctx.stroke();
-
-          // Sunlight glare lines
-          ctx.strokeStyle = '#ffffff44';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo((win0.x + win1.x) / 2, (win0.y + win1.y) / 2);
-          ctx.lineTo((win2.x + win3.x) / 2, (win2.y + win3.y) / 2);
-          ctx.moveTo((win0.x + win3.x) / 2, (win0.y + win3.y) / 2);
-          ctx.lineTo((win1.x + win2.x) / 2, (win1.y + win2.y) / 2);
-          ctx.stroke();
         }
 
-        // 3. DEPARTMENTAL FLOOR TILES
-        for (let x = 0; x < FOCUS_GRID; x++) {
-          for (let y = 0; y < FOCUS_GRID; y++) {
-            const tp = toScreen(x, y);
+        // 3. FLOOR TILES WITH DISTINCT DEPARTMENT COLOR PALETTES
+        for (let gx = 0; gx < FOCUS_GRID; gx++) {
+          for (let gy = 0; gy < FOCUS_GRID; gy++) {
+            const tp = toScreen(gx, gy);
             ctx.beginPath();
             ctx.moveTo(tp.x, tp.y);
             ctx.lineTo(tp.x + TILE_W / 2, tp.y + TILE_H / 2);
@@ -987,265 +897,98 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             ctx.lineTo(tp.x - TILE_W / 2, tp.y + TILE_H / 2);
             ctx.closePath();
 
-            const isAlt = (x + y) % 2 === 0;
+            const alt = (gx + gy) % 2 === 0;
             if (activeFloor === 0) {
-              // Rich Executive Mahogany Wood Flooring
-              ctx.fillStyle = isAlt ? '#78350f' : '#92400e';
+              ctx.fillStyle = alt ? '#78350f' : '#92400e';
             } else if (activeFloor === 1) {
-              // Warm Media Birch Planks
-              ctx.fillStyle = isAlt ? '#d97706' : '#b45309';
+              ctx.fillStyle = alt ? '#d97706' : '#b45309';
+            } else if (activeFloor === 2) {
+              ctx.fillStyle = alt ? '#065f46' : '#047857';
+            } else if (activeFloor === 3) {
+              ctx.fillStyle = alt ? '#1e293b' : '#334155';
             } else if (activeFloor === 4) {
-              // Clean Scandinavian Ceramic Tiles
-              ctx.fillStyle = isAlt ? '#f1f5f9' : '#e2e8f0';
+              ctx.fillStyle = alt ? '#f1f5f9' : '#e2e8f0';
             } else {
-              // High-tech Raised Perforated Server Grid Tiles
-              ctx.fillStyle = isAlt ? '#090d16' : '#1e293b';
+              ctx.fillStyle = alt ? '#090d16' : '#1e293b';
             }
 
             ctx.fill();
             ctx.strokeStyle = activeFloor === 5 
-              ? (isAlt ? '#00f0ff33' : '#0284c722')
+              ? (alt ? '#0284c733' : '#00f0ff22') 
               : (activeFloor === 4 ? '#cbd5e1' : '#451a0333');
             ctx.lineWidth = 1;
             ctx.stroke();
           }
         }
 
-        // 4. FLOOR-SPECIFIC RUGS & CARPET ACCENTS
-        if (activeFloor === 0) {
-          // Executive Royal Crimson Carpet Runner
-          const rp0 = toScreen(1.5, 2.0);
-          const rp1 = toScreen(6.5, 2.0);
-          const rp2 = toScreen(6.5, 5.5);
-          const rp3 = toScreen(1.5, 5.5);
-          ctx.fillStyle = '#991b1b';
-          ctx.beginPath();
-          ctx.moveTo(rp0.x, rp0.y + TILE_H / 2);
-          ctx.lineTo(rp1.x + TILE_W / 2, rp1.y + TILE_H / 2);
-          ctx.lineTo(rp2.x, rp2.y + TILE_H);
-          ctx.lineTo(rp3.x - TILE_W / 2, rp3.y + TILE_H / 2);
-          ctx.closePath();
-          ctx.fill();
-          ctx.strokeStyle = '#eab308';
-          ctx.lineWidth = 3;
-          ctx.stroke();
-        } else if (activeFloor === 1) {
-          // Studio Vibrant Cyan Geometric Circular Rug
-          const cPos = toScreen(4.5, 4.5);
-          ctx.fillStyle = '#0284c7aa';
-          ctx.beginPath();
-          ctx.ellipse(cPos.x, cPos.y + 14, 78, 38, 0, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.strokeStyle = '#38bdf8';
-          ctx.lineWidth = 3;
-          ctx.stroke();
-        } else if (activeFloor === 4) {
-          // Modern Scandinavian Lavender Study Rug
-          const rp0 = toScreen(2.0, 2.5);
-          const rp1 = toScreen(6.5, 2.5);
-          const rp2 = toScreen(6.5, 5.5);
-          const rp3 = toScreen(2.0, 5.5);
-          ctx.fillStyle = '#7c3aed55';
-          ctx.beginPath();
-          ctx.moveTo(rp0.x, rp0.y + TILE_H / 2);
-          ctx.lineTo(rp1.x + TILE_W / 2, rp1.y + TILE_H / 2);
-          ctx.lineTo(rp2.x, rp2.y + TILE_H);
-          ctx.lineTo(rp3.x - TILE_W / 2, rp3.y + TILE_H / 2);
-          ctx.closePath();
-          ctx.fill();
-          ctx.strokeStyle = '#c084fc';
-          ctx.lineWidth = 2.5;
-          ctx.stroke();
+        // 4. INTERACTIVE CAMPUS STAIRCASE ON THE FLOOR
+        const stairP = toScreen(FOCUS_GRID - 2.5, 1.5);
+
+        // Stairwell floor base
+        ctx.fillStyle = '#020617';
+        ctx.fillRect(stairP.x - 50, stairP.y - 20, 100, 42);
+        ctx.strokeStyle = '#eab308';
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(stairP.x - 50, stairP.y - 20, 100, 42);
+
+        // Animated step treads
+        for (let st = 0; st < 6; st++) {
+          ctx.fillStyle = st % 2 === 0 ? '#713f12' : '#ca8a04';
+          ctx.fillRect(stairP.x - 42 + st * 14, stairP.y - 12 + st * 4, 12, 6);
         }
 
-        // 5. DEPARTMENTAL PROPS & EQUIPMENT
-        // ----------------------------------------------------
-        // A. Shared Lounge Sofa at (5.5, 1.5)
-        const sofaPos = toScreen(5.5, 1.5);
-        ctx.fillStyle = activeFloor === 0 ? '#1e293b' : activeFloor === 1 ? '#0284c7' : activeFloor === 4 ? '#7c3aed' : '#334155';
-        ctx.fillRect(sofaPos.x - 28, sofaPos.y - 20, 56, 26);
-        ctx.fillStyle = '#0f172a';
-        ctx.fillRect(sofaPos.x - 28, sofaPos.y - 24, 56, 6);
-        // Sofa pillows
-        ctx.fillStyle = activeFloor === 0 ? '#ca8a04' : activeFloor === 1 ? '#f59e0b' : '#c084fc';
-        ctx.fillRect(sofaPos.x - 24, sofaPos.y - 18, 12, 10);
-        ctx.fillRect(sofaPos.x + 12, sofaPos.y - 18, 12, 10);
+        // Handrail with glowing gold
+        ctx.strokeStyle = '#fef08a';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(stairP.x - 45, stairP.y - 14);
+        ctx.lineTo(stairP.x + 45, stairP.y + 12);
+        ctx.stroke();
 
-        // B. Coffee & Refreshment Station at (1.5, 2.5)
+        // Directional Action Badges on Stairwell
+        if (activeFloor < 5) {
+          ctx.fillStyle = '#10b981';
+          ctx.fillRect(stairP.x - 46, stairP.y - 36, 92, 14);
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 7.5px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(`▲ STAIRS UP: FLOOR ${activeFloor + 1}`, stairP.x, stairP.y - 26);
+        }
+
+        if (activeFloor > 0) {
+          ctx.fillStyle = '#f59e0b';
+          ctx.fillRect(stairP.x - 46, stairP.y + 24, 92, 14);
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 7.5px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(`▼ STAIRS DOWN: FLOOR ${activeFloor - 1}`, stairP.x, stairP.y + 34);
+        }
+
+        // 5. DEPARTMENTAL RUGS & FURNITURE
+        const sofaPos = toScreen(5.5, 1.5);
+        ctx.fillStyle = activeFloor === 0 ? '#1e293b' : activeFloor === 1 ? '#0284c7' : activeFloor === 2 ? '#047857' : activeFloor === 3 ? '#b45309' : activeFloor === 4 ? '#7c3aed' : '#334155';
+        ctx.fillRect(sofaPos.x - 28, sofaPos.y - 20, 56, 26);
+
         const cofPos = toScreen(1.5, 2.5);
         ctx.fillStyle = '#334155';
         ctx.fillRect(cofPos.x - 18, cofPos.y - 26, 36, 26);
-        if (activeFloor === 4) {
-          // Water Cooler with Blue Bottle
-          ctx.fillStyle = '#38bdf8';
-          ctx.beginPath();
-          ctx.arc(cofPos.x, cofPos.y - 36, 8, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = '#e2e8f0';
-          ctx.fillRect(cofPos.x - 6, cofPos.y - 28, 12, 12);
-        } else {
-          // Espresso Machine with Chrome Steam Arm
-          ctx.fillStyle = '#94a3b8';
-          ctx.fillRect(cofPos.x - 12, cofPos.y - 36, 24, 14);
-          ctx.fillStyle = '#ea580c';
-          ctx.fillRect(cofPos.x - 4, cofPos.y - 26, 8, 6); // Coffee cup
-        }
 
-        // C. Floor-Specific Props
-        if (activeFloor === 0) {
-          // Floor 0: Tall Brass Potted Ficus Tree at (0.8, 0.8)
-          const plP = toScreen(0.8, 0.8);
-          ctx.fillStyle = '#d97706';
-          ctx.fillRect(plP.x - 9, plP.y - 12, 18, 16);
-          ctx.fillStyle = '#15803d';
-          ctx.beginPath();
-          ctx.arc(plP.x, plP.y - 24, 16, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = '#22c55e';
-          ctx.beginPath();
-          ctx.arc(plP.x - 4, plP.y - 28, 10, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Glass Trophy Bookcase at (0.8, 5.2)
-          const bcP = toScreen(0.8, 5.2);
-          ctx.fillStyle = '#451a03';
-          ctx.fillRect(bcP.x - 20, bcP.y - 48, 40, 48);
-          ctx.fillStyle = '#eab308';
-          ctx.fillRect(bcP.x - 12, bcP.y - 38, 8, 10); // Gold Trophy 1
-          ctx.fillRect(bcP.x + 4, bcP.y - 24, 8, 10); // Gold Trophy 2
-
-          // AURI Mascot Interface & Docking Station at (3.8, 1.8)
-          const dockP = toScreen(3.8, 1.8);
-          ctx.fillStyle = '#f8fafc';
-          ctx.fillRect(dockP.x - 16, dockP.y - 24, 32, 22);
-          ctx.fillStyle = '#ff6600';
-          ctx.fillRect(dockP.x - 16, dockP.y - 26, 32, 4);
-          ctx.fillStyle = tick % 16 < 8 ? '#00f0ff' : '#38bdf8';
-          ctx.fillRect(dockP.x - 10, dockP.y - 20, 20, 10);
-        } else if (activeFloor === 1) {
-          // Floor 1: Studio 4K Cinema Camera on Tripod at (1.5, 5.5)
-          const camP = toScreen(1.5, 5.5);
-          ctx.strokeStyle = '#0f172a';
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.moveTo(camP.x, camP.y - 20); ctx.lineTo(camP.x - 14, camP.y + 6);
-          ctx.moveTo(camP.x, camP.y - 20); ctx.lineTo(camP.x + 14, camP.y + 6);
-          ctx.moveTo(camP.x, camP.y - 20); ctx.lineTo(camP.x, camP.y + 8);
-          ctx.stroke();
-
-          ctx.fillStyle = '#1e293b';
-          ctx.fillRect(camP.x - 14, camP.y - 38, 28, 20);
-          ctx.fillStyle = '#0f172a';
-          ctx.fillRect(camP.x + 12, camP.y - 34, 10, 12); // Telephoto lens
-          // Red Recording LED
-          ctx.fillStyle = tick % 20 < 10 ? '#ef4444' : '#7f1d1d';
-          ctx.beginPath();
-          ctx.arc(camP.x - 8, camP.y - 32, 4, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Professional Ring Light at (7.0, 2.5)
-          const rlP = toScreen(7.0, 2.5);
-          ctx.strokeStyle = '#334155';
-          ctx.lineWidth = 2.5;
-          ctx.beginPath();
-          ctx.moveTo(rlP.x, rlP.y); ctx.lineTo(rlP.x, rlP.y - 40);
-          ctx.stroke();
-          ctx.strokeStyle = '#fef08a';
-          ctx.lineWidth = 4;
-          ctx.beginPath();
-          ctx.arc(rlP.x, rlP.y - 48, 12, 0, Math.PI * 2);
-          ctx.stroke();
-        } else if (activeFloor === 4) {
-          // Floor 4: Heavy-Duty Laser Copier at (7.2, 2.2)
-          const copP = toScreen(7.2, 2.2);
-          ctx.fillStyle = '#f1f5f9';
-          ctx.fillRect(copP.x - 18, copP.y - 28, 36, 28);
-          ctx.fillStyle = '#94a3b8';
-          ctx.fillRect(copP.x - 14, copP.y - 34, 28, 6); // Scanner top
-          // Pulsing Emerald LED
-          ctx.fillStyle = tick % 16 < 8 ? '#10b981' : '#059669';
-          ctx.fillRect(copP.x + 6, copP.y - 24, 6, 4);
-
-          // Filing Cabinets at (0.8, 1.2)
-          const fcP = toScreen(0.8, 1.2);
-          ctx.fillStyle = '#64748b';
-          ctx.fillRect(fcP.x - 16, fcP.y - 44, 32, 44);
-          ctx.fillStyle = '#cbd5e1';
-          ctx.fillRect(fcP.x - 12, fcP.y - 36, 24, 6);
-          ctx.fillRect(fcP.x - 12, fcP.y - 24, 24, 6);
-          ctx.fillRect(fcP.x - 12, fcP.y - 12, 24, 6);
-        } else if (activeFloor === 5) {
-          // Floor 5: Enterprise 42U Server Racks along (1.0, 0.8) to (4.0, 0.8)
-          [1.0, 2.0, 3.0, 4.0].forEach((rx, idx) => {
-            const srvP = toScreen(rx, 0.8);
-            ctx.fillStyle = '#0f172a';
-            ctx.fillRect(srvP.x - 14, srvP.y - 46, 28, 46);
-            ctx.strokeStyle = '#0284c7';
-            ctx.lineWidth = 1.5;
-            ctx.strokeRect(srvP.x - 14, srvP.y - 46, 28, 46);
-
-            // Blinking Status LEDs
-            for (let row = 0; row < 5; row++) {
-              const ledY = srvP.y - 40 + row * 7;
-              const blink = (tick + idx * 4 + row) % 18 < 9;
-              ctx.fillStyle = blink ? '#22c55e' : '#065f46';
-              ctx.fillRect(srvP.x - 10, ledY, 4, 3);
-              ctx.fillStyle = blink ? '#00e5ff' : '#0284c7';
-              ctx.fillRect(srvP.x - 3, ledY, 4, 3);
-              ctx.fillStyle = (tick + row) % 24 < 12 ? '#f59e0b' : '#78350f';
-              ctx.fillRect(srvP.x + 4, ledY, 4, 3);
-            }
-          });
-
-          // Network Patch Rack at (0.8, 3.5)
-          const prP = toScreen(0.8, 3.5);
-          ctx.fillStyle = '#1e293b';
-          ctx.fillRect(prP.x - 12, prP.y - 38, 24, 38);
-          // Patch cords
-          ctx.strokeStyle = '#38bdf8';
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.moveTo(prP.x - 8, prP.y - 26);
-          ctx.quadraticCurveTo(prP.x, prP.y - 16, prP.x + 6, prP.y - 22);
-          ctx.stroke();
-        }
-
-        // 6. DEPARTMENTAL DESKS IN FOCUS MODE
+        // 6. DEPARTMENTAL WORKSTATIONS
         ALL_PERSONNEL_DESKS.filter(d => d.floor === activeFloor).forEach(desk => {
           const pos = toScreen(desk.x, desk.y);
 
-          // Workstation Partition / Desk Surface
-          ctx.fillStyle = activeFloor === 0 ? '#78350f' : activeFloor === 1 ? '#b45309' : activeFloor === 4 ? '#e2e8f0' : '#1e293b';
+          ctx.fillStyle = activeFloor === 0 ? '#78350f' : activeFloor === 1 ? '#b45309' : activeFloor === 2 ? '#065f46' : activeFloor === 3 ? '#1e293b' : activeFloor === 4 ? '#e2e8f0' : '#1e293b';
           ctx.fillRect(pos.x - 28, pos.y - 22, 56, 22);
-          ctx.fillStyle = activeFloor === 0 ? '#92400e' : activeFloor === 1 ? '#d97706' : activeFloor === 4 ? '#f8fafc' : '#334155';
+          ctx.fillStyle = activeFloor === 0 ? '#92400e' : activeFloor === 1 ? '#d97706' : activeFloor === 2 ? '#047857' : activeFloor === 3 ? '#334155' : activeFloor === 4 ? '#f8fafc' : '#334155';
           ctx.fillRect(pos.x - 28, pos.y - 26, 56, 5);
 
           // Monitor
           ctx.fillStyle = '#0f172a';
           ctx.fillRect(pos.x - 14, pos.y - 48, 28, 22);
 
-          // Display Screen Content
-          if (activeFloor === 1) {
-            // Video Editing Timeline Screen (Magenta audio, cyan video)
-            ctx.fillStyle = '#0f172a';
-            ctx.fillRect(pos.x - 12, pos.y - 46, 24, 18);
-            ctx.fillStyle = '#06b6d4';
-            ctx.fillRect(pos.x - 10, pos.y - 43, 20, 5);
-            ctx.fillStyle = '#ec4899';
-            ctx.fillRect(pos.x - 10, pos.y - 36, 20, 4);
-          } else if (activeFloor === 5) {
-            // Terminal Window with Green Matrix Code
-            ctx.fillStyle = '#022c22';
-            ctx.fillRect(pos.x - 12, pos.y - 46, 24, 18);
-            ctx.fillStyle = '#22c55e';
-            ctx.font = '6px monospace';
-            ctx.fillText("> ssh rpa", pos.x, pos.y - 34);
-          } else {
-            ctx.fillStyle = tick % 16 < 8 ? '#00e5ff' : '#6ee7b7';
-            ctx.fillRect(pos.x - 12, pos.y - 46, 24, 18);
-          }
+          ctx.fillStyle = activeFloor === 1 ? '#06b6d4' : activeFloor === 2 ? '#10b981' : activeFloor === 3 ? '#f59e0b' : '#38bdf8';
+          ctx.fillRect(pos.x - 12, pos.y - 46, 24, 18);
 
-          // Chair
           ctx.fillStyle = desk.chairColor;
           ctx.fillRect(pos.x - 10, pos.y - 10, 20, 6);
         });
@@ -1268,41 +1011,38 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             const auriImg = getImage(`/assets/sprites/orbi/orbi_${isWorking ? 'working' : (orbiState || 'idle')}.gif`);
             if (auriImg.complete && auriImg.naturalWidth > 0) {
               ctx.drawImage(auriImg, pos.x - 24, pos.y + yOffset - 18, 48, 48);
+            } else {
+              ctx.fillStyle = '#ff6600';
+              ctx.fillRect(pos.x - 14, pos.y + yOffset - 14, 28, 28);
             }
           } else {
-            const empImg = getImage(`/assets/sprites/employees/${sim.avatar_file}`);
-            if (empImg.complete && empImg.naturalWidth > 0) {
-              if (sim.facing === 'SW') {
-                ctx.save();
-                ctx.translate(pos.x, pos.y + yOffset);
-                ctx.scale(-1, 1);
-                ctx.drawImage(empImg, -18, -14, 36, 40);
-                ctx.restore();
-              } else {
-                ctx.drawImage(empImg, pos.x - 18, pos.y + yOffset - 14, 36, 40);
-              }
+            const spriteImg = getImage(`/assets/sprites/agents/${sim.avatar_file}`);
+            if (spriteImg.complete && spriteImg.naturalWidth > 0) {
+              ctx.drawImage(spriteImg, pos.x - 20, pos.y + yOffset - 20, 40, 40);
+            } else {
+              ctx.fillStyle = '#0284c7';
+              ctx.fillRect(pos.x - 12, pos.y + yOffset - 18, 24, 24);
             }
           }
 
-          // Name Tag & Visiting Badge
-          const isVisiting = sim.homeFloor !== activeFloor;
-          ctx.fillStyle = isVisiting ? '#78350f' : '#0f172aee';
-          ctx.fillRect(pos.x - 32, pos.y + 6, 64, 16);
-          ctx.strokeStyle = isVisiting ? '#f59e0b' : '#475569';
-          ctx.strokeRect(pos.x - 32, pos.y + 6, 64, 16);
+          // Name Tag
+          ctx.fillStyle = '#0f172aee';
+          ctx.fillRect(pos.x - 28, pos.y + 6, 56, 15);
+          ctx.strokeStyle = '#475569';
+          ctx.strokeRect(pos.x - 28, pos.y + 6, 56, 15);
           ctx.font = 'bold 8.5px monospace';
           ctx.fillStyle = '#f8fafc';
           ctx.textAlign = 'center';
-          ctx.fillText(isVisiting ? `[F${sim.homeFloor}] ${sim.name}` : sim.name, pos.x, pos.y + 17);
+          ctx.fillText(sim.name, pos.x, pos.y + 17);
 
-          // Speech Bubble
           if (sim.bubbleText) {
             ctx.fillStyle = '#ffffff';
             ctx.strokeStyle = '#0f172a';
             ctx.lineWidth = 1.5;
-            const bWidth = Math.max(sim.bubbleText.length * 6 + 20, 60);
+            const bWidth = Math.max(sim.bubbleText.length * 6.5 + 20, 60);
             const bx = pos.x - bWidth / 2;
             const by = pos.y + yOffset - 36;
+
             ctx.beginPath();
             ctx.roundRect(bx, by, bWidth, 22, 6);
             ctx.fill();
@@ -1322,7 +1062,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
     return () => cancelAnimationFrame(animFrameRef.current);
   }, [viewMode, activeFloor, agents, orbiState]);
 
-  // Click on Canvas
+  // Click on Canvas: Interactive Stairs & Floor Selection
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -1331,11 +1071,31 @@ export const VirtualHeadquarters: React.FC<Props> = ({
     const cy = (e.clientY - rect.top) / zoom;
 
     if (viewMode === 'multi_tower') {
+      // 1. Check if clicked near any of the 5 Grand Central Staircases
+      const stairConnectors = [
+        { from: 0, to: 1, x: 610, y: 570, label: "Ground Promenade Stairs (Floor 0 ➔ Floor 1)" },
+        { from: 1, to: 2, x: 610, y: 465, label: "Ascending Atrium Stairs (Floor 1 ➔ Floor 2)" },
+        { from: 2, to: 3, x: 610, y: 360, label: "Mid Skybridge Stairs (Floor 2 ➔ Floor 3)" },
+        { from: 3, to: 4, x: 610, y: 255, label: "Upper Escalator Stairs (Floor 3 ➔ Floor 4)" },
+        { from: 4, to: 5, x: 610, y: 150, label: "Penthouse Skybridge Stairs (Floor 4 ➔ Floor 5)" }
+      ];
+
+      for (const st of stairConnectors) {
+        if (Math.hypot(cx - st.x, cy - st.y) < 45) {
+          const target = activeFloor === st.from ? st.to : st.from;
+          handleUseStairs(target);
+          return;
+        }
+      }
+
+      // 2. Check if clicked directly on any of the 6 Floor Plates
       const TOWER_FLOORS: Record<number, { x: number; y: number }> = {
-        0: { x: 420, y: 130 },
-        1: { x: 860, y: 240 },
-        4: { x: 360, y: 460 },
-        5: { x: 820, y: 550 }
+        0: { x: 330, y: 570 },
+        1: { x: 890, y: 570 },
+        2: { x: 330, y: 360 },
+        3: { x: 890, y: 360 },
+        4: { x: 330, y: 150 },
+        5: { x: 890, y: 150 }
       };
 
       for (const [fStr, coords] of Object.entries(TOWER_FLOORS)) {
@@ -1346,14 +1106,34 @@ export const VirtualHeadquarters: React.FC<Props> = ({
           return;
         }
       }
+    } else {
+      // In Floor Focus View: Check if clicked on Floor Stairwell Landing
+      const originX = canvas.width / 2;
+      const originY = 110;
+      const stairSx = originX + ((FOCUS_GRID - 2.5) - 1.5) * (TILE_W / 2);
+      const stairSy = originY + ((FOCUS_GRID - 2.5) + 1.5) * (TILE_H / 2);
+
+      // Stairs Up Hitbox (upper badge)
+      if (activeFloor < 5 && Math.hypot(cx - stairSx, cy - (stairSy - 30)) < 35) {
+        handleUseStairs(activeFloor + 1);
+        return;
+      }
+      // Stairs Down Hitbox (lower badge)
+      if (activeFloor > 0 && Math.hypot(cx - stairSx, cy - (stairSy + 30)) < 35) {
+        handleUseStairs(activeFloor - 1);
+        return;
+      }
     }
 
+    // Inspect character if clicked near any agent
     for (const sim of simRef.current) {
-      const fullAgent = agents.find(a => a.agent_id === sim.agent_id);
-      if (fullAgent) {
-        onSelectAgent(fullAgent);
-        setActiveActionLog(`Inspecting Dossier: ${fullAgent.name} (${fullAgent.role})`);
-        return;
+      if (sim.currentFloor === activeFloor || viewMode === 'multi_tower') {
+        const fullAgent = agents.find(a => a.agent_id === sim.agent_id);
+        if (fullAgent) {
+          onSelectAgent(fullAgent);
+          setActiveActionLog(`Inspecting Dossier: ${fullAgent.name} (${fullAgent.role})`);
+          return;
+        }
       }
     }
   };
@@ -1368,14 +1148,16 @@ export const VirtualHeadquarters: React.FC<Props> = ({
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <span className="font-pixel text-xs text-orange-400">AUTONOMIA HQ //</span>
-              <h2 className="text-base font-bold text-white">
-                {viewMode === 'multi_tower' ? 'Multi-Tier Campus Complex (All Connected Floors)' : FLOOR_CONFIG.find(f => f.floor === activeFloor)?.name}
-              </h2>
+              <span className="font-pixel text-sm text-white tracking-wider">
+                {viewMode === 'multi_tower' ? 'Multi-Tier Campus Tower (All 6 Connected Floors)' : FLOOR_CONFIG.find(f => f.floor === activeFloor)?.name}
+              </span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                {viewMode === 'multi_tower' ? '6-FLOOR ATRIUM' : FLOOR_CONFIG.find(f => f.floor === activeFloor)?.badge}
+              </span>
             </div>
             <p className="text-xs text-slate-400">
               {viewMode === 'multi_tower' 
-                ? 'Escalators and stairs connecting Floor 0, 1, 4, 5 with autonomous inter-department mobility'
+                ? 'Ground Foundation (F0/F1) ➔ Mid Wings (F2/F3) ➔ Cloud Penthouse (F4/F5) connected by central stairs.' 
                 : FLOOR_CONFIG.find(f => f.floor === activeFloor)?.subtitle
               }
             </p>
@@ -1384,6 +1166,31 @@ export const VirtualHeadquarters: React.FC<Props> = ({
 
         {/* View Mode & Simulation Controls */}
         <div className="flex items-center space-x-3">
+          {/* Direct Interactive Staircase Navigation */}
+          <div className="flex items-center space-x-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+            <button
+              onClick={() => handleUseStairs(activeFloor - 1)}
+              disabled={activeFloor <= 0}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center space-x-1 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-amber-300 hover:bg-amber-500/20"
+              title={activeFloor > 0 ? `Take stairs down to Floor ${activeFloor - 1}` : "Already on ground floor"}
+            >
+              <ArrowDown className="w-3.5 h-3.5" />
+              <span>Stairs Down</span>
+            </button>
+
+            <span className="text-[10px] text-slate-500 font-mono">|</span>
+
+            <button
+              onClick={() => handleUseStairs(activeFloor + 1)}
+              disabled={activeFloor >= 5}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center space-x-1 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-emerald-300 hover:bg-emerald-500/20"
+              title={activeFloor < 5 ? `Take stairs up to Floor ${activeFloor + 1}` : "Already on top floor"}
+            >
+              <ArrowUp className="w-3.5 h-3.5" />
+              <span>Stairs Up</span>
+            </button>
+          </div>
+
           {/* Quick Simulation Commands */}
           <div className="flex items-center space-x-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
             <button
@@ -1430,20 +1237,20 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             </button>
           </div>
 
-          {/* Floor Selector (when in focus mode) */}
+          {/* Floor Selector (All 6 Floors) */}
           {viewMode === 'floor_focus' && (
             <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
               {FLOOR_CONFIG.map((f) => (
                 <button
                   key={f.floor}
                   onClick={() => setActiveFloor(f.floor)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
                     activeFloor === f.floor
                       ? 'bg-orange-600 text-white shadow-md shadow-orange-600/30'
                       : 'text-slate-400 hover:text-white hover:bg-slate-800'
                   }`}
                 >
-                  Floor {f.floor}
+                  F{f.floor}
                 </button>
               ))}
             </div>
@@ -1513,7 +1320,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             </span>
             <span className="text-slate-200">{activeActionLog}</span>
             <span className="text-slate-600">|</span>
-            <span className="text-amber-400">Continuous Pathing Active</span>
+            <span className="text-amber-400">Click any stairs or floor to navigate</span>
           </div>
         </div>
       </div>
