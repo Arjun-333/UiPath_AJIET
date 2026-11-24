@@ -196,6 +196,17 @@ class WorkflowOrchestrator:
                     waiting_approval = any(t.status == "review" for t in tasks)
                     if waiting_approval:
                         break
+                    # If any task failed and no more tasks can become ready, fail the project
+                    has_failures = any(t.status == "failed" for t in tasks)
+                    if has_failures:
+                        proj_stmt = select(ProjectModel).where(ProjectModel.id == project_id)
+                        proj_res = await session.execute(proj_stmt)
+                        proj = proj_res.scalar_one_or_none()
+                        if proj:
+                            proj.status = "failed"
+                            await session.commit()
+                        await self.broadcast("project_failed", {"project_id": project_id, "error": "Pipeline halted due to failed task dependency."})
+                        break
                     await asyncio.sleep(1.0)
                     continue
 

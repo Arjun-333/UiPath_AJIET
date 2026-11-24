@@ -99,8 +99,11 @@ export const App: React.FC = () => {
     };
 
     connectWs();
+    const handleCustomRefresh = () => fetchData();
+    window.addEventListener('autonomia_refresh_data', handleCustomRefresh);
     return () => {
       clearInterval(interval);
+      window.removeEventListener('autonomia_refresh_data', handleCustomRefresh);
       if (ws) ws.close();
     };
   }, []);

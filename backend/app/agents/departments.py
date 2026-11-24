@@ -91,7 +91,7 @@ class DarshanDirectorAgent(BaseAgent):
         project_id = task_context.get("project_id", "autonomia_proj")
         script_data = task_context.get("script", {})
         out_dir = PROJECTS_DIR / project_id
-        rendered_assets = self.renderer.render_project_video(project_id, script_data, out_dir)
+        rendered_assets = await self.renderer.render_project_video(project_id, script_data, out_dir)
         return rendered_assets
 
 

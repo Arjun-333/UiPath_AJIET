@@ -9,6 +9,8 @@ data tables, live execution consoles, neural speech narration, and generates:
 import subprocess
 import shutil
 import json
+import asyncio
+from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any
 from PIL import Image, ImageDraw, ImageFont
@@ -547,7 +549,7 @@ class VideoRenderer:
         shutil.rmtree(temp_dir, ignore_errors=True)
         return master_mp4
 
-    def render_project_video(self, project_id: str, script_data: Dict[str, Any], output_dir: str | Path) -> Dict[str, str]:
+    async def render_project_video(self, project_id: str, script_data: Dict[str, Any], output_dir: str | Path) -> Dict[str, str]:
         """
         Master Pipeline Method:
         1. Synthesizes neural audio per scene.
@@ -555,7 +557,6 @@ class VideoRenderer:
         3. Creates structured Production Manifest (manifest.json).
         4. Assembles 16:9 Master Video and 9:16 Vertical Reel.
         """
-        import asyncio
         out_dir = Path(output_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
         audio_dir = out_dir / "audio"
@@ -567,7 +568,7 @@ class VideoRenderer:
         if not scenes:
             from backend.app.engine.llm_provider import HeuristicLLMProvider
             provider = HeuristicLLMProvider()
-            raw = asyncio.run(provider.generate("UiPath Studio Automation", role="scriptwriter"))
+            raw = await provider.generate("UiPath Studio Automation", role="scriptwriter")
             parsed = json.loads(raw)
             scenes = parsed.get("scenes", [])
 
@@ -599,10 +600,10 @@ class VideoRenderer:
 
         # 2. Render Each Scene Segment
         for sc in structured_scenes:
-            asyncio.run(self.render_single_scene(out_dir, sc, total_scenes=len(structured_scenes)))
+            await self.render_single_scene(out_dir, sc, total_scenes=len(structured_scenes))
 
         # 3. Assemble Complete Master Video & Reel
-        asyncio.run(self.assemble_video_from_scenes(out_dir, structured_scenes))
+        await self.assemble_video_from_scenes(out_dir, structured_scenes)
 
         # 4. Generate & Save Video Production Manifest
         manifest = {

@@ -178,6 +178,40 @@ async def list_projects():
         return results
 
 
+@app.delete("/api/projects/{project_id}")
+async def delete_project(project_id: str):
+    """Deletes or cancels a project pipeline."""
+    async with AsyncSessionLocal() as session:
+        from sqlalchemy import delete
+        await session.execute(delete(TaskModel).where(TaskModel.project_id == project_id))
+        await session.execute(delete(ProjectModel).where(ProjectModel.id == project_id))
+        await session.commit()
+    await manager.broadcast_event("project_deleted", {"project_id": project_id})
+    return {"status": "deleted", "project_id": project_id}
+
+
+@app.post("/api/projects/cleanup")
+async def cleanup_stale_projects():
+    """Archives or clears old abandoned pipelines that were interrupted by server restarts."""
+    async with AsyncSessionLocal() as session:
+        from sqlalchemy import select, delete
+        stmt = select(ProjectModel).where(ProjectModel.status.in_(["in_progress", "interrupted"]))
+        res = await session.execute(stmt)
+        stale_projects = res.scalars().all()
+        cleared_count = 0
+        for p in stale_projects:
+            task_stmt = select(TaskModel).where(TaskModel.project_id == p.id)
+            task_res = await session.execute(task_stmt)
+            tasks = task_res.scalars().all()
+            if all(t.status == "pending" for t in tasks) or any(t.status == "failed" for t in tasks):
+                await session.execute(delete(TaskModel).where(TaskModel.project_id == p.id))
+                await session.execute(delete(ProjectModel).where(ProjectModel.id == p.id))
+                cleared_count += 1
+        await session.commit()
+    await manager.broadcast_event("projects_cleaned", {"cleared_count": cleared_count})
+    return {"status": "cleared", "cleared_count": cleared_count}
+
+
 @app.get("/api/approvals")
 async def list_approvals():
     """Lists Level 3 actions awaiting CEO review."""
