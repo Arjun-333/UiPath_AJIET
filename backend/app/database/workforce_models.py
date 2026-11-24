@@ -186,3 +186,64 @@ class ModelPricingModel(Base):
     completion_price_per_1k = Column(Float, nullable=False, default=0.0020)
     active = Column(Boolean, nullable=False, default=True)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+
+class WorkforceOrganizationalFindingModel(Base):
+    __tablename__ = "workforce_organizational_findings"
+
+    id = Column(String(64), primary_key=True)
+    finding_type = Column(String(64), nullable=False)  # bottleneck, approval_backlog, handoff_delay, department_imbalance, single_point_of_failure, recurring_failure, cost_anomaly, capability_gap
+    severity = Column(String(32), nullable=False, default="MEDIUM")  # CRITICAL, HIGH, MEDIUM, LOW
+    department = Column(String(64), nullable=False)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=False)
+    suggested_action = Column(Text, nullable=False)
+    evidence = Column(JSON, nullable=False, default=dict)
+    confidence_score = Column(Float, nullable=False, default=0.0)
+    data_window_days = Column(Integer, nullable=False, default=30)
+    status = Column(String(32), nullable=False, default="active")  # active, addressed, dismissed
+    linked_draft_id = Column(String(64), nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    resolved_at = Column(DateTime, nullable=True)
+
+    __table_args__ = (
+        Index("idx_org_findings_dept_status", "department", "status"),
+    )
+
+
+class WorkforceImpactTrackingModel(Base):
+    __tablename__ = "workforce_impact_tracking"
+
+    id = Column(String(64), primary_key=True)
+    action_type = Column(String(64), nullable=False)  # hire, retrain, reassign, promote
+    target_agent_id = Column(String(64), nullable=False)
+    department = Column(String(64), nullable=False)
+    linked_approval_id = Column(String(64), nullable=False)
+    linked_finding_id = Column(String(64), nullable=True)
+    executed_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    follow_up_window_days = Column(Integer, nullable=False, default=30)
+    baseline_metrics = Column(JSON, nullable=False)  # Snapshot at execution time
+    follow_up_metrics = Column(JSON, nullable=True)   # Evaluated after window
+    outcome = Column(String(32), nullable=False, default="pending")  # pending, improved, no_change, worsened, insufficient_data
+    outcome_summary = Column(Text, nullable=True)
+    evaluated_at = Column(DateTime, nullable=True)
+
+
+class WorkforceRecruitmentDraftModel(Base):
+    __tablename__ = "workforce_recruitment_drafts"
+
+    id = Column(String(64), primary_key=True)
+    linked_finding_id = Column(String(64), nullable=False)
+    title = Column(String(128), nullable=False)
+    role = Column(String(128), nullable=False)
+    department = Column(String(64), nullable=False)
+    floor = Column(Integer, nullable=False, default=1)
+    permission_level = Column(Integer, nullable=False, default=2)
+    suggested_model = Column(String(128), nullable=False, default="nvidia/nemotron-3-ultra-550b-a55b")
+    system_instructions = Column(Text, nullable=False)
+    suggested_tools = Column(JSON, nullable=False, default=list)
+    responsibilities = Column(JSON, nullable=False, default=list)
+    proposed_test_tasks = Column(JSON, nullable=False, default=list)
+    status = Column(String(32), nullable=False, default="draft")  # draft, submitted, rejected
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+

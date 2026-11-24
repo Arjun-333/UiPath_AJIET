@@ -7,10 +7,11 @@ import { EmployeeInspector } from './components/EmployeeInspector';
 import { MediaVault } from './components/MediaVault';
 import { WorkforceCommsCenter } from './components/WorkforceCommsCenter';
 import { VideoQualityInspector } from './components/VideoQualityInspector';
+import { WorkforceManagementView } from './components/workforce/WorkforceManagementView';
 import { Building2, Terminal, Film, ShieldCheck, Activity, Users, Sparkles, MessageSquare, ShieldAlert } from 'lucide-react';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'hq' | 'command' | 'vault' | 'qa'>('hq');
+  const [activeTab, setActiveTab] = useState<'hq' | 'command' | 'vault' | 'qa' | 'workforce'>('hq');
   const [activeFloor, setActiveFloor] = useState<number>(0);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -88,6 +89,8 @@ export const App: React.FC = () => {
             setMessages(prev => [...prev, msg.data]);
           } else if (msg.event === 'agent_transit') {
             setPendingTransit(msg.data);
+          } else if (msg.event === 'employee_lifecycle_changed' || msg.event === 'workforce_alert') {
+            fetchData();
           }
         } catch (e) {
           console.error("WS parse error", e);
@@ -222,6 +225,18 @@ export const App: React.FC = () => {
             <ShieldAlert className="w-4 h-4 text-orange-400" />
             <span>Video QA Lab</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab('workforce')}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              activeTab === 'workforce'
+                ? 'bg-orange-600 text-white shadow-md shadow-orange-600/30'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
+          >
+            <Users className="w-4 h-4 text-orange-400" />
+            <span>Workforce & Talent</span>
+          </button>
         </div>
 
         {/* Right Status, Comms & Approvals */}
@@ -299,6 +314,8 @@ export const App: React.FC = () => {
             projectId={projects.length > 0 ? projects[0].id : selectedProjectId}
           />
         )}
+
+        {activeTab === 'workforce' && <WorkforceManagementView />}
       </main>
 
       {/* Modals */}

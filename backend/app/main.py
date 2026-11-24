@@ -31,11 +31,18 @@ async def lifespan(app: FastAPI):
     from backend.app.workforce.backfill import backfill_existing_agents, backfill_historical_task_telemetry
     await backfill_existing_agents()
     await backfill_historical_task_telemetry()
+    from backend.app.workforce.lifecycle_engine import GLOBAL_LIFECYCLE_ENGINE
+    from backend.app.workforce.advisor import GLOBAL_ADVISOR_SERVICE
+    GLOBAL_LIFECYCLE_ENGINE.broadcast_callback = manager.broadcast_event
+    GLOBAL_ADVISOR_SERVICE.broadcast_callback = manager.broadcast_event
     # Register orchestrator broadcast handler to stream to connected WebSockets
     GLOBAL_ORCHESTRATOR.register_listener(manager.broadcast_event)
     yield
 
 app = FastAPI(title="Project Autonomia API", version="1.0.0", lifespan=lifespan)
+
+from backend.app.workforce.router import router as workforce_router
+app.include_router(workforce_router)
 
 app.add_middleware(
     CORSMiddleware,
