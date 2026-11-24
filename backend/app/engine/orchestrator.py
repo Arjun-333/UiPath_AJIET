@@ -440,7 +440,51 @@ class WorkflowOrchestrator:
                 telem.approval_wait_seconds = wait_sec
                 telem.status = "completed" if action == "approve" else "failed"
 
+            # Check if this is an Advisor Recommendation
+            if approval.action_type.startswith("advisor_") or "advisor_" in (approval.task_id or ""):
+                from backend.app.database.workforce_models import WorkforceRecommendationModel
+                rec_stmt = select(WorkforceRecommendationModel).where(
+                    (WorkforceRecommendationModel.linked_approval_id == approval_id) |
+                    (WorkforceRecommendationModel.id == (approval.task_id or "").replace("advisor_", ""))
+                )
+                rec_res = await session.execute(rec_stmt)
+                rec = rec_res.scalar_one_or_none()
+                if rec:
+                    rec.status = "approved" if action == "approve" else "dismissed"
+                    rec.resolved_at = datetime.utcnow()
+
+            # Check if this is a Video Publish action
+            if approval.action_type == "publish_content" and action == "approve":
+                pub_msg = AgentMessageModel(
+                    id=f"msg_{uuid.uuid4().hex[:8]}",
+                    sender_id="arjun_ceo",
+                    sender_name="Arjun (CEO)",
+                    sender_floor=0,
+                    recipient_id="#general",
+                    recipient_name="All Company",
+                    recipient_floor=0,
+                    message_type="general_chat",
+                    content=f"🚀 PUBLISHED: {approval.description}. Cleared for release to YouTube / Instagram channels!"
+                )
+                session.add(pub_msg)
+
             await session.commit()
+
+        # Check if this is a Workforce Candidate Hire & Deploy action
+        if approval.action_type == "workforce_deploy":
+            if action == "approve":
+                from backend.app.workforce.lifecycle_engine import GLOBAL_LIFECYCLE_ENGINE
+                from backend.app.workforce.rbac import Principal, Role, AUTHORIZED_PRINCIPALS
+                ceo_principal = AUTHORIZED_PRINCIPALS.get("arjun_ceo", Principal("arjun_ceo", Role.CEO, True, "Arjun (CEO)"))
+                try:
+                    await GLOBAL_LIFECYCLE_ENGINE.execute_hire(
+                        candidate_id=approval.agent_id,
+                        approval_id=approval.id,
+                        principal=ceo_principal
+                    )
+                except Exception as e:
+                    import logging
+                    logging.getLogger("autonomia.orchestrator").warning(f"Error executing hire during approval: {e}")
 
         auri = self.registry.get_agent("auri_ceo_interface") or self.registry.get_agent("orbi_ceo_interface")
         if auri:
@@ -449,6 +493,7 @@ class WorkflowOrchestrator:
         await self.broadcast("approval_resolved", {
             "approval_id": approval_id,
             "status": approval.status,
+            "action_type": approval.action_type,
             "feedback": feedback
         })
 

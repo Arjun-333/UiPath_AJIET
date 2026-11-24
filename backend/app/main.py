@@ -194,6 +194,7 @@ async def list_approvals():
                 "action_type": a.action_type,
                 "description": a.description,
                 "preview_url": a.preview_url,
+                "preview_data": a.preview_data,
                 "status": a.status,
                 "ceo_feedback": a.ceo_feedback,
                 "created_at": a.created_at.isoformat() if a.created_at else None

@@ -42,6 +42,7 @@ export interface Approval {
   action_type: string;
   description: string;
   preview_url?: string;
+  preview_data?: Record<string, any>;
   status: 'pending' | 'approved' | 'rejected';
   ceo_feedback?: string;
   created_at: string;

@@ -116,12 +116,19 @@ export const App: React.FC = () => {
   };
 
   const handleResolveApproval = async (approvalId: string, action: 'approve' | 'reject', feedback: string) => {
-    await fetch(`/api/approvals/${approvalId}/resolve`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, feedback })
-    });
-    fetchData();
+    try {
+      const res = await fetch(`/api/approvals/${approvalId}/resolve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, feedback })
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ detail: 'Failed to process approval.' }));
+        throw new Error(errorData.detail || errorData.error || 'Server rejected approval resolution.');
+      }
+    } finally {
+      await fetchData();
+    }
   };
 
   const handleSendMessage = async (senderId: string, recipientId: string, content: string, messageType: string) => {
