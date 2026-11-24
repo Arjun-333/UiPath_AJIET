@@ -1,0 +1,335 @@
+{
+  "project_id": "test_proj_01",
+  "title": "Mastering UiPath Document Understanding: Enterprise RPA Masterclass",
+  "status": "quality_approved",
+  "total_duration": 182.0,
+  "repair_attempts": 0,
+  "quality_score": 95.0,
+  "scenes": [
+    {
+      "scene_id": "scene_01",
+      "scene_number": 1,
+      "chapter": "Chapter 1: The Core Automation Challenge",
+      "title": "Manual Repetition vs Intelligent RPA",
+      "narration": "Welcome developers to UiPath Community AJIET! Today we dive deep into Document Understanding. (Refined: Make the intro emphasis on RPA and UiPath Studio clearer)",
+      "duration": 30.0,
+      "start_timestamp": 0.0,
+      "end_timestamp": 30.0,
+      "voiceover_asset": "data/projects/test_proj_01/audio/scene_01.wav",
+      "generation_history": [
+        {
+          "action": "ceo_manual_correction",
+          "request": "Make the intro emphasis on RPA and UiPath Studio clearer",
+          "instruction_type": "narration",
+          "timestamp": "2026-11-24T19:05:09.361327"
+        }
+      ]
+    },
+    {
+      "scene_id": "scene_02",
+      "scene_number": 2,
+      "chapter": "Chapter 2: UiPath Studio Architecture & Interface",
+      "title": "Studio IDE Deep Dive & Package Configuration",
+      "narration": "Let us explore the modern UI automation activities in UiPath Studio.",
+      "duration": 30.0,
+      "start_timestamp": 30.0,
+      "end_timestamp": 60.0,
+      "voiceover_asset": "data/projects/test_proj_01/audio/scene_02.wav",
+      "generation_history": []
+    },
+    {
+      "scene_id": "scene_03",
+      "scene_number": 3,
+      "chapter": "Chapter 3: Hands-On Workflow Design",
+      "title": "Drag-and-Drop Activity Sequence & Selector Tuning",
+      "narration": "Now let us construct the core workflow sequence with fuzzy selectors.",
+      "duration": 32.0,
+      "start_timestamp": 60.0,
+      "end_timestamp": 92.0,
+      "voiceover_asset": "data/projects/test_proj_01/audio/scene_03.wav",
+      "generation_history": []
+    },
+    {
+      "scene_id": "scene_04",
+      "scene_number": 4,
+      "chapter": "Chapter 4: Data Processing & Variables",
+      "title": "DataTable Manipulation & Orchestrator Queues",
+      "narration": "In the Data Manager panel we define DataTable variables and queues.",
+      "duration": 30.0,
+      "start_timestamp": 92.0,
+      "end_timestamp": 122.0,
+      "voiceover_asset": "data/projects/test_proj_01/audio/scene_04.wav",
+      "generation_history": []
+    },
+    {
+      "scene_id": "scene_05",
+      "scene_number": 5,
+      "chapter": "Chapter 5: Live Robot Execution & Diagnostics",
+      "title": "Studio Debugging & Real-Time Terminal Execution",
+      "narration": "Let us hit Run File and observe real-time execution in the Output Console.",
+      "duration": 30.0,
+      "start_timestamp": 122.0,
+      "end_timestamp": 152.0,
+      "voiceover_asset": "data/projects/test_proj_01/audio/scene_05.wav",
+      "generation_history": []
+    },
+    {
+      "scene_id": "scene_06",
+      "scene_number": 6,
+      "chapter": "Chapter 6: Enterprise Deployment & Best Practices",
+      "title": "Publishing to Orchestrator & Community AJIET Best Practices",
+      "narration": "To conclude, we publish the finished package directly to UiPath Orchestrator.",
+      "duration": 30.0,
+      "start_timestamp": 152.0,
+      "end_timestamp": 182.0,
+      "voiceover_asset": "data/projects/test_proj_01/audio/scene_06.wav",
+      "generation_history": []
+    }
+  ],
+  "defects": [
+    {
+      "defect_id": "def_sub_87107e",
+      "scene_id": "global",
+      "timestamp_range": [
+        0.0,
+        28.67
+      ],
+      "severity": "MEDIUM",
+      "category": "subtitle",
+      "explanation": "Subtitle text exceeds action safe margins (161 chars > 52 chars).",
+      "evidence": {
+        "line_length": 161,
+        "text": "Welcome developers to UiPath C..."
+      },
+      "recommended_correction": "Wrap subtitle lines into 2 balanced rows under 48 chars.",
+      "responsible_agent": "shreyank_editor",
+      "correction_status": "detected"
+    },
+    {
+      "defect_id": "def_sub_778dbf",
+      "scene_id": "global",
+      "timestamp_range": [
+        28.67,
+        62.039
+      ],
+      "severity": "MEDIUM",
+      "category": "subtitle",
+      "explanation": "Subtitle text exceeds action safe margins (68 chars > 52 chars).",
+      "evidence": {
+        "line_length": 68,
+        "text": "Let us explore the modern UI a..."
+      },
+      "recommended_correction": "Wrap subtitle lines into 2 balanced rows under 48 chars.",
+      "responsible_agent": "shreyank_editor",
+      "correction_status": "detected"
+    },
+    {
+      "defect_id": "def_sub_ef3262",
+      "scene_id": "global",
+      "timestamp_range": [
+        62.039,
+        91.909
+      ],
+      "severity": "MEDIUM",
+      "category": "subtitle",
+      "explanation": "Subtitle text exceeds action safe margins (69 chars > 52 chars).",
+      "evidence": {
+        "line_length": 69,
+        "text": "Now let us construct the core ..."
+      },
+      "recommended_correction": "Wrap subtitle lines into 2 balanced rows under 48 chars.",
+      "responsible_agent": "shreyank_editor",
+      "correction_status": "detected"
+    },
+    {
+      "defect_id": "def_sub_aaf691",
+      "scene_id": "global",
+      "timestamp_range": [
+        91.909,
+        121.78
+      ],
+      "severity": "MEDIUM",
+      "category": "subtitle",
+      "explanation": "Subtitle text exceeds action safe margins (67 chars > 52 chars).",
+      "evidence": {
+        "line_length": 67,
+        "text": "In the Data Manager panel we d..."
+      },
+      "recommended_correction": "Wrap subtitle lines into 2 balanced rows under 48 chars.",
+      "responsible_agent": "shreyank_editor",
+      "correction_status": "detected"
+    },
+    {
+      "defect_id": "def_sub_02dfc0",
+      "scene_id": "global",
+      "timestamp_range": [
+        121.78,
+        148.75
+      ],
+      "severity": "MEDIUM",
+      "category": "subtitle",
+      "explanation": "Subtitle text exceeds action safe margins (74 chars > 52 chars).",
+      "evidence": {
+        "line_length": 74,
+        "text": "Let us hit Run File and observ..."
+      },
+      "recommended_correction": "Wrap subtitle lines into 2 balanced rows under 48 chars.",
+      "responsible_agent": "shreyank_editor",
+      "correction_status": "detected"
+    },
+    {
+      "defect_id": "def_sub_9dfcd9",
+      "scene_id": "global",
+      "timestamp_range": [
+        148.75,
+        178.259
+      ],
+      "severity": "MEDIUM",
+      "category": "subtitle",
+      "explanation": "Subtitle text exceeds action safe margins (77 chars > 52 chars).",
+      "evidence": {
+        "line_length": 77,
+        "text": "To conclude, we publish the fi..."
+      },
+      "recommended_correction": "Wrap subtitle lines into 2 balanced rows under 48 chars.",
+      "responsible_agent": "shreyank_editor",
+      "correction_status": "detected"
+    }
+  ],
+  "score_breakdown": {
+    "visual_quality": 100.0,
+    "audio_quality": 100.0,
+    "story_alignment": 100.0,
+    "subtitle_quality": 70.0,
+    "technical_quality": 100.0,
+    "branding_presentation": 95.0
+  },
+  "last_inspection": {
+    "project_id": "test_proj_01",
+    "inspected_at": "2026-11-24T19:05:32.217876",
+    "passed": true,
+    "status": "quality_approved",
+    "overall_score": 95.0,
+    "score_breakdown": {
+      "visual_quality": 100.0,
+      "audio_quality": 100.0,
+      "story_alignment": 100.0,
+      "subtitle_quality": 70.0,
+      "technical_quality": 100.0,
+      "branding_presentation": 95.0
+    },
+    "defects_count": 6,
+    "critical_defects_count": 0,
+    "defects": [
+      {
+        "defect_id": "def_sub_87107e",
+        "scene_id": "global",
+        "timestamp_range": [
+          0.0,
+          28.67
+        ],
+        "severity": "MEDIUM",
+        "category": "subtitle",
+        "explanation": "Subtitle text exceeds action safe margins (161 chars > 52 chars).",
+        "evidence": {
+          "line_length": 161,
+          "text": "Welcome developers to UiPath C..."
+        },
+        "recommended_correction": "Wrap subtitle lines into 2 balanced rows under 48 chars.",
+        "responsible_agent": "shreyank_editor",
+        "correction_status": "detected"
+      },
+      {
+        "defect_id": "def_sub_778dbf",
+        "scene_id": "global",
+        "timestamp_range": [
+          28.67,
+          62.039
+        ],
+        "severity": "MEDIUM",
+        "category": "subtitle",
+        "explanation": "Subtitle text exceeds action safe margins (68 chars > 52 chars).",
+        "evidence": {
+          "line_length": 68,
+          "text": "Let us explore the modern UI a..."
+        },
+        "recommended_correction": "Wrap subtitle lines into 2 balanced rows under 48 chars.",
+        "responsible_agent": "shreyank_editor",
+        "correction_status": "detected"
+      },
+      {
+        "defect_id": "def_sub_ef3262",
+        "scene_id": "global",
+        "timestamp_range": [
+          62.039,
+          91.909
+        ],
+        "severity": "MEDIUM",
+        "category": "subtitle",
+        "explanation": "Subtitle text exceeds action safe margins (69 chars > 52 chars).",
+        "evidence": {
+          "line_length": 69,
+          "text": "Now let us construct the core ..."
+        },
+        "recommended_correction": "Wrap subtitle lines into 2 balanced rows under 48 chars.",
+        "responsible_agent": "shreyank_editor",
+        "correction_status": "detected"
+      },
+      {
+        "defect_id": "def_sub_aaf691",
+        "scene_id": "global",
+        "timestamp_range": [
+          91.909,
+          121.78
+        ],
+        "severity": "MEDIUM",
+        "category": "subtitle",
+        "explanation": "Subtitle text exceeds action safe margins (67 chars > 52 chars).",
+        "evidence": {
+          "line_length": 67,
+          "text": "In the Data Manager panel we d..."
+        },
+        "recommended_correction": "Wrap subtitle lines into 2 balanced rows under 48 chars.",
+        "responsible_agent": "shreyank_editor",
+        "correction_status": "detected"
+      },
+      {
+        "defect_id": "def_sub_02dfc0",
+        "scene_id": "global",
+        "timestamp_range": [
+          121.78,
+          148.75
+        ],
+        "severity": "MEDIUM",
+        "category": "subtitle",
+        "explanation": "Subtitle text exceeds action safe margins (74 chars > 52 chars).",
+        "evidence": {
+          "line_length": 74,
+          "text": "Let us hit Run File and observ..."
+        },
+        "recommended_correction": "Wrap subtitle lines into 2 balanced rows under 48 chars.",
+        "responsible_agent": "shreyank_editor",
+        "correction_status": "detected"
+      },
+      {
+        "defect_id": "def_sub_9dfcd9",
+        "scene_id": "global",
+        "timestamp_range": [
+          148.75,
+          178.259
+        ],
+        "severity": "MEDIUM",
+        "category": "subtitle",
+        "explanation": "Subtitle text exceeds action safe margins (77 chars > 52 chars).",
+        "evidence": {
+          "line_length": 77,
+          "text": "To conclude, we publish the fi..."
+        },
+        "recommended_correction": "Wrap subtitle lines into 2 balanced rows under 48 chars.",
+        "responsible_agent": "shreyank_editor",
+        "correction_status": "detected"
+      }
+    ],
+    "repair_attempts": 0
+  }
+}

@@ -1,0 +1,24 @@
+1
+00:00:00,000 --> 00:00:10,740
+Welcome back, UiPath developers! Today at UiPath Community AJIET, we're unlocking the power of UiPath Studio Automation.
+
+2
+00:00:10,740 --> 00:00:18,410
+Manual data extraction from PDFs and invoices drains hours of productive engineering time every single week.
+
+3
+00:00:18,410 --> 00:00:27,929
+By deploying UiPath Studio Automation, we combine machine learning taxonomies with OCR digitizers to automate extraction seamlessly.
+
+4
+00:00:27,929 --> 00:00:37,429
+Inside UiPath Studio, simply configure the Taxonomy Manager, drag the Data Extraction Scope, and bind your extraction models.
+
+5
+00:00:37,429 --> 00:00:45,250
+What once took fifteen minutes per document is now completed in two seconds with ninety-nine percent validation accuracy.
+
+6
+00:00:45,250 --> 00:00:52,950
+Hit subscribe to join UiPath Community AJIET, drop your questions in the comments, and keep automating!
+
