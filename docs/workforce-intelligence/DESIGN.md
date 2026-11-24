@@ -1,9 +1,20 @@
 # AUTONOMIA — Workforce Intelligence & Talent Management Module
 ## Technical Design Document (`docs/workforce-intelligence/DESIGN.md`)
-**Version**: 1.0.0-rc1  
-**Status**: DRAFT FOR CEO APPROVAL (Phase 1 Gate)  
+**Version**: 1.1.0  
+**Status**: APPROVED & ACTIVE (Phases 1-2 Complete, Phase 3 Ready)  
 **Author**: Lead AI Systems Architect & Full-Stack Engineer  
 **Branch**: `workforce-intelligence`  
+
+---
+
+## 0. Vision
+
+AUTONOMIA must be able to evaluate its own workforce, identify organizational weaknesses, recruit missing capabilities and continuously improve its operations, while the human CEO (the user of this application) retains final authority over every consequential decision.
+
+The system observes, analyzes, recommends and drafts. The CEO decides.
+
+Every feature in this module serves this closed-loop cycle:
+$$\text{Measure} \longrightarrow \text{Diagnose} \longrightarrow \text{Recommend} \longrightarrow \text{CEO Decision} \longrightarrow \text{Execute} \longrightarrow \text{Verify Impact} \longrightarrow \text{Repeat}$$
 
 ---
 
@@ -60,6 +71,7 @@
 
 ### 1.2 Authentication & RBAC System
 * **Principle**: Consequential lifecycle actions can **only** be authorized and executed by the human CEO principal (`arjun_ceo`), verified server-side.
+* **Core Principle 7 (No Autonomous Authority)**: There is strictly **no auto-approve mode**, **no delegated approval**, and **no scheduled job** that can execute a lifecycle action. Analysis, findings, recommendations and recruitment drafts may be automated. State-changing decisions never are.
 * **Implementation Mechanism**:
   - FastAPI dependency injection with `Security(get_current_principal)`.
   - In development and local deployment, requests pass the authenticated principal via standard Authorization Header:
@@ -571,6 +583,67 @@ Lifecycle operations trigger immediate visual reactions in the Virtual Campus wi
    - Triggering lifecycle action broadcasts `employee_lifecycle_changed` event with correct payload.
 9. **E2E Playwright Browser Tests**:
    - Navigate to Workforce dashboard, inspect leaderboard, open employee dossier, trigger recruitment test, and save screenshots to `/screenshots/workforce-intelligence/`.
+10. **Continuous Improvement Verification Tests**:
+   - Scheduled advisor runs are idempotent for the same data window and never execute any lifecycle action.
+   - The advisor and recruitment drafts cannot create agents, grant permissions or deploy; only a CEO-authorized request can.
+   - Outcome tracking: baseline capture and before/after calculation verified against hand-computed fixtures, including the insufficient-data case.
+   - No code path exists that approves or executes a lifecycle action without explicit CEO authorization (test for any auto-approve or delegated-approval route).
+
+---
+
+## 9. Design of the Continuous Improvement Loop
+
+### 9.1 Organizational Weakness Detection (Beyond Individual Agents)
+The system analyzes multi-agent workflow data to detect systemic organizational friction:
+1. **Workflow Bottlenecks**: Stages where tasks experience the highest queue latency or dependency blocking duration.
+2. **Approval Backlogs**: Departments or action types accumulating excessive pending Level 3 reviews.
+3. **Handoff Delays**: Significant latency between a task completion and downstream agent pickup.
+4. **Overloaded vs. Idle Departments**: Disproportionate task distribution across departments.
+5. **Single Points of Failure**: Capabilities or critical task types possessed by only a single agent with no departmental backup.
+6. **Recurring Failure Patterns**: Specific task types or error codes failing repeatedly despite retries.
+7. **Cost Anomalies**: Sudden spikes in token consumption or cost-per-deliverable.
+8. **Capability Gaps**: Task types that are frequently reassigned, retried, escalated or left unassigned due to missing domain skills.
+
+Each finding is recorded in `workforce_organizational_findings`:
+- `id`, `finding_type`, `severity` (Critical, High, Medium, Low), `confidence_score`, `evidence` (record IDs & metrics), `title`, `description`, `suggested_action`, `data_window_days`, `status` (`active`, `addressed`, `dismissed`), `created_at`.
+- Stored under the identical evidence-verification rules as advisor recommendations.
+
+### 9.2 Scheduled Analysis & Rate Limiting
+- **Schedule**: The Workforce Advisor runs on a configurable schedule (default: daily at 00:00 UTC) and on-demand by the CEO.
+- **Guardrails**:
+  - Rate-limited (minimum 1 hour between automatic runs unless forced by CEO).
+  - Telemetry logged and cost-tracked.
+  - **Strict Idempotency**: For the same data window, duplicate findings are suppressed; only new or escalating issues are surfaced.
+  - High-severity findings trigger persistent notification alerts in the CEO Command Centre.
+
+### 9.3 Gap-to-Recruitment Drafting
+- When a capability gap is diagnosed, the Advisor generates a **DRAFT Job Specification**:
+  - Suggested Title, Department, Floor, Responsibilities, Required Skills.
+  - Recommended Model, System Instructions, Tool Whitelist (least-privilege).
+  - Proposed Sandbox Test Tasks and Pass Thresholds.
+- **Strict Boundary**: The draft is pre-filled into the Recruitment Centre and linked to the finding ID. **A draft has zero operational effect** until the CEO reviews, modifies, and submits it.
+- Deployment follows the strict gate: test tasks pass $\rightarrow$ CEO Level 3 approval $\rightarrow$ CEO authorization execution. The Advisor **cannot** create agents, grant permissions, or deploy.
+
+### 9.4 Closed-Loop Impact Tracking (Observed Change vs. Causation)
+When the CEO authorizes an action originating from a finding or recommendation (e.g. hiring a specialist, retraining an agent, reassigning departments):
+1. **Baseline Capture**: Snapshot baseline metrics ($R_{\text{comp}}, Q_{\text{out}}, A_{\text{task}}, T_{\text{exec}}, C_{\text{task}}$) for the affected agent, department, and workflow at execution timestamp ($t_0$).
+2. **Follow-Up Window**: Track metrics across a follow-up evaluation period (default: 30 days).
+3. **Outcome Evaluation**: Compare before/after metrics:
+   - `improved`: Quantifiable positive change exceeding threshold ($> 5\%$) with sufficient sample size ($\ge 10$ tasks).
+   - `no_change`: Metric delta within $\pm 5\%$.
+   - `worsened`: Performance degradation ($> 5\%$).
+   - `insufficient_data`: Sample size below 10 tasks in the follow-up period.
+4. **Causation Limitation Rule**: Outcomes are documented strictly as **observed change**, never as proven causation (acknowledging task complexity shifts, seasonal volume, and external factors).
+5. **Advisor Track Record**: The Advisor panel surfaces its historical track record (accepted recommendations vs observed outcomes). This feedback is **informational only** and **never** automatically alters system prompts, weights, or behavior.
+
+### 9.5 Retraining Loop
+1. **Proposal**: Diagnostic finding cites specific defect patterns and proposes updated instructions or tool access with evidence.
+2. **CEO Authorization**: Human CEO reviews and signs off in Approvals.
+3. **Sandbox Testing**: New configuration version is placed in a sandbox and re-evaluated against the exact test criteria that flagged the weakness.
+4. **CEO Review & Final Deployment**: Re-evaluation results are presented to the CEO. The CEO authorizes reactivation or rolls back to the prior configuration version. No retrained agent goes live without passing re-evaluation and human CEO approval.
+
+### 9.6 Hard Authority Boundary
+Every improvement step that changes system state requires explicit human CEO authorization. No auto-approve mode, delegated approval, or self-modifying code paths exist anywhere in the application.
 
 ---
 

@@ -62,6 +62,15 @@ Branch: `workforce-intelligence`
   - [ ] Recommendation lifecycle (pending, accepted $\rightarrow$ creates Approval, dismissed)
   - [ ] `WorkforceAdvisorPanel.tsx` UI
 
+- [ ] **PHASE 6B: Continuous Improvement Loop**
+  - [ ] Organizational findings engine (workflow bottlenecks, approval backlogs, handoff delays, single points of failure, recurring failure patterns)
+  - [ ] Scheduled analysis runner (daily / on-demand, rate-limited, cost-tracked, idempotent)
+  - [ ] Gap-to-recruitment drafting (draft job specifications pre-filled in Recruitment Centre)
+  - [ ] Closed-loop impact tracking (execution baseline capture and 30-day before/after outcome evaluation)
+  - [ ] Retraining loop with sandbox re-evaluation and CEO review gate
+  - [ ] Command Centre persistent notification alerts for high-severity findings
+  - [ ] Non-causal observed change reporting and Advisor historical track record
+
 - [ ] **PHASE 7: Real-Time Office & App Integration**
   - [ ] Real-time WebSocket synchronization (`employee_hired`, `employee_reassigned`, `employee_suspended`, `employee_terminated`, `employee_promoted`)
   - [ ] Virtual Campus visual state mapping (renderer-agnostic)
