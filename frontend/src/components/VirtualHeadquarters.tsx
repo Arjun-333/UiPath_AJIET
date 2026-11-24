@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Agent, AgentMessage, AgentTransitEvent } from '../types';
 import { 
   Building2, Users, Coffee, Laptop, Sparkles, MessageSquare, 
-  ChevronRight, ZoomIn, ZoomOut, Maximize2, Layers, Compass, ArrowUp, ArrowDown
+  ChevronRight, ZoomIn, ZoomOut, Maximize2, Layers, Compass, 
+  ArrowUp, ArrowDown, Pause, Play, Clock, Eye
 } from 'lucide-react';
 
 interface Props {
@@ -25,10 +26,195 @@ export const FLOOR_CONFIG = [
   { floor: 5, name: "Floor 5: Technology & Infrastructure", subtitle: "Pratham, Mallika, Vaibhav & Faazil (Systems, DevOps & DB)", theme: "tech", badge: "TECH & CLOUD" }
 ];
 
+// Realistic corporate focus activities per employee
+const AGENT_WORK_ACTIVITIES: Record<string, { desk: string[]; break: string[]; visit: string[] }> = {
+  arjun_ceo: {
+    desk: [
+      "Reviewing executive growth roadmap for AJIET community",
+      "Evaluating departmental video delivery approvals",
+      "Analyzing quarterly AI media expansion milestones",
+      "Setting strategic directives for creative & tech ops"
+    ],
+    break: ["Espresso break at executive lounge", "Reflecting on company milestones"],
+    visit: ["Inspecting Floor 1 Media Studio", "Checking Floor 5 Cloud Infrastructure"]
+  },
+  auri_ceo_interface: {
+    desk: [
+      "Standing by for CEO Arjun's instructions",
+      "Monitoring executive telemetry & task feeds",
+      "Coordinating inter-floor agent transit",
+      "Synthesizing daily operational summary"
+    ],
+    break: ["Recharging docking station battery", "Syncing memory buffers"],
+    visit: ["Delivering executive dispatch to Floor 1", "Syncing with CTO Pratham on Floor 5"]
+  },
+  coo_01: {
+    desk: [
+      "Decomposing CEO project workflows into tasks",
+      "Balancing departmental workload allocations",
+      "Tracking deliverable milestones and handoffs",
+      "Auditing operational resource throughput"
+    ],
+    break: ["Reviewing sprint logs with coffee", "Short rest at executive sofa"],
+    visit: ["Syncing with Director Darshan on Floor 1", "Reviewing QA metrics on Floor 3"]
+  },
+  darshan_director: {
+    desk: [
+      "Directing scene 4 video composition & pacing",
+      "Inspecting FFmpeg render export pipeline",
+      "Reviewing motion graphics cuts & color timing",
+      "Validating final master 16:9 render release"
+    ],
+    break: ["Pouring studio coffee at refreshment bar", "Discussing creative pacing on sofa"],
+    visit: ["Syncing with Scriptwriter Shrinithi", "Checking defect inspection report on Floor 3"]
+  },
+  shrinithi_script: {
+    desk: [
+      "Drafting UiPath Document Understanding hook",
+      "Structuring 60-second video narrative flow",
+      "Polishing technical taxonomy citations",
+      "Timing voiceover narration cadence"
+    ],
+    break: ["Herbal tea break in studio lounge", "Reading UiPath community release notes"],
+    visit: ["Reviewing script draft with Darshan", "Checking doc references on Floor 4"]
+  },
+  vaishnavi_design: {
+    desk: [
+      "Crafting high-CTR YouTube thumbnail typography",
+      "Adjusting contrast & mascot branding visuals",
+      "Selecting high-impact visual color palettes",
+      "Exporting 1080p promotional title cards"
+    ],
+    break: ["Grabbing cappuccino at studio bar", "Sketching thumbnail concepts on lounge"],
+    visit: ["Reviewing thumbnail preview with Director", "Consulting Marketing on Floor 2"]
+  },
+  shreyank_editor: {
+    desk: [
+      "Compositing 9:16 Instagram reel cuts",
+      "Aligning subtitle margins inside safe zone",
+      "Fine-tuning motion graphics transitions",
+      "Rendering 60fps vertical reels"
+    ],
+    break: ["Quick espresso recharge at coffee bar", "Relaxing on creative sofa"],
+    visit: ["Showing reel cuts to Director Darshan", "Testing audio sync on Floor 3"]
+  },
+  ananya_marketing: {
+    desk: [
+      "Analyzing student audience retention on Shorts",
+      "Planning Instagram Reels campaign calendar",
+      "Optimizing YouTube search tags & metadata",
+      "Forecasting campus enrollment engagement"
+    ],
+    break: ["Iced coffee break at marketing counter", "Reviewing engagement dashboards"],
+    visit: ["Consulting Designer Vaishnavi on Floor 1", "Reviewing campus signups on Floor 4"]
+  },
+  rohit_social: {
+    desk: [
+      "Scheduling multi-platform video uploads",
+      "Monitoring YouTube community comments",
+      "Tracking reel engagement CTR analytics",
+      "Preparing weekly digital broadcast"
+    ],
+    break: ["Coffee break at growth lounge", "Checking social notification queues"],
+    visit: ["Fetching rendered reels from Floor 1", "Consulting Lead Ananya on growth"]
+  },
+  tarun_qa: {
+    desk: [
+      "Scanning video frames for frozen/black defects",
+      "Verifying FFmpeg 1080p export integrity",
+      "Evaluating Nemotron automated QA logs",
+      "Validating scene duration continuity"
+    ],
+    break: ["Green tea recharge at QA bar", "Reviewing inspection rubric benchmarks"],
+    visit: ["Reporting minor cut defect to Darshan", "Auditing subtitle compliance with Kavya"]
+  },
+  kavya_compliance: {
+    desk: [
+      "Checking audio LUFS loudness (-14dB standard)",
+      "Verifying subtitle timing & safe margins",
+      "Auditing UiPath brand trademark usage",
+      "Running compliance verification checklist"
+    ],
+    break: ["Espresso break at test lab lounge", "Calibrating audio monitoring headset"],
+    visit: ["Reviewing subtitle timing with Shreyank", "Syncing with Srijana on Floor 4"]
+  },
+  iffah_doc: {
+    desk: [
+      "Coordinating Automate Campus Quest",
+      "Reviewing student workshop curriculum",
+      "Preparing email announcement campaign",
+      "Managing academic outreach partnerships"
+    ],
+    break: ["Tea break at outreach refreshment bar", "Reviewing student feedback letters"],
+    visit: ["Checking campaign plan with CEO Arjun", "Syncing with Tech Lead Pratham on Floor 5"]
+  },
+  jiya_research: {
+    desk: [
+      "Researching UiPath Action Center APIs",
+      "Indexing Taxonomy Manager documentation",
+      "Validating OCR Digitizer code samples",
+      "Compiling technical reference guide"
+    ],
+    break: ["Coffee break at documentation bar", "Reading RPA whitepapers on sofa"],
+    visit: ["Providing taxonomy reference to Shrinithi", "Checking database schema with Mallika"]
+  },
+  srijana_quality: {
+    desk: [
+      "Conducting compliance audit of deliverables",
+      "Checking academic certification standards",
+      "Verifying email campaign recipient lists",
+      "Reviewing student privacy guidelines"
+    ],
+    break: ["Matcha tea break at doc lounge", "Reviewing compliance checklist"],
+    visit: ["Syncing with QA Inspector Tarun on Floor 3", "Auditing security with Vaibhav on Floor 5"]
+  },
+  pratham_cto: {
+    desk: [
+      "Monitoring distributed FFmpeg rendering load",
+      "Optimizing async event bus throughput",
+      "Profiling system memory & CPU overhead",
+      "Architecting autonomous agent microservices"
+    ],
+    break: ["Strong dark espresso at tech bar", "Reviewing cloud architecture blueprints"],
+    visit: ["Briefing CEO Arjun on system stability", "Syncing with DB Manager Mallika"]
+  },
+  mallika_tech: {
+    desk: [
+      "Managing SQLite connection pooling",
+      "Indexing telemetry query execution plans",
+      "Validating schema migrations integrity",
+      "Auditing API response latencies"
+    ],
+    break: ["Coffee break at systems bar", "Reviewing database query benchmarks"],
+    visit: ["Reviewing server logs with Pratham", "Checking storage volume with Faazil"]
+  },
+  vaibhav_devops: {
+    desk: [
+      "Auditing environment variable security",
+      "Monitoring Docker container health",
+      "Checking automated backup cron jobs",
+      "Verifying rate limiter defense policies"
+    ],
+    break: ["Pouring black coffee at tech bar", "Reviewing network access logs"],
+    visit: ["Consulting Faazil on NVMe storage", "Briefing CTO Pratham on uptime"]
+  },
+  faazil_sysadmin: {
+    desk: [
+      "Monitoring NVMe SSD storage space",
+      "Purging temporary video render caches",
+      "Checking local network socket latency",
+      "Auditing disk I/O performance"
+    ],
+    break: ["Espresso recharge at server lounge", "Checking hardware temperature gauges"],
+    visit: ["Inspecting server racks on Floor 5", "Syncing with DevOps Vaibhav"]
+  }
+};
+
 interface CharacterSim {
   agent_id: string;
   name: string;
   role: string;
+  department: string;
   homeFloor: number;
   currentFloor: number;
   avatar_file: string;
@@ -49,6 +235,19 @@ interface CharacterSim {
   transitProgress?: number;
   transitFromFloor?: number;
   transitToFloor?: number;
+  currentActivity: string;
+}
+
+interface HoveredAgentInfo {
+  agent_id: string;
+  name: string;
+  role: string;
+  department: string;
+  floor: number;
+  state: string;
+  currentActivity: string;
+  screenX: number;
+  screenY: number;
 }
 
 export const VirtualHeadquarters: React.FC<Props> = ({
@@ -64,9 +263,11 @@ export const VirtualHeadquarters: React.FC<Props> = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [zoom, setZoom] = useState<number>(1.0);
   const [viewMode, setViewMode] = useState<'multi_tower' | 'floor_focus'>('multi_tower');
+  const [pacingMode, setPacingMode] = useState<'calm' | 'active' | 'paused'>('calm');
+  const [hoveredAgent, setHoveredAgent] = useState<HoveredAgentInfo | null>(null);
   const simRef = useRef<CharacterSim[]>([]);
   const animFrameRef = useRef<number>(0);
-  const [activeActionLog, setActiveActionLog] = useState<string>("Autonomous corporate workforce operational across all 6 campus floors.");
+  const [activeActionLog, setActiveActionLog] = useState<string>("Calm focus mode active: Employees performing deep departmental tasks.");
 
   // Isometric Grid Settings
   const TILE_W = 56;
@@ -87,29 +288,29 @@ export const VirtualHeadquarters: React.FC<Props> = ({
   // Home desk coordinates for all personnel across all 6 floors
   const ALL_PERSONNEL_DESKS = [
     // Floor 0 - Executive (Ground Left)
-    { agent_id: 'arjun_ceo', name: 'Arjun', role: 'Founder & CEO', floor: 0, x: 2, y: 3, chairColor: '#ea580c', isAuri: false },
-    { agent_id: 'auri_ceo_interface', name: 'AURI', role: 'Mascot & CEO Interface', floor: 0, x: 4, y: 3, chairColor: '#0284c7', isAuri: true },
-    { agent_id: 'coo_01', name: 'Marcus Vance', role: 'COO', floor: 0, x: 5, y: 4, chairColor: '#475569', isAuri: false },
+    { agent_id: 'arjun_ceo', name: 'Arjun', role: 'Founder & CEO', department: 'Executive Management', floor: 0, x: 2, y: 3, chairColor: '#ea580c', isAuri: false },
+    { agent_id: 'auri_ceo_interface', name: 'AURI', role: 'Mascot & CEO Interface', department: 'Executive Management', floor: 0, x: 4, y: 3, chairColor: '#0284c7', isAuri: true },
+    { agent_id: 'coo_01', name: 'Marcus Vance', role: 'COO', department: 'Executive Management', floor: 0, x: 5, y: 4, chairColor: '#475569', isAuri: false },
     // Floor 1 - Media Studio (Ground Right)
-    { agent_id: 'darshan_director', name: 'Darshan', role: 'Video Director', floor: 1, x: 2, y: 4, chairColor: '#ea580c', isAuri: false },
-    { agent_id: 'shrinithi_script', name: 'Shrinithi', role: 'Scriptwriter', floor: 1, x: 4, y: 4, chairColor: '#0284c7', isAuri: false },
-    { agent_id: 'vaishnavi_design', name: 'Vaishnavi', role: 'Thumbnail Designer', floor: 1, x: 6, y: 4, chairColor: '#dc2626', isAuri: false },
-    { agent_id: 'shreyank_editor', name: 'Shreyank', role: 'Motion Graphics', floor: 1, x: 5, y: 6, chairColor: '#10b981', isAuri: false },
+    { agent_id: 'darshan_director', name: 'Darshan', role: 'Video Director', department: 'Creative & Video Production', floor: 1, x: 2, y: 4, chairColor: '#ea580c', isAuri: false },
+    { agent_id: 'shrinithi_script', name: 'Shrinithi', role: 'Scriptwriter', department: 'Creative & Video Production', floor: 1, x: 4, y: 4, chairColor: '#0284c7', isAuri: false },
+    { agent_id: 'vaishnavi_design', name: 'Vaishnavi', role: 'Thumbnail Designer', department: 'Creative & Video Production', floor: 1, x: 6, y: 4, chairColor: '#dc2626', isAuri: false },
+    { agent_id: 'shreyank_editor', name: 'Shreyank', role: 'Motion Graphics', department: 'Creative & Video Production', floor: 1, x: 5, y: 6, chairColor: '#10b981', isAuri: false },
     // Floor 2 - Marketing & Growth Operations (Mid Left)
-    { agent_id: 'ananya_marketing', name: 'Ananya', role: 'Growth Strategist', floor: 2, x: 3, y: 4, chairColor: '#10b981', isAuri: false },
-    { agent_id: 'rohit_social', name: 'Rohit', role: 'Social & YouTube Lead', floor: 2, x: 5, y: 5, chairColor: '#ec4899', isAuri: false },
+    { agent_id: 'ananya_marketing', name: 'Ananya', role: 'Growth Strategist', department: 'Marketing & Campaign Management', floor: 2, x: 3, y: 4, chairColor: '#10b981', isAuri: false },
+    { agent_id: 'rohit_social', name: 'Rohit', role: 'Social & YouTube Lead', department: 'Marketing & Campaign Management', floor: 2, x: 5, y: 5, chairColor: '#ec4899', isAuri: false },
     // Floor 3 - AI Video QA & Testing Lab (Mid Right)
-    { agent_id: 'tarun_qa', name: 'Tarun', role: 'Lead Defect Inspector', floor: 3, x: 3, y: 4, chairColor: '#f59e0b', isAuri: false },
-    { agent_id: 'kavya_compliance', name: 'Kavya', role: 'Subtitle & Audio QA', floor: 3, x: 5, y: 5, chairColor: '#8b5cf6', isAuri: false },
+    { agent_id: 'tarun_qa', name: 'Tarun', role: 'Lead Defect Inspector', department: 'AI Video Quality & QA Lab', floor: 3, x: 3, y: 4, chairColor: '#f59e0b', isAuri: false },
+    { agent_id: 'kavya_compliance', name: 'Kavya', role: 'Subtitle & Audio QA', department: 'AI Video Quality & QA Lab', floor: 3, x: 5, y: 5, chairColor: '#8b5cf6', isAuri: false },
     // Floor 4 - Documentation & Campus Hub (Top Left)
-    { agent_id: 'iffah_doc', name: 'Iffah', role: 'Campus Outreach Lead', floor: 4, x: 2, y: 4, chairColor: '#9333ea', isAuri: false },
-    { agent_id: 'jiya_research', name: 'Jiya', role: 'Technical Docs', floor: 4, x: 4, y: 4, chairColor: '#0284c7', isAuri: false },
-    { agent_id: 'srijana_quality', name: 'Srijana', role: 'Quality Inspector', floor: 4, x: 6, y: 4, chairColor: '#10b981', isAuri: false },
+    { agent_id: 'iffah_doc', name: 'Iffah', role: 'Campus Outreach Lead', department: 'Administration', floor: 4, x: 2, y: 4, chairColor: '#9333ea', isAuri: false },
+    { agent_id: 'jiya_research', name: 'Jiya', role: 'Technical Docs', department: 'Administration', floor: 4, x: 4, y: 4, chairColor: '#0284c7', isAuri: false },
+    { agent_id: 'srijana_quality', name: 'Srijana', role: 'Quality Inspector', department: 'Administration', floor: 4, x: 6, y: 4, chairColor: '#10b981', isAuri: false },
     // Floor 5 - Technology & Infrastructure (Top Right)
-    { agent_id: 'pratham_cto', name: 'Pratham', role: 'CTO & Tech Lead', floor: 5, x: 2, y: 4, chairColor: '#0284c7', isAuri: false },
-    { agent_id: 'mallika_tech', name: 'Mallika', role: 'API & DB Lead', floor: 5, x: 4, y: 4, chairColor: '#10b981', isAuri: false },
-    { agent_id: 'vaibhav_devops', name: 'Vaibhav', role: 'DevOps & Security', floor: 5, x: 6, y: 4, chairColor: '#f59e0b', isAuri: false },
-    { agent_id: 'faazil_sysadmin', name: 'Faazil', role: 'SysAdmin & Storage', floor: 5, x: 5, y: 6, chairColor: '#6366f1', isAuri: false }
+    { agent_id: 'pratham_cto', name: 'Pratham', role: 'CTO & Tech Lead', department: 'Technology & Infrastructure', floor: 5, x: 2, y: 4, chairColor: '#0284c7', isAuri: false },
+    { agent_id: 'mallika_tech', name: 'Mallika', role: 'API & DB Lead', department: 'Technology & Infrastructure', floor: 5, x: 4, y: 4, chairColor: '#10b981', isAuri: false },
+    { agent_id: 'vaibhav_devops', name: 'Vaibhav', role: 'DevOps & Security', department: 'Technology & Infrastructure', floor: 5, x: 6, y: 4, chairColor: '#f59e0b', isAuri: false },
+    { agent_id: 'faazil_sysadmin', name: 'Faazil', role: 'SysAdmin & Storage', department: 'Technology & Infrastructure', floor: 5, x: 5, y: 6, chairColor: '#6366f1', isAuri: false }
   ];
 
   // Persistent Initialization & Smooth Task Assignment Updates
@@ -117,10 +318,12 @@ export const VirtualHeadquarters: React.FC<Props> = ({
     if (simRef.current.length === 0) {
       const list: CharacterSim[] = ALL_PERSONNEL_DESKS.map(d => {
         const real = agents.find(a => a.agent_id === d.agent_id);
+        const acts = AGENT_WORK_ACTIVITIES[d.agent_id]?.desk || ["Performing assigned operations"];
         return {
           agent_id: d.agent_id,
           name: d.name,
           role: d.role,
+          department: d.department,
           homeFloor: d.floor,
           currentFloor: d.floor,
           avatar_file: real?.avatar_file || `${d.agent_id}.png`,
@@ -132,12 +335,13 @@ export const VirtualHeadquarters: React.FC<Props> = ({
           targetX: d.x,
           targetY: d.y,
           state: 'working_at_desk',
-          subStateTimer: Math.floor(Math.random() * 140) + 160,
+          subStateTimer: Math.floor(Math.random() * 800) + 1200, // Calm long focus
           facing: 'SE',
           walkCycle: 0,
           bubbleText: undefined,
           bubbleTimer: 0,
-          bubbleEmoji: d.isAuri ? "🤖" : "💻"
+          bubbleEmoji: d.isAuri ? "🤖" : "💻",
+          currentActivity: acts[0]
         };
       });
       simRef.current = list;
@@ -153,15 +357,15 @@ export const VirtualHeadquarters: React.FC<Props> = ({
               sim.transitFromFloor = sim.currentFloor;
               sim.transitToFloor = sim.homeFloor;
               sim.transitProgress = 0.0;
-              sim.bubbleText = "⚡ Work assigned! Taking stairs home";
-              sim.bubbleTimer = 110;
+              sim.bubbleText = "⚡ Task active! Stairs home";
+              sim.bubbleTimer = 360;
             }
           } else if (Math.hypot(sim.curX - sim.deskX, sim.curY - sim.deskY) > 0.1) {
             sim.targetX = sim.deskX;
             sim.targetY = sim.deskY;
             sim.state = 'walking';
             sim.bubbleText = "⚡ Task active! Walking to desk";
-            sim.bubbleTimer = 90;
+            sim.bubbleTimer = 300;
           } else {
             sim.curX = sim.deskX;
             sim.curY = sim.deskY;
@@ -184,7 +388,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
       sim.transitProgress = 0.0;
       sim.bubbleText = `Stairs to Floor ${pendingTransit.to_floor}!`;
       sim.bubbleEmoji = "🚶";
-      sim.bubbleTimer = 160;
+      sim.bubbleTimer = 360;
       setActiveActionLog(`${sim.name} taking stairs: Floor ${pendingTransit.from_floor} ➔ Floor ${pendingTransit.to_floor} (${pendingTransit.purpose})`);
     }
   }, [pendingTransit]);
@@ -195,9 +399,9 @@ export const VirtualHeadquarters: React.FC<Props> = ({
       const lastMsg = recentMessages[recentMessages.length - 1];
       const senderSim = simRef.current.find(s => s.agent_id === lastMsg.sender_id);
       if (senderSim) {
-        senderSim.bubbleText = lastMsg.content.length > 32 ? lastMsg.content.slice(0, 32) + '...' : lastMsg.content;
+        senderSim.bubbleText = lastMsg.content.length > 36 ? lastMsg.content.slice(0, 36) + '...' : lastMsg.content;
         senderSim.bubbleEmoji = "💬";
-        senderSim.bubbleTimer = 180;
+        senderSim.bubbleTimer = 400; // 6.5s comfortable read
       }
     }
   }, [recentMessages]);
@@ -209,31 +413,35 @@ export const VirtualHeadquarters: React.FC<Props> = ({
       sim.state = 'walking';
       sim.targetX = isCoffee ? 1.5 : 5.5;
       sim.targetY = isCoffee ? 2.5 : 1.5;
-      sim.bubbleText = isCoffee ? "☕ Coffee break time!" : "🛋️ Heading to lounge!";
-      sim.bubbleTimer = 120;
+      sim.bubbleText = isCoffee ? "☕ Coffee break time!" : "🛋️ Taking a rest at lounge";
+      sim.bubbleTimer = 360;
+      sim.currentActivity = isCoffee ? "Grabbing coffee & recharging" : "Resting at floor lounge sofa";
     });
-    setActiveActionLog("☕ Team break activated: Staff gathering at department refreshment bars.");
+    setActiveActionLog("☕ Team break: Staff gathering at department refreshment bars.");
   };
 
   // Interactive Quick Command: Summon All to Desks
   const handleSummonToDesks = () => {
     simRef.current.forEach(sim => {
+      const acts = AGENT_WORK_ACTIVITIES[sim.agent_id]?.desk || ["Focused workstation task"];
+      sim.currentActivity = acts[0];
+
       if (sim.currentFloor !== sim.homeFloor) {
         sim.state = 'escalator_transit';
         sim.transitFromFloor = sim.currentFloor;
         sim.transitToFloor = sim.homeFloor;
         sim.transitProgress = 0.0;
         sim.bubbleText = `Stairs back to Floor ${sim.homeFloor}!`;
-        sim.bubbleTimer = 120;
+        sim.bubbleTimer = 360;
       } else {
         sim.state = 'walking';
         sim.targetX = sim.deskX;
         sim.targetY = sim.deskY;
-        sim.bubbleText = "💻 Heading back to desk!";
-        sim.bubbleTimer = 100;
+        sim.bubbleText = "💻 Back to desk work";
+        sim.bubbleTimer = 300;
       }
     });
-    setActiveActionLog("💻 All employees returning to workstations.");
+    setActiveActionLog("💻 All employees focused at assigned workstations.");
   };
 
   // Navigate using stairs directly
@@ -243,7 +451,6 @@ export const VirtualHeadquarters: React.FC<Props> = ({
     setActiveFloor(targetFloor);
     setActiveActionLog(`🪜 Used campus stairs: Floor ${fromFloor} ➔ Floor ${targetFloor} (${FLOOR_CONFIG[targetFloor]?.name})`);
 
-    // Animate active floor agent taking stairs
     const mover = simRef.current.find(s => s.currentFloor === fromFloor);
     if (mover) {
       mover.state = 'escalator_transit';
@@ -251,7 +458,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
       mover.transitToFloor = targetFloor;
       mover.transitProgress = 0.0;
       mover.bubbleText = `🪜 Taking stairs to Floor ${targetFloor}!`;
-      mover.bubbleTimer = 120;
+      mover.bubbleTimer = 360;
     }
   };
 
@@ -264,10 +471,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
 
     let tick = 0;
 
-    // Floor Center Anchors in Architectural Multi-Tier Campus Layout
-    // Bottom: Ground Level (Floor 0 & 1)
-    // Middle: Mid Level (Floor 2 & 3)
-    // Top: Penthouse / Cloud Level (Floor 4 & 5)
+    // Architectural Multi-Tier Campus Coordinates
     const TOWER_FLOORS: Record<number, { name: string; x: number; y: number; gridW: number; gridH: number; color: string; labelColor: string }> = {
       0: { name: "Floor 0: Executive Suite", x: 330, y: 570, gridW: 7, gridH: 6, color: '#1e293b', labelColor: '#f97316' },
       1: { name: "Floor 1: Media Studio", x: 890, y: 570, gridW: 7, gridH: 6, color: '#b91c1c', labelColor: '#38bdf8' },
@@ -289,9 +493,10 @@ export const VirtualHeadquarters: React.FC<Props> = ({
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // ==========================================
-      // SHARED AGENT AI MOTION UPDATE
+      // SHARED AGENT AI MOTION UPDATE (Calm Corporate Pacing)
       // ==========================================
       const simList = simRef.current;
+
       simList.forEach(sim => {
         const realAgent = agents.find(a => a.agent_id === sim.agent_id);
         const isRealWorking = realAgent?.status === 'working';
@@ -304,7 +509,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
               sim.transitToFloor = sim.homeFloor;
               sim.transitProgress = 0.0;
               sim.bubbleText = "⚡ Task active! Stairs home";
-              sim.bubbleTimer = 90;
+              sim.bubbleTimer = 360;
             }
           } else if (Math.hypot(sim.curX - sim.deskX, sim.curY - sim.deskY) > 0.1) {
             sim.targetX = sim.deskX;
@@ -316,52 +521,92 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             sim.state = 'working_at_desk';
             sim.facing = 'SE';
           }
-        } else {
+        } else if (pacingMode !== 'paused') {
+          // Autonomous calm corporate behavior
           sim.subStateTimer--;
           if (sim.subStateTimer <= 0) {
-            sim.subStateTimer = Math.floor(Math.random() * 240) + 200;
+            // Calm Pacing: 35 to 75 seconds between decisions
+            const intervalBase = pacingMode === 'calm' ? 2400 : 900;
+            const intervalJitter = pacingMode === 'calm' ? 1800 : 600;
+            sim.subStateTimer = Math.floor(Math.random() * intervalJitter) + intervalBase;
+
+            const acts = AGENT_WORK_ACTIVITIES[sim.agent_id] || {
+              desk: ["Working on assigned deliverables"],
+              break: ["Coffee break at floor lounge"],
+              visit: ["Syncing with colleague"]
+            };
+
+            // Count existing bubbles on this floor to avoid visual clutter
+            const bubblesOnFloor = simList.filter(s => s.currentFloor === sim.currentFloor && s.bubbleTimer && s.bubbleTimer > 0).length;
+            const canShowBubble = bubblesOnFloor < 1; // At most 1 bubble per floor
 
             if (sim.state === 'working_at_desk') {
               const roll = Math.random();
-              if (roll < 0.3) {
+              if (roll < 0.10) {
+                // Occasional Coffee Walk
                 sim.targetX = 1.5;
                 sim.targetY = 2.5;
                 sim.state = 'walking';
-                sim.bubbleText = "☕ Grabbing coffee";
-                sim.bubbleTimer = 90;
-              } else if (roll < 0.55) {
+                sim.currentActivity = acts.break[0] || "Grabbing fresh coffee";
+                if (canShowBubble) {
+                  sim.bubbleText = `☕ ${acts.break[0] || "Grabbing coffee"}`;
+                  sim.bubbleTimer = 400; // 6.5s read
+                }
+              } else if (roll < 0.18) {
+                // Occasional Lounge Rest
                 sim.targetX = 5.5;
                 sim.targetY = 1.5;
                 sim.state = 'walking';
-                sim.bubbleText = "🛋️ Taking a break";
-                sim.bubbleTimer = 90;
-              } else if (roll < 0.75) {
-                // Cross floor visit via stairs
+                sim.currentActivity = acts.break[1] || "Short rest on sofa";
+                if (canShowBubble) {
+                  sim.bubbleText = `🛋️ ${acts.break[1] || "Resting at lounge"}`;
+                  sim.bubbleTimer = 400;
+                }
+              } else if (roll < 0.22) {
+                // Rare Cross-Floor Collaboration via stairs
                 const destFloor = (sim.homeFloor + 1) % 6;
                 sim.state = 'escalator_transit';
                 sim.transitFromFloor = sim.homeFloor;
                 sim.transitToFloor = destFloor;
                 sim.transitProgress = 0.0;
-                sim.bubbleText = `Stairs to Floor ${destFloor}`;
-                sim.bubbleTimer = 140;
-                setActiveActionLog(`${sim.name} taking stairs to Floor ${destFloor} for peer sync.`);
+                sim.currentActivity = `Collaborating on Floor ${destFloor}`;
+                if (canShowBubble) {
+                  sim.bubbleText = `🪜 Stairs to Floor ${destFloor}`;
+                  sim.bubbleTimer = 420;
+                }
+                setActiveActionLog(`${sim.name} taking stairs to Floor ${destFloor} for departmental alignment.`);
               } else {
+                // Deep Work Focus (80% of time)
                 sim.state = 'working_at_desk';
+                const nextAct = acts.desk[Math.floor(Math.random() * acts.desk.length)];
+                sim.currentActivity = nextAct;
+                if (canShowBubble && Math.random() < 0.4) {
+                  sim.bubbleText = nextAct.length > 34 ? nextAct.slice(0, 34) + '...' : nextAct;
+                  sim.bubbleTimer = 420; // 7s read time
+                }
               }
             } else if (sim.state === 'drinking_coffee' || sim.state === 'sitting_on_sofa' || sim.state === 'visiting_colleague') {
+              // Finish break and return to desk
               if (sim.currentFloor !== sim.homeFloor) {
                 sim.state = 'escalator_transit';
                 sim.transitFromFloor = sim.currentFloor;
                 sim.transitToFloor = sim.homeFloor;
                 sim.transitProgress = 0.0;
-                sim.bubbleText = `Stairs back to Floor ${sim.homeFloor}`;
-                sim.bubbleTimer = 110;
+                sim.currentActivity = `Returning to Floor ${sim.homeFloor}`;
+                if (canShowBubble) {
+                  sim.bubbleText = `Stairs back to Floor ${sim.homeFloor}`;
+                  sim.bubbleTimer = 360;
+                }
               } else {
                 sim.targetX = sim.deskX;
                 sim.targetY = sim.deskY;
                 sim.state = 'walking';
-                sim.bubbleText = "💻 Heading back to desk";
-                sim.bubbleTimer = 80;
+                const nextAct = acts.desk[0];
+                sim.currentActivity = nextAct;
+                if (canShowBubble) {
+                  sim.bubbleText = "💻 Resuming focused work";
+                  sim.bubbleTimer = 360;
+                }
               }
             }
           }
@@ -369,30 +614,31 @@ export const VirtualHeadquarters: React.FC<Props> = ({
 
         // Handle Staircase / Escalator Transit
         if (sim.state === 'escalator_transit' && sim.transitFromFloor !== undefined && sim.transitToFloor !== undefined) {
-          sim.transitProgress = (sim.transitProgress || 0) + 0.015;
+          const transitSpeed = pacingMode === 'calm' ? 0.009 : 0.016;
+          sim.transitProgress = (sim.transitProgress || 0) + transitSpeed;
           if (sim.transitProgress >= 1.0) {
             sim.currentFloor = sim.transitToFloor;
             sim.state = sim.currentFloor === sim.homeFloor ? 'working_at_desk' : 'visiting_colleague';
             sim.curX = sim.currentFloor === sim.homeFloor ? sim.deskX : 3.5;
             sim.curY = sim.currentFloor === sim.homeFloor ? sim.deskY : 3.5;
             sim.bubbleText = sim.currentFloor === sim.homeFloor ? "Back at desk!" : `Arrived on Floor ${sim.currentFloor}!`;
-            sim.bubbleTimer = 100;
-            sim.subStateTimer = 220;
+            sim.bubbleTimer = 360;
+            sim.subStateTimer = 2400; // Settle peacefully on destination
           }
         }
 
-        // Handle Walking Interpolation
+        // Handle Walking Interpolation with Natural Gentle Speed
         if (sim.state === 'walking') {
           const dx = sim.targetX - sim.curX;
           const dy = sim.targetY - sim.curY;
           const dist = Math.hypot(dx, dy);
 
           if (dist > 0.06) {
-            const speed = 0.035;
+            const speed = pacingMode === 'calm' ? 0.016 : 0.028; // Gentle, realistic walking speed
             sim.curX += (dx / dist) * speed;
             sim.curY += (dy / dist) * speed;
             sim.facing = dx >= 0 ? 'SE' : 'SW';
-            sim.walkCycle = (sim.walkCycle + 0.25) % 4;
+            sim.walkCycle = (sim.walkCycle + 0.16) % 4;
           } else {
             sim.curX = sim.targetX;
             sim.curY = sim.targetY;
@@ -403,12 +649,10 @@ export const VirtualHeadquarters: React.FC<Props> = ({
               sim.facing = 'SE';
             } else if (Math.hypot(sim.curX - 1.5, sim.curY - 2.5) < 0.5) {
               sim.state = 'drinking_coffee';
-              sim.bubbleText = "☕ Mmm, fresh brew!";
-              sim.bubbleTimer = 110;
+              sim.subStateTimer = 1800; // Savor coffee for 30s
             } else if (Math.hypot(sim.curX - 5.5, sim.curY - 1.5) < 0.5) {
               sim.state = 'sitting_on_sofa';
-              sim.bubbleText = "🛋️ Relaxing on lounge";
-              sim.bubbleTimer = 110;
+              sim.subStateTimer = 1800; // Rest on sofa for 30s
             }
           }
         }
@@ -461,7 +705,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
           // Animated steps
           const stepCount = 14;
           for (let s = 0; s < stepCount; s++) {
-            const ratio = ((s / stepCount) + (tick * 0.008)) % 1.0;
+            const ratio = ((s / stepCount) + (tick * 0.006)) % 1.0;
             const sx = pStart.x + (pEnd.x - pStart.x) * ratio;
             const sy = pStart.y + (pEnd.y - pStart.y) * ratio;
             ctx.fillStyle = '#713f12';
@@ -525,22 +769,16 @@ export const VirtualHeadquarters: React.FC<Props> = ({
 
               const alt = (x + y) % 2 === 0;
               if (fl === 0) {
-                // Executive Rich Mahogany
                 ctx.fillStyle = alt ? '#78350f' : '#92400e';
               } else if (fl === 1) {
-                // Media Warm Birch Planks
                 ctx.fillStyle = alt ? '#d97706' : '#b45309';
               } else if (fl === 2) {
-                // Marketing Emerald Ceramic Herringbone
                 ctx.fillStyle = alt ? '#065f46' : '#047857';
               } else if (fl === 3) {
-                // Video QA Precision Lab Slate
                 ctx.fillStyle = alt ? '#1e293b' : '#334155';
               } else if (fl === 4) {
-                // Documentation Scandinavian Chalk Tiles
                 ctx.fillStyle = alt ? '#f1f5f9' : '#e2e8f0';
               } else {
-                // Tech Cyber Anti-Static Server Grid
                 ctx.fillStyle = alt ? '#090d16' : '#1e293b';
               }
 
@@ -553,7 +791,6 @@ export const VirtualHeadquarters: React.FC<Props> = ({
 
           // Departmental Rugs & Floor Accents
           if (fl === 0) {
-            // Executive Crimson & Gold Runner Rug
             const rp0 = toTowerScreen(0, 1.5, 1.5);
             const rp1 = toTowerScreen(0, 4.5, 1.5);
             const rp2 = toTowerScreen(0, 4.5, 3.5);
@@ -570,7 +807,6 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             ctx.lineWidth = 2;
             ctx.stroke();
           } else if (fl === 1) {
-            // Media Studio Cyan Accent Circle Rug
             const cPos = toTowerScreen(1, 3.5, 3.5);
             ctx.fillStyle = '#0284c799';
             ctx.beginPath();
@@ -580,7 +816,6 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             ctx.lineWidth = 1.5;
             ctx.stroke();
           } else if (fl === 2) {
-            // Marketing Coral Analytics Growth Rug
             const rp0 = toTowerScreen(2, 2.0, 2.0);
             const rp1 = toTowerScreen(2, 5.0, 2.0);
             const rp2 = toTowerScreen(2, 5.0, 4.0);
@@ -597,7 +832,6 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             ctx.lineWidth = 1.5;
             ctx.stroke();
           } else if (fl === 3) {
-            // Video QA Precision Amber Target Mat
             const cPos = toTowerScreen(3, 3.5, 3.5);
             ctx.fillStyle = '#f59e0b55';
             ctx.beginPath();
@@ -607,7 +841,6 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             ctx.lineWidth = 1.5;
             ctx.stroke();
           } else if (fl === 4) {
-            // Documentation Lavender Study Rug
             const rp0 = toTowerScreen(4, 2.0, 2.0);
             const rp1 = toTowerScreen(4, 5.0, 2.0);
             const rp2 = toTowerScreen(4, 5.0, 4.0);
@@ -624,7 +857,6 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             ctx.lineWidth = 1.5;
             ctx.stroke();
           } else if (fl === 5) {
-            // Tech Glowing Cyan Circuit Seams
             const pC = toTowerScreen(5, 3.5, 3.5);
             ctx.strokeStyle = '#00f0ffaa';
             ctx.lineWidth = 2;
@@ -687,7 +919,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
 
           const isWorking = sim.state === 'working_at_desk';
           const isWalking = sim.state === 'walking';
-          const bounceY = isWalking ? Math.sin(sim.walkCycle * Math.PI) * 2.5 : 0;
+          const bounceY = isWalking ? Math.sin(sim.walkCycle * Math.PI) * 2.0 : 0;
           const yOffset = (isWorking ? -10 : -14) + bounceY;
 
           // Shadow
@@ -745,7 +977,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
 
       } else {
         // ==========================================
-        // VIEW MODE: SINGLE FLOOR FOCUS (All 6 Floors Decorated with Real Stairs)
+        // VIEW MODE: SINGLE FLOOR FOCUS (Decorated with Real Stairs & Focused Props)
         // ==========================================
         const originX = canvas.width / 2;
         const originY = 110;
@@ -756,7 +988,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
           return { x: sx, y: sy };
         };
 
-        // 1. LEFT WALL WITH DEPARTMENTAL PALETTES
+        // 1. LEFT WALL
         const lp0 = toScreen(0, 0, 170);
         const lp1 = toScreen(0, FOCUS_GRID, 170);
         const lp2 = toScreen(0, FOCUS_GRID, 0);
@@ -820,7 +1052,6 @@ export const VirtualHeadquarters: React.FC<Props> = ({
 
         // Wall Displays based on Floor
         if (activeFloor === 2) {
-          // Marketing Campaign Funnel & Growth Metrics Display
           const mktP = toScreen(7.0, 0, 85);
           ctx.fillStyle = '#022c22';
           ctx.fillRect(mktP.x - 48, mktP.y - 25, 96, 50);
@@ -839,7 +1070,6 @@ export const VirtualHeadquarters: React.FC<Props> = ({
           ctx.fillStyle = '#10b981';
           ctx.fillRect(mktP.x + 10, mktP.y - 8, 20, 24);
         } else if (activeFloor === 3) {
-          // Video QA Defect & Spectrum Hologram Monitor
           const qaP = toScreen(7.0, 0, 85);
           ctx.fillStyle = '#1c1917';
           ctx.fillRect(qaP.x - 48, qaP.y - 25, 96, 50);
@@ -861,7 +1091,6 @@ export const VirtualHeadquarters: React.FC<Props> = ({
           }
           ctx.stroke();
         } else if (activeFloor === 4) {
-          // Sprint Kanban Whiteboard
           const wbP = toScreen(7.0, 0, 85);
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(wbP.x - 45, wbP.y - 25, 90, 50);
@@ -874,7 +1103,6 @@ export const VirtualHeadquarters: React.FC<Props> = ({
           ctx.fillStyle = '#fde047'; ctx.fillRect(wbP.x - 38, wbP.y - 8, 8, 8);
           ctx.fillStyle = '#4ade80'; ctx.fillRect(wbP.x + 22, wbP.y - 4, 8, 8);
         } else if (activeFloor === 5) {
-          // NOC Real-Time Monitoring Wall
           const nocP = toScreen(7.0, 0, 85);
           ctx.fillStyle = '#060a12';
           ctx.fillRect(nocP.x - 48, nocP.y - 25, 96, 50);
@@ -924,20 +1152,17 @@ export const VirtualHeadquarters: React.FC<Props> = ({
         // 4. INTERACTIVE CAMPUS STAIRCASE ON THE FLOOR
         const stairP = toScreen(FOCUS_GRID - 2.5, 1.5);
 
-        // Stairwell floor base
         ctx.fillStyle = '#020617';
         ctx.fillRect(stairP.x - 50, stairP.y - 20, 100, 42);
         ctx.strokeStyle = '#eab308';
         ctx.lineWidth = 2.5;
         ctx.strokeRect(stairP.x - 50, stairP.y - 20, 100, 42);
 
-        // Animated step treads
         for (let st = 0; st < 6; st++) {
           ctx.fillStyle = st % 2 === 0 ? '#713f12' : '#ca8a04';
           ctx.fillRect(stairP.x - 42 + st * 14, stairP.y - 12 + st * 4, 12, 6);
         }
 
-        // Handrail with glowing gold
         ctx.strokeStyle = '#fef08a';
         ctx.lineWidth = 2.5;
         ctx.beginPath();
@@ -945,7 +1170,6 @@ export const VirtualHeadquarters: React.FC<Props> = ({
         ctx.lineTo(stairP.x + 45, stairP.y + 12);
         ctx.stroke();
 
-        // Directional Action Badges on Stairwell
         if (activeFloor < 5) {
           ctx.fillStyle = '#10b981';
           ctx.fillRect(stairP.x - 46, stairP.y - 36, 92, 14);
@@ -999,7 +1223,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
           const pos = toScreen(sim.curX, sim.curY);
           const isWorking = sim.state === 'working_at_desk';
           const isWalking = sim.state === 'walking';
-          const bounceY = isWalking ? Math.sin(sim.walkCycle * Math.PI) * 3 : 0;
+          const bounceY = isWalking ? Math.sin(sim.walkCycle * Math.PI) * 2.5 : 0;
           const yOffset = (isWorking ? -20 : -26) + bounceY;
 
           ctx.fillStyle = '#00000044';
@@ -1060,7 +1284,67 @@ export const VirtualHeadquarters: React.FC<Props> = ({
 
     animFrameRef.current = requestAnimationFrame(render);
     return () => cancelAnimationFrame(animFrameRef.current);
-  }, [viewMode, activeFloor, agents, orbiState]);
+  }, [viewMode, activeFloor, agents, orbiState, pacingMode]);
+
+  // Track Mouse Movement for Live Agent Hover Inspector
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const cx = (e.clientX - rect.left) / zoom;
+    const cy = (e.clientY - rect.top) / zoom;
+
+    const originX = canvas.width / 2;
+    const originY = 110;
+
+    let foundSim: CharacterSim | null = null;
+    let foundScreenPos = { x: 0, y: 0 };
+
+    for (const sim of simRef.current) {
+      let sx = 0;
+      let sy = 0;
+
+      if (viewMode === 'multi_tower') {
+        const TOWER_FLOORS: Record<number, { x: number; y: number }> = {
+          0: { x: 330, y: 570 },
+          1: { x: 890, y: 570 },
+          2: { x: 330, y: 360 },
+          3: { x: 890, y: 360 },
+          4: { x: 330, y: 150 },
+          5: { x: 890, y: 150 }
+        };
+        const base = TOWER_FLOORS[sim.currentFloor] || TOWER_FLOORS[0];
+        sx = base.x + (sim.curX - sim.curY) * (TILE_W / 2);
+        sy = base.y + (sim.curX + sim.curY) * (TILE_H / 2);
+      } else {
+        if (sim.currentFloor !== activeFloor) continue;
+        sx = originX + (sim.curX - sim.curY) * (TILE_W / 2);
+        sy = originY + (sim.curX + sim.curY) * (TILE_H / 2);
+      }
+
+      if (Math.hypot(cx - sx, cy - sy) < 28) {
+        foundSim = sim;
+        foundScreenPos = { x: sx, y: sy };
+        break;
+      }
+    }
+
+    if (foundSim) {
+      setHoveredAgent({
+        agent_id: foundSim.agent_id,
+        name: foundSim.name,
+        role: foundSim.role,
+        department: foundSim.department,
+        floor: foundSim.currentFloor,
+        state: foundSim.state,
+        currentActivity: foundSim.currentActivity,
+        screenX: foundScreenPos.x,
+        screenY: foundScreenPos.y
+      });
+    } else {
+      setHoveredAgent(null);
+    }
+  };
 
   // Click on Canvas: Interactive Stairs & Floor Selection
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -1113,12 +1397,12 @@ export const VirtualHeadquarters: React.FC<Props> = ({
       const stairSx = originX + ((FOCUS_GRID - 2.5) - 1.5) * (TILE_W / 2);
       const stairSy = originY + ((FOCUS_GRID - 2.5) + 1.5) * (TILE_H / 2);
 
-      // Stairs Up Hitbox (upper badge)
+      // Stairs Up Hitbox
       if (activeFloor < 5 && Math.hypot(cx - stairSx, cy - (stairSy - 30)) < 35) {
         handleUseStairs(activeFloor + 1);
         return;
       }
-      // Stairs Down Hitbox (lower badge)
+      // Stairs Down Hitbox
       if (activeFloor > 0 && Math.hypot(cx - stairSx, cy - (stairSy + 30)) < 35) {
         handleUseStairs(activeFloor - 1);
         return;
@@ -1129,12 +1413,29 @@ export const VirtualHeadquarters: React.FC<Props> = ({
     for (const sim of simRef.current) {
       if (sim.currentFloor === activeFloor || viewMode === 'multi_tower') {
         const fullAgent = agents.find(a => a.agent_id === sim.agent_id);
-        if (fullAgent) {
+        if (fullAgent && hoveredAgent?.agent_id === sim.agent_id) {
           onSelectAgent(fullAgent);
           setActiveActionLog(`Inspecting Dossier: ${fullAgent.name} (${fullAgent.role})`);
           return;
         }
       }
+    }
+  };
+
+  const getStatusBadge = (state: string) => {
+    switch (state) {
+      case 'working_at_desk':
+        return { label: 'Focused Deep Work', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' };
+      case 'drinking_coffee':
+        return { label: 'Coffee Break', color: 'bg-amber-500/20 text-amber-300 border-amber-500/40' };
+      case 'sitting_on_sofa':
+        return { label: 'Lounge Rest', color: 'bg-purple-500/20 text-purple-300 border-purple-500/40' };
+      case 'escalator_transit':
+        return { label: 'Stair Transit', color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' };
+      case 'walking':
+        return { label: 'In Transit', color: 'bg-blue-500/20 text-blue-300 border-blue-500/40' };
+      default:
+        return { label: 'Active', color: 'bg-slate-700 text-slate-300 border-slate-600' };
     }
   };
 
@@ -1166,8 +1467,59 @@ export const VirtualHeadquarters: React.FC<Props> = ({
 
         {/* View Mode & Simulation Controls */}
         <div className="flex items-center space-x-3">
+          {/* Pacing Speed Selector */}
+          <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+            <button
+              onClick={() => {
+                setPacingMode('calm');
+                setActiveActionLog("Calm Pacing: Employees focused at desks with readable 7s thought bubbles.");
+              }}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center space-x-1.5 transition-all ${
+                pacingMode === 'calm'
+                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Long focused work intervals, gentle movement, readable bubbles"
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>Calm Focus</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setPacingMode('active');
+                setActiveActionLog("Active Pacing: Moderate walk intervals.");
+              }}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center space-x-1.5 transition-all ${
+                pacingMode === 'active'
+                  ? 'bg-orange-600 text-white shadow-md shadow-orange-600/30'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Moderate movement intervals"
+            >
+              <Play className="w-3.5 h-3.5" />
+              <span>Active</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setPacingMode('paused');
+                setActiveActionLog("Mobility Paused: Employees fixed at workstations for quiet inspection.");
+              }}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center space-x-1.5 transition-all ${
+                pacingMode === 'paused'
+                  ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Pause all autonomous roaming"
+            >
+              <Pause className="w-3.5 h-3.5" />
+              <span>Pause</span>
+            </button>
+          </div>
+
           {/* Direct Interactive Staircase Navigation */}
-          <div className="flex items-center space-x-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+          <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
             <button
               onClick={() => handleUseStairs(activeFloor - 1)}
               disabled={activeFloor <= 0}
@@ -1192,10 +1544,10 @@ export const VirtualHeadquarters: React.FC<Props> = ({
           </div>
 
           {/* Quick Simulation Commands */}
-          <div className="flex items-center space-x-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+          <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
             <button
               onClick={handleTriggerTeamBreak}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-amber-300 hover:bg-amber-500/20 flex items-center space-x-1.5 transition-colors"
+              className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-amber-300 hover:bg-amber-500/20 flex items-center space-x-1 transition-colors"
               title="Send agents to coffee & sofa lounge"
             >
               <Coffee className="w-3.5 h-3.5" />
@@ -1203,7 +1555,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             </button>
             <button
               onClick={handleSummonToDesks}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-cyan-300 hover:bg-cyan-500/20 flex items-center space-x-1.5 transition-colors"
+              className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-cyan-300 hover:bg-cyan-500/20 flex items-center space-x-1 transition-colors"
               title="Call all agents back to workstations"
             >
               <Laptop className="w-3.5 h-3.5" />
@@ -1244,7 +1596,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
                 <button
                   key={f.floor}
                   onClick={() => setActiveFloor(f.floor)}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
+                  className={`px-2 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
                     activeFloor === f.floor
                       ? 'bg-orange-600 text-white shadow-md shadow-orange-600/30'
                       : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -1260,10 +1612,10 @@ export const VirtualHeadquarters: React.FC<Props> = ({
           {onOpenComms && (
             <button
               onClick={onOpenComms}
-              className="px-3.5 py-2 rounded-xl text-xs font-mono font-bold bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/40 text-cyan-300 flex items-center space-x-2 transition-all shadow-md shadow-cyan-600/20"
+              className="px-3 py-1.5 rounded-xl text-xs font-mono font-bold bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/40 text-cyan-300 flex items-center space-x-1.5 transition-all shadow-md shadow-cyan-600/20"
             >
               <MessageSquare className="w-3.5 h-3.5" />
-              <span>Workforce Comms</span>
+              <span>Comms</span>
               {recentMessages.length > 0 && (
                 <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
               )}
@@ -1309,18 +1661,63 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             width={1240}
             height={740}
             onClick={handleCanvasClick}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={() => setHoveredAgent(null)}
             className="rounded-2xl border-4 border-slate-800/90 shadow-2xl bg-[#080c16] cursor-pointer"
           />
+
+          {/* Floating Hover Activity Inspector Card */}
+          {hoveredAgent && (
+            <div 
+              className="absolute pointer-events-none z-30 transition-all duration-75"
+              style={{ 
+                left: `${hoveredAgent.screenX}px`, 
+                top: `${hoveredAgent.screenY - 84}px`,
+                transform: 'translate(-50%, -100%)'
+              }}
+            >
+              <div className="bg-slate-950/95 border border-slate-700/80 p-3.5 rounded-xl shadow-2xl backdrop-blur-md w-72 text-left space-y-2">
+                <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
+                  <div>
+                    <div className="font-bold text-xs text-white flex items-center space-x-1.5">
+                      <span>{hoveredAgent.name}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">Floor {hoveredAgent.floor}</span>
+                    </div>
+                    <div className="text-[11px] text-slate-400">{hoveredAgent.role}</div>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold border ${getStatusBadge(hoveredAgent.state).color}`}>
+                    {getStatusBadge(hoveredAgent.state).label}
+                  </span>
+                </div>
+
+                <div className="text-[11px] text-slate-200 bg-slate-900/90 p-2 rounded-lg border border-slate-800 space-y-0.5">
+                  <div className="text-[9px] font-mono text-orange-400 font-bold uppercase tracking-wider">CURRENT FOCUS:</div>
+                  <div className="leading-snug">{hoveredAgent.currentActivity}</div>
+                </div>
+
+                <div className="text-[9px] text-slate-500 font-mono text-center">
+                  Click agent to open personnel dossier & history
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Live Action Ticker at bottom */}
           <div className="absolute bottom-5 left-6 bg-slate-950/90 border border-slate-800 px-4 py-2.5 rounded-xl shadow-xl flex items-center space-x-4 text-[11px] font-mono text-slate-400 pointer-events-none backdrop-blur-sm">
             <span className="flex items-center space-x-1.5 text-emerald-400 font-bold">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>HQ MOBILITY FEED:</span>
+              <span>LIVE HQ FOCUS:</span>
             </span>
-            <span className="text-slate-200">{activeActionLog}</span>
+            <span className="text-slate-200">
+              {hoveredAgent 
+                ? `${hoveredAgent.name} (${hoveredAgent.role}): ${hoveredAgent.currentActivity}` 
+                : activeActionLog
+              }
+            </span>
             <span className="text-slate-600">|</span>
-            <span className="text-amber-400">Click any stairs or floor to navigate</span>
+            <span className="text-amber-400">
+              {pacingMode === 'paused' ? 'Mobility Paused' : pacingMode === 'calm' ? 'Calm Focus Active (7s Read)' : 'Active Flow'}
+            </span>
           </div>
         </div>
       </div>
