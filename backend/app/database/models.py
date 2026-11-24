@@ -49,6 +49,7 @@ class ApprovalModel(Base):
 
     id = Column(String(64), primary_key=True)
     task_id = Column(String(64), ForeignKey("tasks.id"), nullable=False)
+    agent_id = Column(String(64), nullable=True)
     action_type = Column(String(64), nullable=False)  # publish_youtube, publish_instagram, send_bulk_email
     description = Column(Text, nullable=False)
     preview_url = Column(String(512), nullable=True)

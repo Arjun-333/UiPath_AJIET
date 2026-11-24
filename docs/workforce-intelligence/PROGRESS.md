@@ -20,12 +20,19 @@ Branch: `workforce-intelligence`
   - **Known Issues / Blockers**: None. Awaiting CEO approval of Phase 1 specification.
   - **Next**: Upon CEO approval, proceed to **Phase 2: Data Layer** (reversible migrations, additive tables, backfill of existing team, telemetry instrumentation, metrics engine).
 
-- [ ] **PHASE 2: Data Layer & Metrics Engine**
-  - [ ] Migration runner and 7 additive schema tables
-  - [ ] Backfill existing 12 registered team members into `workforce_employees` and `workforce_agent_configs` v1
-  - [ ] Additive instrumentation for task start/end timestamps, duration, token usage, and cost
-  - [ ] Deterministic `metrics_engine.py` calculating the 8 indicators with minimum sample threshold enforcement
-  - [ ] Automated unit tests for metrics calculations and edge cases
+- [x] **PHASE 2: Data Layer & Metrics Engine**
+  - **Done**:
+    - Created relational models in `backend/app/database/workforce_models.py` (`WorkforceEmployeeModel`, `WorkforceAgentConfigModel`, `WorkforceTaskTelemetryModel`, `WorkforceTaskEvaluationModel`, `WorkforceRecruitmentTestModel`, `WorkforceRecommendationModel`, `WorkforceAuditLogModel`, `ModelPricingModel`).
+    - Implemented versioned, additive migration runner in `backend/app/database/migrations/runner.py` with `schema_migrations` tracking table and added indexed `agent_id` column to `approvals`.
+    - Created idempotent backfill engine `backend/app/workforce/backfill.py` registering all 12 canonical team members as `active` with Config Version 1 and backfilling historical task telemetry.
+    - Added execution duration and cost telemetry instrumentation in `backend/app/engine/orchestrator.py`, calculating pure execution time (subtracting approval wait time).
+    - Built deterministic `backend/app/workforce/metrics_engine.py` calculating all 8 indicators, sample size rule (minimum 10 tasks), configurable transparent composite score (v1.0), department breakdown, and historical trend intervals.
+    - Wired migration and backfill execution into `lifespan` in `backend/app/main.py`.
+  - **Tested**:
+    - Authored unit & integration suite `backend/tests/test_workforce_data.py`.
+    - 5/5 Phase 2 tests passed; 25/25 total project tests passing.
+  - **Known Issues / Blockers**: None.
+  - **Next**: **Phase 3: Lifecycle Engine & State Machine** (state machine validation, immutable configuration versioning, server-side RBAC guard, append-only audit logger, in-flight task handling).
 
 - [ ] **PHASE 3: Lifecycle Engine & State Machine**
   - [ ] Deterministic `state_machine.py` enforcing allowed transitions

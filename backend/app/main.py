@@ -26,6 +26,11 @@ from backend.app.engine.orchestrator import GLOBAL_ORCHESTRATOR
 async def lifespan(app: FastAPI):
     # Initialize database tables on startup
     await init_db()
+    from backend.app.database.migrations.runner import run_migrations
+    await run_migrations()
+    from backend.app.workforce.backfill import backfill_existing_agents, backfill_historical_task_telemetry
+    await backfill_existing_agents()
+    await backfill_historical_task_telemetry()
     # Register orchestrator broadcast handler to stream to connected WebSockets
     GLOBAL_ORCHESTRATOR.register_listener(manager.broadcast_event)
     yield
