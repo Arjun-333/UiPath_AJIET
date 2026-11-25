@@ -3,6 +3,9 @@ import { Agent, AgentMessage, AgentTransitEvent } from '../types';
 import { Floor0IsometricRoom, AgentPositionInfo } from './isometric/Floor0IsometricRoom';
 import { Floor1IsometricRoom } from './isometric/Floor1IsometricRoom';
 import { Floor2IsometricRoom } from './isometric/Floor2IsometricRoom';
+import { Floor3IsometricRoom } from './isometric/Floor3IsometricRoom';
+import { Floor4IsometricRoom } from './isometric/Floor4IsometricRoom';
+import { Floor5IsometricRoom } from './isometric/Floor5IsometricRoom';
 import {
   Building2, Users, Coffee, Laptop, Sparkles, MessageSquare,
   ChevronRight, ZoomIn, ZoomOut, Maximize2, Layers, Compass,
@@ -1576,6 +1579,42 @@ export const VirtualHeadquarters: React.FC<Props> = ({
           />
         ) : viewPreference === 'isometric' && activeFloor === 2 && viewMode === 'floor_focus' ? (
           <Floor2IsometricRoom
+            agents={agents}
+            onSelectAgent={onSelectAgent}
+            orbiState={orbiState}
+            onNavigateFloor={(floor) => setActiveFloor(floor)}
+            zoom={zoom}
+            pan={pan}
+            pacingMode={pacingMode}
+            skipBakedLabels={true}
+            onAgentPositionsUpdate={setAgentPositions}
+          />
+        ) : viewPreference === 'isometric' && activeFloor === 3 && viewMode === 'floor_focus' ? (
+          <Floor3IsometricRoom
+            agents={agents}
+            onSelectAgent={onSelectAgent}
+            orbiState={orbiState}
+            onNavigateFloor={(floor) => setActiveFloor(floor)}
+            zoom={zoom}
+            pan={pan}
+            pacingMode={pacingMode}
+            skipBakedLabels={true}
+            onAgentPositionsUpdate={setAgentPositions}
+          />
+        ) : viewPreference === 'isometric' && activeFloor === 4 && viewMode === 'floor_focus' ? (
+          <Floor4IsometricRoom
+            agents={agents}
+            onSelectAgent={onSelectAgent}
+            orbiState={orbiState}
+            onNavigateFloor={(floor) => setActiveFloor(floor)}
+            zoom={zoom}
+            pan={pan}
+            pacingMode={pacingMode}
+            skipBakedLabels={true}
+            onAgentPositionsUpdate={setAgentPositions}
+          />
+        ) : viewPreference === 'isometric' && activeFloor === 5 && viewMode === 'floor_focus' ? (
+          <Floor5IsometricRoom
             agents={agents}
             onSelectAgent={onSelectAgent}
             orbiState={orbiState}
