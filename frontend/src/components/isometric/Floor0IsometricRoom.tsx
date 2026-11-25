@@ -235,8 +235,8 @@ export const Floor0IsometricRoom: React.FC<Props> = ({
           avatarImg = getImage(orbiState === 'thinking'
             ? '/assets/sprites/auri/orbi_thinking_f0.png'
             : orbiState === 'celebrating'
-            ? '/assets/sprites/auri/orbi_celebrating_f0.png'
-            : '/assets/sprites/auri/orbi_idle_f0.png'
+              ? '/assets/sprites/auri/orbi_celebrating_f0.png'
+              : '/assets/sprites/auri/orbi_idle_f0.png'
           );
         } else {
           avatarImg = getImage(`/assets/sprites/employees/${sim.avatarFile}`);

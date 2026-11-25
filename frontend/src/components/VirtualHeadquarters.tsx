@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Agent, AgentMessage, AgentTransitEvent } from '../types';
 import { Floor0IsometricRoom } from './isometric/Floor0IsometricRoom';
 import { Floor1IsometricRoom } from './isometric/Floor1IsometricRoom';
-import { 
-  Building2, Users, Coffee, Laptop, Sparkles, MessageSquare, 
-  ChevronRight, ZoomIn, ZoomOut, Maximize2, Layers, Compass, 
+import { Floor2IsometricRoom } from './isometric/Floor2IsometricRoom';
+import {
+  Building2, Users, Coffee, Laptop, Sparkles, MessageSquare,
+  ChevronRight, ZoomIn, ZoomOut, Maximize2, Layers, Compass,
   ArrowUp, ArrowDown, Pause, Play, Clock, Eye
 } from 'lucide-react';
 
@@ -1145,8 +1146,8 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             }
 
             ctx.fill();
-            ctx.strokeStyle = activeFloor === 5 
-              ? (alt ? '#0284c733' : '#00f0ff22') 
+            ctx.strokeStyle = activeFloor === 5
+              ? (alt ? '#0284c733' : '#00f0ff22')
               : (activeFloor === 4 ? '#cbd5e1' : '#451a0333');
             ctx.lineWidth = 1;
             ctx.stroke();
@@ -1552,22 +1553,20 @@ export const VirtualHeadquarters: React.FC<Props> = ({
                 setViewPreference('isometric');
                 setViewMode('floor_focus');
               }}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center space-x-1 ${
-                viewPreference === 'isometric'
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center space-x-1 ${viewPreference === 'isometric'
                   ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
                   : 'text-slate-400 hover:text-white'
-              }`}
+                }`}
               title="2:1 Isometric Cutaway Room View"
             >
               <span>🏢 Isometric</span>
             </button>
             <button
               onClick={() => setViewPreference('legacy')}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center space-x-1 ${
-                viewPreference === 'legacy'
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center space-x-1 ${viewPreference === 'legacy'
                   ? 'bg-slate-700 text-white'
                   : 'text-slate-500 hover:text-white'
-              }`}
+                }`}
               title="Legacy Tower View (?view=legacy)"
             >
               <span>📐 Legacy</span>
@@ -1597,6 +1596,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
         </div>
       </div>
 
+      {/* Main Viewport: Modern Isometric Cutaway Room (Floor 0) vs Legacy Diamond Canvas */}
       {/* Main Viewport: Modern Isometric Cutaway Rooms (Floor 0, Floor 1) vs Legacy Diamond Canvas */}
       {viewPreference === 'isometric' && activeFloor === 0 && viewMode === 'floor_focus' ? (
         <div className="relative flex-1 w-full h-full overflow-hidden bg-[#E6E9F5]">
@@ -1610,6 +1610,15 @@ export const VirtualHeadquarters: React.FC<Props> = ({
       ) : viewPreference === 'isometric' && activeFloor === 1 && viewMode === 'floor_focus' ? (
         <div className="relative flex-1 w-full h-full overflow-hidden bg-[#E6E9F5]">
           <Floor1IsometricRoom
+            agents={agents}
+            onSelectAgent={onSelectAgent}
+            orbiState={orbiState}
+            onNavigateFloor={(floor) => setActiveFloor(floor)}
+          />
+        </div>
+      ) : viewPreference === 'isometric' && activeFloor === 2 && viewMode === 'floor_focus' ? (
+        <div className="relative flex-1 w-full h-full overflow-hidden bg-[#E6E9F5]">
+          <Floor2IsometricRoom
             agents={agents}
             onSelectAgent={onSelectAgent}
             orbiState={orbiState}
@@ -1634,10 +1643,10 @@ export const VirtualHeadquarters: React.FC<Props> = ({
 
             {/* Floating Hover Activity Inspector Card */}
             {hoveredAgent && (
-              <div 
+              <div
                 className="absolute pointer-events-none z-30 transition-all duration-75"
-                style={{ 
-                  left: `${hoveredAgent.screenX}px`, 
+                style={{
+                  left: `${hoveredAgent.screenX}px`,
                   top: `${hoveredAgent.screenY - 84}px`,
                   transform: 'translate(-50%, -100%)'
                 }}
@@ -1675,8 +1684,8 @@ export const VirtualHeadquarters: React.FC<Props> = ({
                 <span>LIVE HQ FOCUS:</span>
               </span>
               <span className="text-slate-200">
-                {hoveredAgent 
-                  ? `${hoveredAgent.name} (${hoveredAgent.role}): ${hoveredAgent.currentActivity}` 
+                {hoveredAgent
+                  ? `${hoveredAgent.name} (${hoveredAgent.role}): ${hoveredAgent.currentActivity}`
                   : activeActionLog
                 }
               </span>
