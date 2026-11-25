@@ -18,6 +18,7 @@ interface Props {
   onOpenComms?: () => void;
   recentMessages?: AgentMessage[];
   pendingTransit?: AgentTransitEvent | null;
+  viewModePreference?: 'isometric' | 'legacy';
 }
 
 export const FLOOR_CONFIG = [
@@ -261,18 +262,95 @@ export const VirtualHeadquarters: React.FC<Props> = ({
   orbiState,
   onOpenComms,
   recentMessages = [],
-  pendingTransit = null
+  pendingTransit = null,
+  viewModePreference
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
   const isLegacyUrl = typeof window !== 'undefined' && window.location.search.includes('view=legacy');
-  const [viewPreference, setViewPreference] = useState<'isometric' | 'legacy'>(isLegacyUrl ? 'legacy' : 'isometric');
+  const [viewPreference, setViewPreference] = useState<'isometric' | 'legacy'>(viewModePreference || (isLegacyUrl ? 'legacy' : 'isometric'));
   const [zoom, setZoom] = useState<number>(1.0);
+  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [viewMode, setViewMode] = useState<'multi_tower' | 'floor_focus'>('floor_focus');
-  const [pacingMode, setPacingMode] = useState<'calm' | 'active' | 'paused'>('calm');
+  const [pacingMode, setPacingMode] = useState<'calm' | 'break' | 'active'>('calm');
   const [hoveredAgent, setHoveredAgent] = useState<HoveredAgentInfo | null>(null);
   const simRef = useRef<CharacterSim[]>([]);
   const animFrameRef = useRef<number>(0);
   const [activeActionLog, setActiveActionLog] = useState<string>("Calm focus mode active: Employees performing deep departmental tasks.");
+
+  // Sync viewModePreference
+  useEffect(() => {
+    if (viewModePreference) {
+      setViewPreference(viewModePreference);
+    }
+  }, [viewModePreference]);
+
+  // Fit to View calculation per Spec 5.B
+  const handleFitToView = () => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const cw = el.clientWidth;
+    const ch = el.clientHeight;
+    if (!cw || !ch) return;
+    const margin = 32;
+    const targetW = 960;
+    const targetH = 620;
+    const optimalZoom = Math.min((cw - margin * 2) / targetW, (ch - margin * 2) / targetH);
+    const clampedZoom = Math.max(0.5, Math.min(2.0, Math.round(optimalZoom * 100) / 100));
+    setZoom(clampedZoom);
+    setPan({ x: 0, y: 0 });
+  };
+
+  // Initial load auto Fit to View & dynamic resize observation
+  useEffect(() => {
+    handleFitToView();
+    const el = viewportRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+      handleFitToView();
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Prevent wheel event bubbling & enable smooth zoom
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.08 : -0.08;
+      setZoom(z => Math.max(0.5, Math.min(2.5, Math.round((z + delta) * 100) / 100)));
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, []);
+
+  // Keyboard shortcuts: F (Fit), +/= (Zoom in), -/_ (Zoom out)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      const isInput = activeEl && (
+        activeEl.tagName === 'INPUT' ||
+        activeEl.tagName === 'TEXTAREA' ||
+        (activeEl as HTMLElement).isContentEditable
+      );
+      if (isInput) return;
+
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        handleFitToView();
+      } else if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        setZoom(z => Math.min(2.5, Math.round((z + 0.15) * 100) / 100));
+      } else if (e.key === '-' || e.key === '_') {
+        e.preventDefault();
+        setZoom(z => Math.max(0.5, Math.round((z - 0.15) * 100) / 100));
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Isometric Grid Settings
   const TILE_W = 56;
@@ -413,6 +491,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
 
   // Interactive Quick Command: Trigger Team Coffee Break
   const handleTriggerTeamBreak = () => {
+    setPacingMode('break');
     simRef.current.forEach((sim, idx) => {
       const isCoffee = idx % 2 === 0;
       sim.state = 'walking';
@@ -427,6 +506,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
 
   // Interactive Quick Command: Summon All to Desks
   const handleSummonToDesks = () => {
+    setPacingMode('calm');
     simRef.current.forEach(sim => {
       const acts = AGENT_WORK_ACTIVITIES[sim.agent_id]?.desk || ["Focused workstation task"];
       sim.currentActivity = acts[0];
@@ -1587,50 +1667,56 @@ export const VirtualHeadquarters: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Main Viewport: Modern Isometric Cutaway Room (Floor 0) vs Legacy Diamond Canvas */}
-      {/* Main Viewport: Modern Isometric Cutaway Rooms (Floor 0, Floor 1) vs Legacy Diamond Canvas */}
-      {viewPreference === 'isometric' && activeFloor === 0 && viewMode === 'floor_focus' ? (
-        <div className="relative flex-1 w-full h-full overflow-hidden bg-[#E6E9F5]">
+      {/* Main Viewport: Modern Isometric Cutaway Rooms vs Legacy Diamond Canvas */}
+      <div ref={viewportRef} className="relative flex-1 w-full h-full min-h-0 overflow-hidden bg-[#080c14]">
+        {viewPreference === 'isometric' && activeFloor === 0 && viewMode === 'floor_focus' ? (
           <Floor0IsometricRoom
             agents={agents}
             onSelectAgent={onSelectAgent}
             orbiState={orbiState}
             onNavigateFloor={(floor) => setActiveFloor(floor)}
+            zoom={zoom}
+            pan={pan}
+            pacingMode={pacingMode}
+            skipBakedLabels={true}
           />
-        </div>
-      ) : viewPreference === 'isometric' && activeFloor === 1 && viewMode === 'floor_focus' ? (
-        <div className="relative flex-1 w-full h-full overflow-hidden bg-[#E6E9F5]">
+        ) : viewPreference === 'isometric' && activeFloor === 1 && viewMode === 'floor_focus' ? (
           <Floor1IsometricRoom
             agents={agents}
             onSelectAgent={onSelectAgent}
             orbiState={orbiState}
             onNavigateFloor={(floor) => setActiveFloor(floor)}
+            zoom={zoom}
+            pan={pan}
+            pacingMode={pacingMode}
+            skipBakedLabels={true}
           />
-        </div>
-      ) : viewPreference === 'isometric' && activeFloor === 2 && viewMode === 'floor_focus' ? (
-        <div className="relative flex-1 w-full h-full overflow-hidden bg-[#E6E9F5]">
+        ) : viewPreference === 'isometric' && activeFloor === 2 && viewMode === 'floor_focus' ? (
           <Floor2IsometricRoom
             agents={agents}
             onSelectAgent={onSelectAgent}
             orbiState={orbiState}
             onNavigateFloor={(floor) => setActiveFloor(floor)}
+            zoom={zoom}
+            pan={pan}
+            pacingMode={pacingMode}
+            skipBakedLabels={true}
           />
-        </div>
-      ) : (
-        <div className="relative flex-1 bg-[#090d14] overflow-auto flex items-center justify-center p-6">
-          <div
-            className="relative transition-transform duration-150 origin-center"
-            style={{ transform: `scale(${zoom})` }}
-          >
-            <canvas
-              ref={canvasRef}
-              width={1240}
-              height={740}
-              onClick={handleCanvasClick}
-              onMouseMove={handleMouseMove}
-              onMouseLeave={() => setHoveredAgent(null)}
-              className="rounded-2xl border-4 border-slate-800/90 shadow-2xl bg-[#080c16] cursor-pointer"
-            />
+        ) : (
+          <div className="relative w-full h-full bg-[#080c14] overflow-auto flex items-center justify-center p-6">
+            <div
+              className="relative transition-transform duration-150 origin-center"
+              style={{ transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)` }}
+            >
+              <canvas
+                ref={canvasRef}
+                width={1240}
+                height={740}
+                onClick={handleCanvasClick}
+                onMouseMove={handleMouseMove}
+                onMouseLeave={() => setHoveredAgent(null)}
+                className="rounded-2xl border-4 border-slate-800/90 shadow-2xl bg-[#080c16] cursor-pointer"
+              />
 
             {/* Floating Hover Activity Inspector Card */}
             {hoveredAgent && (
@@ -1688,6 +1774,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };
