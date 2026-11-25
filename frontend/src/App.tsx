@@ -281,7 +281,7 @@ export const App: React.FC = () => {
         onOpenSearch={() => setShowCommandPalette(true)}
         viewMode={viewMode}
         onChangeViewMode={handleViewModeChange}
-        user={{ name: 'Arjun', role: 'Chief Executive Officer', organization: 'AJIET' }}
+        user={{ name: 'Arjun R', role: 'UiPath Student Developer Champion (SDC)', organization: 'AJIET' }}
       />
 
       {/* Main Content Area */}

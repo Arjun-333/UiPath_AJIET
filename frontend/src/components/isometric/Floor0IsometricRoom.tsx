@@ -115,8 +115,8 @@ export const Floor0IsometricRoom: React.FC<Props> = ({
   const simAgentsRef = useRef<AgentSimState[]>([
     {
       id: 'arjun_ceo',
-      name: 'Arjun (CEO)',
-      role: 'Chief Executive Officer',
+      name: 'Arjun R (SDC)',
+      role: 'UiPath Student Developer Champion (SDC)',
       gx: 4.0,
       gy: 2.2,
       targetGx: 4.0,
