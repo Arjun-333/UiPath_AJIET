@@ -9,6 +9,7 @@ import { WorkforceCommsCenter } from './components/WorkforceCommsCenter';
 import { VideoQualityInspector } from './components/VideoQualityInspector';
 import { WorkforceManagementView } from './components/workforce/WorkforceManagementView';
 import { Header } from './components/Header';
+import { CommandPalette } from './components/CommandPalette';
 import { Building2, Terminal, Film, ShieldCheck, Activity, Users, Sparkles, MessageSquare, ShieldAlert } from 'lucide-react';
 
 const getInitialTab = (): 'hq' | 'command' | 'vault' | 'qa' | 'workforce' => {
@@ -52,8 +53,26 @@ export const App: React.FC = () => {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [showApprovalsModal, setShowApprovalsModal] = useState<boolean>(false);
   const [showCommsModal, setShowCommsModal] = useState<boolean>(false);
+  const [showCommandPalette, setShowCommandPalette] = useState<boolean>(false);
   const [pendingTransit, setPendingTransit] = useState<AgentTransitEvent | null>(null);
-  const [wsConnected, setWsConnected] = useState<boolean>(false);
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'reconnecting' | 'disconnected'>('disconnected');
+
+  // Generic View Mode Setting (stored in localStorage)
+  const [viewMode, setViewMode] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('view') === 'legacy') return 'legacy';
+      return localStorage.getItem('autonomia_preferences_view_mode') || 'isometric';
+    }
+    return 'isometric';
+  });
+
+  const handleViewModeChange = (mode: string) => {
+    setViewMode(mode);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('autonomia_preferences_view_mode', mode);
+    }
+  };
 
   // Load initial REST data
   const fetchData = async () => {
@@ -95,10 +114,13 @@ export const App: React.FC = () => {
       const wsUrl = `${protocol}//${window.location.host}/ws`;
       ws = new WebSocket(wsUrl);
 
-      ws.onopen = () => setWsConnected(true);
+      ws.onopen = () => setConnectionStatus('connected');
       ws.onclose = () => {
-        setWsConnected(false);
+        setConnectionStatus('reconnecting');
         setTimeout(connectWs, 3000);
+      };
+      ws.onerror = () => {
+        setConnectionStatus('disconnected');
       };
 
       ws.onmessage = (event) => {
@@ -194,6 +216,34 @@ export const App: React.FC = () => {
     });
   };
 
+  // Global Keyboard Shortcuts (Cmd+K, 0-5 floor jumps)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      const isInput = activeEl && (
+        activeEl.tagName === 'INPUT' ||
+        activeEl.tagName === 'TEXTAREA' ||
+        (activeEl as HTMLElement).isContentEditable
+      );
+      if (isInput) return;
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setShowCommandPalette(prev => !prev);
+        return;
+      }
+
+      if (['0', '1', '2', '3', '4', '5'].includes(e.key)) {
+        e.preventDefault();
+        setActiveTab('hq');
+        setActiveFloor(parseInt(e.key, 10));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const pendingApprovalsCount = approvals.filter(a => a.status === 'pending').length;
 
   return (
@@ -202,15 +252,20 @@ export const App: React.FC = () => {
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        wsConnected={wsConnected}
+        connectionStatus={connectionStatus}
         messagesCount={messages.length}
         pendingApprovalsCount={pendingApprovalsCount}
+        isApprovalsOpen={showApprovalsModal}
         onOpenComms={() => setShowCommsModal(true)}
         onOpenApprovals={() => setShowApprovalsModal(true)}
+        onOpenSearch={() => setShowCommandPalette(true)}
+        viewMode={viewMode}
+        onChangeViewMode={handleViewModeChange}
+        user={{ name: 'Arjun', role: 'Chief Executive Officer', organization: 'AJIET' }}
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-h-0 overflow-hidden px-6 pb-6">
+      <main className="flex-1 flex flex-col min-h-0 overflow-hidden px-2 md:px-6 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-6">
         {activeTab === 'hq' && (
           <VirtualHeadquarters
             agents={agents}
@@ -221,6 +276,7 @@ export const App: React.FC = () => {
             onOpenComms={() => setShowCommsModal(true)}
             recentMessages={messages}
             pendingTransit={pendingTransit}
+            viewModePreference={viewMode}
           />
         )}
 
@@ -247,6 +303,17 @@ export const App: React.FC = () => {
 
         {activeTab === 'workforce' && <WorkforceManagementView />}
       </main>
+
+      {/* Command Palette Modal */}
+      <CommandPalette
+        isOpen={showCommandPalette}
+        onClose={() => setShowCommandPalette(false)}
+        activeTab={activeTab}
+        onNavigateTab={(tab) => setActiveTab(tab)}
+        onSelectFloor={(floor) => setActiveFloor(floor)}
+        onSelectAgent={(agent) => setSelectedAgent(agent)}
+        agents={agents}
+      />
 
       {/* Modals */}
       {selectedAgent && (
