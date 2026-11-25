@@ -22,12 +22,11 @@ function loadDataUrl(filePath) {
 function buildDefaultCertHtml(item, meta, logos) {
   const name = escapeHtml(item.name);
   const dept = escapeHtml(item.department || '');
-  const certId = escapeHtml(item.certId);
   const eventTitle = escapeHtml(meta.eventTitle || 'UiPath Community AJIET Automation Workshop');
   const subtitle = escapeHtml(meta.subtitle || 'Certificate of Participation');
   const issueDate = escapeHtml(meta.issueDate || '');
-  const issuerName = escapeHtml(meta.issuerName || 'Arjun');
-  const issuerRole = escapeHtml(meta.issuerRole || 'Founder & CEO, UiPath Community AJIET');
+  const issuerName = escapeHtml(meta.issuerName || 'Arjun R');
+  const issuerRole = escapeHtml(meta.issuerRole || 'UiPath Student Developer Champion (SDC)');
 
   return `<!DOCTYPE html>
 <html>
@@ -59,7 +58,7 @@ function buildDefaultCertHtml(item, meta, logos) {
     width: 100%;
     height: 100%;
     border: 2px solid #ea580c;
-    padding: 34px 58px 36px;
+    padding: 30px 54px 36px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -81,40 +80,62 @@ function buildDefaultCertHtml(item, meta, logos) {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 14px 12px;
-    border-bottom: 1px solid #e2e8f0;
+    padding: 4px 8px 16px;
+    border-bottom: 1.5px solid #e2e8f0;
+  }
+  .college-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-align: left;
   }
   .logo-ajiet {
-    height: 72px;
+    height: 64px;
+    width: 64px;
     object-fit: contain;
+    flex-shrink: 0;
+  }
+  .college-text {
+    font-family: 'Ubuntu', sans-serif;
+    line-height: 1.3;
+  }
+  .college-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: 0.4px;
+  }
+  .college-sub {
+    font-size: 12px;
+    color: #334155;
+  }
+  .partner-logos {
+    display: flex;
+    align-items: center;
+    gap: 16px;
   }
   .logo-community {
-    width: 78px;
-    height: 78px;
+    width: 62px;
+    height: 62px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid #ea580c;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+  }
+  .v-sep {
+    width: 1px;
+    height: 40px;
+    background: #cbd5e1;
   }
   .logo-uipath {
-    height: 36px;
+    height: 34px;
     object-fit: contain;
-  }
-  .org {
-    font-family: 'Ubuntu', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 3.5px;
-    text-transform: uppercase;
-    color: #ea580c;
-    margin-top: 12px;
   }
   .heading {
     font-size: 42px;
     font-weight: 700;
     letter-spacing: 2px;
     color: #0f172a;
-    margin-top: 6px;
+    margin-top: 18px;
     text-transform: uppercase;
   }
   .divider {
@@ -129,7 +150,7 @@ function buildDefaultCertHtml(item, meta, logos) {
     color: #475569;
     letter-spacing: 1px;
     text-transform: uppercase;
-    margin-top: 14px;
+    margin-top: 16px;
   }
   .recipient {
     font-size: 50px;
@@ -167,7 +188,7 @@ function buildDefaultCertHtml(item, meta, logos) {
     padding-top: 10px;
   }
   .sig-block {
-    width: 250px;
+    width: 270px;
     text-align: center;
     font-family: 'Ubuntu', sans-serif;
   }
@@ -184,11 +205,11 @@ function buildDefaultCertHtml(item, meta, logos) {
     margin-top: 2px;
   }
   .meta-block {
-    font-family: 'Ubuntu Mono', monospace;
-    font-size: 13px;
+    width: 270px;
+    font-family: 'Ubuntu', sans-serif;
+    font-size: 14px;
     color: #475569;
     text-align: left;
-    line-height: 1.6;
   }
   .seal {
     width: 78px;
@@ -217,11 +238,20 @@ function buildDefaultCertHtml(item, meta, logos) {
       <div class="corner br"></div>
       <div>
         <div class="logo-bar">
-          <div>${logos.ajiet ? `<img class="logo-ajiet" src="${logos.ajiet}" alt="AJIET" />` : ''}</div>
-          <div>${logos.community ? `<img class="logo-community" src="${logos.community}" alt="UiPath Community AJIET" />` : ''}</div>
-          <div>${logos.uipath ? `<img class="logo-uipath" src="${logos.uipath}" alt="UiPath" />` : ''}</div>
+          <div class="college-brand">
+            ${logos.ajiet ? `<img class="logo-ajiet" src="${logos.ajiet}" alt="AJIET" />` : ''}
+            <div class="college-text">
+              <div class="college-name">A J INSTITUTE OF ENGINEERING &amp; TECHNOLOGY</div>
+              <div class="college-sub">(A Unit of Laxmi Memorial Education Trust &reg;)</div>
+              <div class="college-sub">Kottara Chowki, Mangaluru</div>
+            </div>
+          </div>
+          <div class="partner-logos">
+            ${logos.community ? `<img class="logo-community" src="${logos.community}" alt="UiPath Community AJIET" />` : ''}
+            <div class="v-sep"></div>
+            ${logos.uipath ? `<img class="logo-uipath" src="${logos.uipath}" alt="UiPath" />` : ''}
+          </div>
         </div>
-        <div class="org">A J Institute of Engineering &amp; Technology • UiPath Community AJIET</div>
         <div class="heading">${subtitle}</div>
         <div class="divider"></div>
       </div>
@@ -238,7 +268,6 @@ function buildDefaultCertHtml(item, meta, logos) {
       <div class="footer-row">
         <div class="meta-block">
           <div>Date: <strong>${issueDate}</strong></div>
-          <div>Certificate ID: <strong>${certId}</strong></div>
         </div>
         <div class="seal">Verified<br/>AJIET</div>
         <div class="sig-block">

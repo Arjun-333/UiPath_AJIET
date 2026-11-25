@@ -27,8 +27,8 @@ class GenerateCertificatesRequest(BaseModel):
     event_title: str
     subtitle: str = "Certificate of Participation"
     issue_date: Optional[str] = None
-    issuer_name: str = "Arjun"
-    issuer_role: str = "Founder & CEO, UiPath Community AJIET"
+    issuer_name: str = "Arjun R"
+    issuer_role: str = "UiPath Student Developer Champion (SDC)"
     students: List[Dict[str, str]]
     template_id: Optional[str] = None
     layout: Optional[Dict[str, Any]] = None

@@ -94,8 +94,8 @@ def generate_certificates_batch(
     event_title: str,
     subtitle: str = "Certificate of Participation",
     issue_date: Optional[str] = None,
-    issuer_name: str = "Arjun",
-    issuer_role: str = "Founder & CEO, UiPath Community AJIET",
+    issuer_name: str = "Arjun R",
+    issuer_role: str = "UiPath Student Developer Champion (SDC)",
     template_id: Optional[str] = None,
     layout: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
@@ -120,24 +120,24 @@ def generate_certificates_batch(
 
     items = []
     generated_files: List[Dict[str, str]] = []
+    seen_names: Dict[str, int] = {}
     for idx, st in enumerate(students, start=1):
         name = (st.get("name") or "").strip()
         if not name:
             continue
-        cert_id = f"AJIET-{datetime.now().strftime('%Y')}-{batch_id[-4:].upper()}-{idx:03d}"
         safe_name = re.sub(r"[^A-Za-z0-9_-]+", "_", name).strip("_") or f"student_{idx}"
-        pdf_filename = f"{safe_name}_{cert_id}.pdf"
+        seen_names[safe_name] = seen_names.get(safe_name, 0) + 1
+        suffix = f"_{seen_names[safe_name]}" if seen_names[safe_name] > 1 else ""
+        pdf_filename = f"{safe_name}{suffix}.pdf"
         pdf_path = pdfs_dir / pdf_filename
         items.append({
             "name": name,
             "email": st.get("email", ""),
             "department": st.get("department", ""),
-            "certId": cert_id,
             "outputPath": str(pdf_path)
         })
         generated_files.append({
             "name": name,
-            "cert_id": cert_id,
             "filename": pdf_filename,
             "preview_url": f"/api/certificates/file/{batch_id}/{pdf_filename}"
         })
