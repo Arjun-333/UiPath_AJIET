@@ -1679,13 +1679,23 @@ export const VirtualHeadquarters: React.FC<Props> = ({
                 }}
               >
                 <div
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${item.name}, ${item.role}. Status: ${item.statusText || item.status}`}
                   onClick={() => {
                     const real = agents.find(a => a.agent_id === item.id || a.id === item.id);
                     if (real) onSelectAgent(real);
                   }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      const real = agents.find(a => a.agent_id === item.id || a.id === item.id);
+                      if (real) onSelectAgent(real);
+                    }
+                  }}
                   onMouseEnter={() => setHoveredLabelId(item.id)}
                   onMouseLeave={() => setHoveredLabelId(null)}
-                  className={`flex items-center space-x-1.5 px-2 py-0.5 rounded-full border shadow-lg cursor-pointer transition-all ${
+                  className={`flex items-center space-x-1.5 px-2 py-0.5 rounded-full border shadow-lg cursor-pointer transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 ${
                     isHovered
                       ? 'bg-slate-900 border-orange-500 text-white scale-105 ring-2 ring-orange-500/30'
                       : 'bg-slate-950/85 backdrop-blur-md border-slate-700/60 text-slate-200 hover:border-slate-500'
@@ -1703,7 +1713,10 @@ export const VirtualHeadquarters: React.FC<Props> = ({
 
                 {/* Hover / Tap Reveal Card per Spec 7.B */}
                 {isHovered && (
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2.5 rounded-xl bg-slate-950/95 border border-slate-700/80 shadow-2xl backdrop-blur-md text-left space-y-1 pointer-events-none z-30">
+                  <div
+                    role="tooltip"
+                    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2.5 rounded-xl bg-slate-950/95 border border-slate-700/80 shadow-2xl backdrop-blur-md text-left space-y-1 pointer-events-none z-30 animate-in fade-in zoom-in-95 duration-100"
+                  >
                     <div className="flex items-center justify-between border-b border-slate-800 pb-1">
                       <span className="text-xs font-bold text-white font-mono">{item.name}</span>
                       <span className="text-[10px] text-slate-400 font-mono">{item.role}</span>
