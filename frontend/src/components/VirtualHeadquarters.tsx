@@ -1444,241 +1444,154 @@ export const VirtualHeadquarters: React.FC<Props> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0b0f17] text-slate-100 rounded-2xl border border-slate-800 shadow-2xl overflow-hidden select-none">
-      {/* Top Header Controls */}
-      <div className="flex items-center justify-between px-6 py-4 bg-slate-900 border-b border-slate-800 shrink-0">
-        <div className="flex items-center space-x-4">
-          <div className="p-2.5 bg-orange-600/20 border border-orange-500/40 rounded-xl text-orange-400">
-            <Building2 className="w-5 h-5" />
+    <div className="flex flex-col h-full bg-[#0b0f17] text-slate-100 rounded-2xl border border-slate-800/80 shadow-2xl overflow-hidden select-none">
+      {/* Unified Studio Floor Console Header */}
+      <div className="flex items-center justify-between px-6 py-3 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/80 shrink-0">
+        {/* Left: Active Floor Identity Capsule */}
+        <div className="flex items-center space-x-3.5">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500/20 to-amber-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 shadow-sm shadow-orange-500/10">
+            <Building2 className="w-4 h-4" />
           </div>
-          <div>
+          <div className="flex flex-col">
             <div className="flex items-center space-x-2">
-              <span className="font-pixel text-sm text-white tracking-wider">
-                {viewMode === 'multi_tower' ? 'Multi-Tier Campus Tower (All 6 Connected Floors)' : FLOOR_CONFIG.find(f => f.floor === activeFloor)?.name}
+              <span className="font-pixel text-xs text-white tracking-wider">
+                {viewMode === 'multi_tower'
+                  ? '6-TIER CAMPUS ATRIUM'
+                  : FLOOR_CONFIG.find(f => f.floor === activeFloor)?.name.toUpperCase()}
               </span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                {viewMode === 'multi_tower' ? '6-FLOOR ATRIUM' : FLOOR_CONFIG.find(f => f.floor === activeFloor)?.badge}
+              <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                {viewMode === 'multi_tower'
+                  ? 'MULTI-TOWER'
+                  : FLOOR_CONFIG.find(f => f.floor === activeFloor)?.badge}
               </span>
             </div>
-            <p className="text-xs text-slate-400">
-              {viewMode === 'multi_tower' 
-                ? 'Ground Foundation (F0/F1) ➔ Mid Wings (F2/F3) ➔ Cloud Penthouse (F4/F5) connected by central stairs.' 
-                : FLOOR_CONFIG.find(f => f.floor === activeFloor)?.subtitle
-              }
+            <p className="text-[11px] text-slate-400 font-mono">
+              {viewMode === 'multi_tower'
+                ? 'Ground Foundation (F0/F1) ➔ Mid Wings (F2/F3) ➔ Cloud Penthouse (F4/F5)'
+                : FLOOR_CONFIG.find(f => f.floor === activeFloor)?.subtitle}
             </p>
           </div>
         </div>
 
-        {/* View Mode & Simulation Controls */}
-        <div className="flex items-center space-x-3">
-          {/* Pacing Speed Selector */}
-          <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-            <button
-              onClick={() => {
-                setPacingMode('calm');
-                setActiveActionLog("Calm Pacing: Employees focused at desks with readable 7s thought bubbles.");
-              }}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center space-x-1.5 transition-all ${
-                pacingMode === 'calm'
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Long focused work intervals, gentle movement, readable bubbles"
-            >
-              <Clock className="w-3.5 h-3.5" />
-              <span>Calm Focus</span>
-            </button>
+        {/* Center: Segmented Floor Switcher Micro-Dock */}
+        <div className="flex items-center space-x-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800/80 shadow-inner">
+          {FLOOR_CONFIG.map(f => {
+            const isActive = activeFloor === f.floor && viewMode === 'floor_focus';
+            return (
+              <button
+                key={f.floor}
+                onClick={() => {
+                  setViewMode('floor_focus');
+                  setActiveFloor(f.floor);
+                }}
+                className={`relative px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all duration-200 ${
+                  isActive
+                    ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-md shadow-orange-600/30'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+                title={f.name}
+              >
+                <span>F{f.floor}</span>
+                {isActive && (
+                  <span className="absolute bottom-0 inset-x-2 h-0.5 bg-white/70 rounded-full" />
+                )}
+              </button>
+            );
+          })}
+        </div>
 
-            <button
-              onClick={() => {
-                setPacingMode('active');
-                setActiveActionLog("Active Pacing: Moderate walk intervals.");
-              }}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center space-x-1.5 transition-all ${
-                pacingMode === 'active'
-                  ? 'bg-orange-600 text-white shadow-md shadow-orange-600/30'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Moderate movement intervals"
-            >
-              <Play className="w-3.5 h-3.5" />
-              <span>Active</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setPacingMode('paused');
-                setActiveActionLog("Mobility Paused: Employees fixed at workstations for quiet inspection.");
-              }}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center space-x-1.5 transition-all ${
-                pacingMode === 'paused'
-                  ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Pause all autonomous roaming"
-            >
-              <Pause className="w-3.5 h-3.5" />
-              <span>Pause</span>
-            </button>
-          </div>
-
-          {/* Direct Interactive Staircase Navigation */}
-          <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+        {/* Right: Consolidated Controls Strip */}
+        <div className="flex items-center space-x-2">
+          {/* Inter-Floor Stairs Transit Buttons */}
+          <div className="flex items-center space-x-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800/80">
             <button
               onClick={() => handleUseStairs(activeFloor - 1)}
               disabled={activeFloor <= 0}
               className="px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center space-x-1 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-amber-300 hover:bg-amber-500/20"
-              title={activeFloor > 0 ? `Take stairs down to Floor ${activeFloor - 1}` : "Already on ground floor"}
+              title={activeFloor > 0 ? `Stairs down to Floor ${activeFloor - 1}` : 'Ground floor'}
             >
               <ArrowDown className="w-3.5 h-3.5" />
-              <span>Stairs Down</span>
+              <span>Down</span>
             </button>
-
-            <span className="text-[10px] text-slate-500 font-mono">|</span>
-
+            <span className="text-[10px] text-slate-700">|</span>
             <button
               onClick={() => handleUseStairs(activeFloor + 1)}
               disabled={activeFloor >= 5}
               className="px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center space-x-1 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-emerald-300 hover:bg-emerald-500/20"
-              title={activeFloor < 5 ? `Take stairs up to Floor ${activeFloor + 1}` : "Already on top floor"}
+              title={activeFloor < 5 ? `Stairs up to Floor ${activeFloor + 1}` : 'Top floor'}
             >
               <ArrowUp className="w-3.5 h-3.5" />
-              <span>Stairs Up</span>
+              <span>Up</span>
             </button>
           </div>
 
-          {/* Quick Simulation Commands */}
-          <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-            <button
-              onClick={handleTriggerTeamBreak}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-amber-300 hover:bg-amber-500/20 flex items-center space-x-1 transition-colors"
-              title="Send agents to coffee & sofa lounge"
-            >
-              <Coffee className="w-3.5 h-3.5" />
-              <span>Coffee Break</span>
-            </button>
-            <button
-              onClick={handleSummonToDesks}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-cyan-300 hover:bg-cyan-500/20 flex items-center space-x-1 transition-colors"
-              title="Call all agents back to workstations"
-            >
-              <Laptop className="w-3.5 h-3.5" />
-              <span>Back to Work</span>
-            </button>
-          </div>
+          {/* Quick Pacing Command (Coffee Break / Work) */}
+          <button
+            onClick={() => {
+              if (pacingMode === 'break') {
+                handleSummonToDesks();
+              } else {
+                handleTriggerTeamBreak();
+              }
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center space-x-1.5 border transition-all ${
+              pacingMode === 'break'
+                ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold shadow-md shadow-amber-500/20'
+                : 'bg-slate-900/90 text-amber-300 border-slate-800 hover:bg-slate-800/80'
+            }`}
+            title="Toggle Employee Coffee Break / Work Workstation Pacing"
+          >
+            <Coffee className="w-3.5 h-3.5" />
+            <span>{pacingMode === 'break' ? 'Return to Work' : 'Coffee Break'}</span>
+          </button>
 
-          {/* View Preference Switcher (Modern Isometric Cutaway vs Legacy Tower) */}
-          <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+          {/* View Preference: Modern 2:1 Isometric Cutaway vs Legacy */}
+          <div className="flex items-center space-x-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800/80">
             <button
               onClick={() => {
                 setViewPreference('isometric');
                 setViewMode('floor_focus');
-                setActiveFloor(0);
               }}
               className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center space-x-1 ${
                 viewPreference === 'isometric'
                   ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  : 'text-slate-400 hover:text-white'
               }`}
-              title="2:1 Isometric Cutaway Room (Screenshot 2 Match)"
+              title="2:1 Isometric Cutaway Room View"
             >
-              <span>🏢 Isometric Room</span>
+              <span>🏢 Isometric</span>
             </button>
             <button
               onClick={() => setViewPreference('legacy')}
               className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center space-x-1 ${
                 viewPreference === 'legacy'
-                  ? 'bg-slate-700 text-white shadow-md'
-                  : 'text-slate-500 hover:text-white hover:bg-slate-800'
+                  ? 'bg-slate-700 text-white'
+                  : 'text-slate-500 hover:text-white'
               }`}
-              title="Legacy Diamond Tower View (?view=legacy)"
+              title="Legacy Tower View (?view=legacy)"
             >
-              <span>📐 Legacy View</span>
+              <span>📐 Legacy</span>
             </button>
           </div>
 
-          {/* View Mode Toggle */}
-          <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-            <button
-              onClick={() => setViewMode('multi_tower')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center space-x-1.5 ${
-                viewMode === 'multi_tower'
-                  ? 'bg-orange-600 text-white shadow-md shadow-orange-600/30'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>Multi-Floor Tower</span>
-            </button>
-            <button
-              onClick={() => setViewMode('floor_focus')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center space-x-1.5 ${
-                viewMode === 'floor_focus'
-                  ? 'bg-orange-600 text-white shadow-md shadow-orange-600/30'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
-            >
-              <Building2 className="w-3.5 h-3.5" />
-              <span>Floor Focus</span>
-            </button>
-          </div>
-
-          {/* Floor Selector (All 6 Floors) */}
-          {viewMode === 'floor_focus' && (
-            <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-              {FLOOR_CONFIG.map((f) => (
-                <button
-                  key={f.floor}
-                  onClick={() => setActiveFloor(f.floor)}
-                  className={`px-2 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
-                    activeFloor === f.floor
-                      ? 'bg-orange-600 text-white shadow-md shadow-orange-600/30'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                  }`}
-                >
-                  F{f.floor}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Comms Center Button */}
-          {onOpenComms && (
-            <button
-              onClick={onOpenComms}
-              className="px-3 py-1.5 rounded-xl text-xs font-mono font-bold bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/40 text-cyan-300 flex items-center space-x-1.5 transition-all shadow-md shadow-cyan-600/20"
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
-              <span>Comms</span>
-              {recentMessages.length > 0 && (
-                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-              )}
-            </button>
-          )}
-
-          {/* Zoom */}
-          <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+          {/* Zoom Controls */}
+          <div className="flex items-center space-x-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800/80">
             <button
               onClick={() => setZoom(z => Math.max(0.7, z - 0.15))}
-              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+              className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800"
               title="Zoom Out"
             >
-              <ZoomOut className="w-4 h-4" />
+              <ZoomOut className="w-3.5 h-3.5" />
             </button>
-            <span className="text-xs font-mono px-2 font-bold text-slate-300">{Math.round(zoom * 100)}%</span>
+            <span className="text-[11px] font-mono px-1 font-bold text-slate-300">
+              {Math.round(zoom * 100)}%
+            </span>
             <button
               onClick={() => setZoom(z => Math.min(1.8, z + 0.15))}
-              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+              className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800"
               title="Zoom In"
             >
-              <ZoomIn className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setZoom(1.0)}
-              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
-              title="Reset Zoom"
-            >
-              <Maximize2 className="w-4 h-4" />
+              <ZoomIn className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

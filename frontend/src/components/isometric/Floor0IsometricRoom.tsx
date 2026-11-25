@@ -357,62 +357,8 @@ export const Floor0IsometricRoom: React.FC<Props> = ({
 
   return (
     <div className="flex flex-col h-full bg-[#E6E9F5] select-none overflow-hidden relative font-mono">
-      {/* Top Controls Toolbar */}
-      <div className="flex items-center justify-between px-6 py-3 bg-white/80 backdrop-blur-md border-b border-slate-300 shadow-sm z-20 shrink-0">
-        <div className="flex items-center space-x-3">
-          <div className="px-2.5 py-1 bg-orange-600 text-white text-xs font-bold rounded-lg shadow-sm">
-            FLOOR 0 // EXECUTIVE CUTAWAY SUITE
-          </div>
-          <span className="text-xs text-slate-600 font-medium">
-            2:1 Isometric Pixel Art • Enclosed Cutaway Architecture
-          </span>
-        </div>
-
-        {/* Action Controls */}
-        <div className="flex items-center space-x-2">
-          {onNavigateFloor && (
-            <button
-              onClick={() => onNavigateFloor(1)}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-sm"
-              title="Ascend staircase to Floor 1: Media & Creative Studio"
-            >
-              <span>▲ Ascend to Floor 1</span>
-            </button>
-          )}
-
-          <button
-            onClick={() => setPacingMode(prev => prev === 'break' ? 'calm' : 'break')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm ${
-              pacingMode === 'break'
-                ? 'bg-amber-500 text-white'
-                : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            {pacingMode === 'break' ? '☕ Return to Work' : '☕ Coffee Break'}
-          </button>
-
-          <div className="h-4 w-px bg-slate-300 mx-1" />
-
-          <button
-            onClick={() => setZoom(z => Math.max(0.8, z - 0.1))}
-            className="p-1.5 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 text-slate-700 text-xs"
-            title="Zoom Out"
-          >
-            -
-          </button>
-          <span className="text-xs text-slate-600 font-bold px-1">{Math.round(zoom * 100)}%</span>
-          <button
-            onClick={() => setZoom(z => Math.min(1.5, z + 0.1))}
-            className="p-1.5 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 text-slate-700 text-xs"
-            title="Zoom In"
-          >
-            +
-          </button>
-        </div>
-      </div>
-
       {/* Main Canvas Container with Crisp Pixel Rendering */}
-      <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
+      <div className="flex-1 flex items-center justify-center p-2 overflow-auto">
         <div
           style={{
             transform: `scale(${zoom})`,
