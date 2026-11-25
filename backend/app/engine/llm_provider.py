@@ -197,63 +197,156 @@ class HeuristicLLMProvider(BaseLLMProvider):
     Guarantees 100% offline, free, lightning-fast generation tailored specifically
     for UiPath Community AJIET media operations.
     """
+
+    @staticmethod
+    def _extract_topic(prompt: str) -> str:
+        import re
+        cleaned = re.sub(
+            r"^(create|make|generate|produce|build|write)\s+(a|an)?\s*(youtube\s+)?(video|tutorial|masterclass|guide)?\s*(about|on|explaining|for)?\s*",
+            "",
+            prompt.strip(),
+            flags=re.IGNORECASE
+        ).strip(" .!?\"'")
+        if not cleaned or len(cleaned) < 4:
+            return "UiPath Studio Automation"
+        return cleaned[:70]
+
     async def generate(self, prompt: str, system_prompt: Optional[str] = None, role: str = "general") -> str:
         prompt_lower = prompt.lower()
 
         if "script" in role.lower() or "script" in prompt_lower:
-            topic = "UiPath Document Understanding" if "document" in prompt_lower else "UiPath Studio Automation"
+            topic = self._extract_topic(prompt)
             return json.dumps({
-                "title": f"Mastering {topic}: Complete Hands-On RPA Masterclass",
+                "title": f"Mastering {topic}: Complete 5-Minute Hands-On Masterclass",
                 "target_audience": "Student Developers, Engineers & UiPath Community AJIET",
-                "estimated_duration_seconds": 320,  # 5+ Minutes Comprehensive Tutorial
+                "estimated_duration_seconds": 300,
                 "scenes": [
                     {
                         "scene_number": 1,
-                        "chapter": "Chapter 1: The Core Automation Challenge",
-                        "title": "Manual Repetition vs Intelligent RPA",
+                        "chapter": "Chapter 1: Why This Matters",
+                        "title": f"Manual Bottlenecks vs {topic}",
                         "visual_type": "challenge_comparison",
                         "duration": 50,
-                        "narration": f"Welcome developers to UiPath Community AJIET! In enterprise software engineering, manual data entry and repetitive document parsing drain hundreds of productive hours every single month. Today, we are diving deep into {topic}. We will build a production-grade, enterprise-ready software robot from scratch inside UiPath Studio, demonstrating how to automate end-to-end business workflows with zero manual intervention."
+                        "steps": [
+                            f"Eliminate repetitive manual effort in {topic}",
+                            "Achieve 99.8% deterministic validation accuracy",
+                            "Run unattended workflows 24/7 with full audit logs",
+                            "Scale across enterprise queues with zero backlog"
+                        ],
+                        "narration": (
+                            f"Welcome developers to UiPath Community AJIET! In modern software engineering and enterprise operations, "
+                            f"teams still lose hundreds of productive hours every single month to repetitive manual tasks, copy-paste errors, "
+                            f"and fragile handoffs. Today, we are diving deep into {topic}. Over the next five minutes, we will architect and "
+                            f"walk through a production-grade workflow inside UiPath Studio from scratch. First, let us compare the legacy manual "
+                            f"approach against intelligent automation. Manually, a single transaction takes ten to fifteen minutes, suffers from "
+                            f"human fatigue, and leaves no structured audit trail. With {topic}, our software robot executes the exact same steps "
+                            f"in seconds with consistent validation, structured logging, and zero manual intervention."
+                        )
                     },
                     {
                         "scene_number": 2,
-                        "chapter": "Chapter 2: UiPath Studio Architecture & Interface",
-                        "title": "Studio IDE Deep Dive & Package Configuration",
+                        "chapter": "Chapter 2: Studio Architecture",
+                        "title": f"Studio IDE Setup for {topic}",
                         "visual_type": "studio_ide_walkthrough",
-                        "duration": 55,
-                        "narration": "Let us explore the UiPath Studio Modern Design Experience. On the top ribbon, we have the Design and Debug panels alongside the UI Explorer and Data Manager. On the left activities pane, we access modern UI automation libraries, including Use Application or Browser, Click, Type Into, and Table Extraction. Notice how Studio organizes activities with unified targeting technology, combining fuzzy selectors, computer vision, and native UI frameworks for bulletproof reliability."
+                        "duration": 50,
+                        "steps": [
+                            f"Initialize Modern Design project for {topic}",
+                            "Configure UI Automation and System packages",
+                            "Inspect target selectors and properties panel"
+                        ],
+                        "narration": (
+                            f"Let us open UiPath Studio using the Modern Design Experience and configure our project for {topic}. "
+                            f"Across the top ribbon, we have Design, Debug, Manage Packages, Data Manager, and UI Explorer. "
+                            f"On the left side, the Activities Palette groups modern UI automation, system utilities, and data connectors "
+                            f"into clean reusable building blocks. Before dragging our first activity onto the Main.xaml designer canvas, "
+                            f"we verify our package dependencies and enable unified targeting. Notice the Properties panel on the right: "
+                            f"we set InputMode to Modern, enable VerifyExecution, and configure a thirty-second timeout with fuzzy selector "
+                            f"matching. These foundational settings ensure that minor UI layout shifts never break our production automation."
+                        )
                     },
                     {
                         "scene_number": 3,
-                        "chapter": "Chapter 3: Hands-On Workflow Design",
-                        "title": "Drag-and-Drop Activity Sequence & Selector Tuning",
+                        "chapter": "Chapter 3: Workflow Sequence",
+                        "title": f"Building the {topic} Pipeline",
                         "visual_type": "workflow_sequence_builder",
-                        "duration": 60,
-                        "narration": "Now let us construct the core workflow sequence. We drag the Excel Process Scope onto the designer canvas, followed by Use Browser to attach to our target enterprise portal. Inside the sequence, we configure a Type Into activity targeted at the document ID input field. Notice the strict selector validation: using the UI Explorer, we tune our fuzzy selector attributes and enable auto-retry logic to guarantee that dynamic web elements are accurately hooked."
+                        "duration": 50,
+                        "steps": [
+                            "Initialize scope and attach target application",
+                            f"Execute core {topic} extraction & logic",
+                            "Tune fuzzy selectors and Computer Vision anchors",
+                            "Wrap critical actions in Try-Catch retry blocks"
+                        ],
+                        "narration": (
+                            f"Now let us construct the core workflow sequence for {topic}. First, we add an initialization scope to load "
+                            f"our configuration dictionary and attach cleanly to our target application or browser session. Second, we wire "
+                            f"in the primary processing activities so each incoming item flows deterministically from input to validation. "
+                            f"Third, we open UI Explorer to inspect our selector tree. By combining strict native attributes with a fuzzy "
+                            f"match threshold of zero point eight five and Computer Vision anchors, the robot locates dynamic controls reliably "
+                            f"across screen resolutions. Finally, we wrap external network and UI calls inside a Retry Scope and Try-Catch "
+                            f"handler so transient glitches recover automatically."
+                        )
                     },
                     {
                         "scene_number": 4,
-                        "chapter": "Chapter 4: Data Processing & Variables",
-                        "title": "DataTable Manipulation & Orchestrator Queues",
+                        "chapter": "Chapter 4: Data & Variables",
+                        "title": "DataTable, Arguments & Orchestrator Queues",
                         "visual_type": "variables_data_manager",
-                        "duration": 55,
-                        "narration": "A robust robot requires clean data management. In the Data Manager panel, we define our primary variables: dt_Transactions of type DataTable, in_InvoiceNumber of type String, and out_ProcessingStatus of type Boolean. Using the For Each Row in Data Table activity, our robot iterates through extracted records, validates field formats, and securely uploads items into UiPath Orchestrator Queues for distributed transactional processing."
+                        "duration": 50,
+                        "steps": [
+                            "Define typed In/Out arguments and DataTables",
+                            f"Validate {topic} schema and edge cases",
+                            "Dispatch clean records to Orchestrator Queues",
+                            "Track per-item status and confidence scores"
+                        ],
+                        "narration": (
+                            f"A production-ready robot depends on clean, strongly typed data management. In the Data Manager panel, we define "
+                            f"our primary DataTable dt_PipelineRecords along with scoped String and Boolean arguments so every workflow file "
+                            f"stays modular and easy to test. Before writing any output, our validation block checks for missing fields, "
+                            f"normalizes formatting, and logs confidence scores for every record. Next, using Add Queue Item, we dispatch "
+                            f"validated transactions into UiPath Orchestrator Queues. Separating ingestion from processing gives us built-in "
+                            f"retries, SLA monitoring, and horizontal scaling across multiple unattended robots whenever workload volume spikes."
+                        )
                     },
                     {
                         "scene_number": 5,
-                        "chapter": "Chapter 5: Live Robot Execution & Diagnostics",
-                        "title": "Studio Debugging & Real-Time Terminal Execution",
+                        "chapter": "Chapter 5: Live Execution & QA",
+                        "title": f"Running & Debugging {topic}",
                         "visual_type": "live_execution_console",
-                        "duration": 55,
-                        "narration": "Let us hit Run File and monitor the live execution logs in the Output Console. The robot initializes the local runtime, hooks into Chrome via modern UI automation, reads sixty-four line items from the incoming dataset, and extracts invoice details in under four seconds with one hundred percent validation accuracy. Observe how try-catch exception blocks gracefully handle network timeouts and notify system administrators."
+                        "duration": 50,
+                        "steps": [
+                            "Start robot runtime and attach target process",
+                            f"Process {topic} batch with live telemetry",
+                            "Verify zero unhandled exceptions in Output Console",
+                            "Confirm structured audit logs and completion metrics"
+                        ],
+                        "narration": (
+                            f"Let us trigger Debug File and watch the live execution telemetry in the Output Console. The robot runtime "
+                            f"initializes cleanly, attaches to the target environment, and begins processing our incoming batch step by step. "
+                            f"Notice the structured timestamped log lines: each stage reports its input count, selector confidence, and "
+                            f"processing latency in real time. Within seconds, all items pass schema validation and are committed to the "
+                            f"output queue with zero unhandled exceptions. Reviewing memory and CPU telemetry confirms that our workflow runs "
+                            f"lightweight and stable, ready for automated quality assurance sign-off before deployment."
+                        )
                     },
                     {
                         "scene_number": 6,
-                        "chapter": "Chapter 6: Enterprise Deployment & Best Practices",
-                        "title": "Publishing to Orchestrator & Community AJIET Best Practices",
+                        "chapter": "Chapter 6: Deployment & Best Practices",
+                        "title": "Publishing & Community Takeaways",
                         "visual_type": "deployment_outro",
-                        "duration": 45,
-                        "narration": "To conclude, we publish the finished package directly to UiPath Orchestrator, enabling scheduled unattended execution. Remember the three Golden Rules of UiPath Community AJIET: always use the Modern Experience, parameterize your selectors, and implement global exception handlers. Check the video description for the complete downloadable workflow template, and make sure to subscribe to UiPath Community AJIET for weekly automation masterclasses!"
+                        "duration": 50,
+                        "steps": [
+                            "Use Modern Experience and parameterized configs",
+                            "Enforce Global Exception Handlers on all projects",
+                            "Publish versioned packages to UiPath Orchestrator"
+                        ],
+                        "narration": (
+                            f"To wrap up, we publish our verified {topic} package directly to UiPath Orchestrator and configure an unattended "
+                            f"schedule trigger. Before you build your own version, remember the three Golden Rules from UiPath Community AJIET: "
+                            f"first, always use the Modern Experience with unified targeting; second, keep all URLs, credentials, and thresholds "
+                            f"in Orchestrator Assets rather than hardcoding them; and third, attach a Global Exception Handler to every production "
+                            f"project. You can inspect the generated workflow assets and captions inside the Media Vault. Subscribe to UiPath "
+                            f"Community AJIET for more hands-on automation masterclasses, and we will see you in the next build!"
+                        )
                     }
                 ]
             })

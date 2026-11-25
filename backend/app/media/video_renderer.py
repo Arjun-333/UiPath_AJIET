@@ -439,7 +439,7 @@ class VideoRenderer:
             self.tts.synthesize_speech(narration_text, audio_path)
 
         duration = self.get_audio_duration(audio_path)
-        scene["duration"] = max(duration, 4.0)
+        scene["duration"] = max(duration, 4.0) + 0.45
         dur = float(scene["duration"])
 
         # 2. Render 3 Progressive Keyframe Stages for animated step highlights
@@ -479,9 +479,11 @@ class VideoRenderer:
         sub_filters = self._build_drawtext_subtitles(narration_text, dur, y_expr="h-115", font_size=22, chunk_size=8)
 
         try:
+            audio_filter = "[1:a]apad=pad_dur=0.45,loudnorm=I=-16:TP=-1.5:LRA=11[aout]"
             if AURI_WORKING_GIF.exists():
                 filter_complex = (
                     f"[0:v]fps=30,scale=1280:720,{fade_filter}[bg];"
+                    f"{audio_filter};"
                     f"[1:a]showwaves=s=200x36:mode=line:colors=0x38bdf8@0.9:scale=sqrt[wave];"
                     f"[2:v]scale=96:96[mascot];"
                     f"[bg][mascot]overlay=W-132:H-158:shortest=1[v1];"
@@ -501,7 +503,7 @@ class VideoRenderer:
                     "-ignore_loop", "0", "-i", str(AURI_WORKING_GIF),
                     "-filter_complex", filter_complex,
                     "-map", out_map,
-                    "-map", "1:a",
+                    "-map", "[aout]",
                     "-c:v", "libx264",
                     "-preset", "veryfast",
                     "-t", f"{dur:.2f}",
@@ -514,6 +516,7 @@ class VideoRenderer:
             else:
                 filter_complex = (
                     f"[0:v]fps=30,{zoom_filter},{fade_filter}[bg];"
+                    f"{audio_filter};"
                     f"[bg]drawbox=x=36:y=702:w='(t/{dur:.2f})*(1280-72)':h=8:color=0xff6600:t=fill[v1]"
                 )
                 if sub_filters:
@@ -527,7 +530,7 @@ class VideoRenderer:
                     "-i", str(audio_path),
                     "-filter_complex", filter_complex,
                     "-map", out_map,
-                    "-map", "1:a",
+                    "-map", "[aout]",
                     "-c:v", "libx264",
                     "-preset", "veryfast",
                     "-t", f"{dur:.2f}",
@@ -628,10 +631,20 @@ class VideoRenderer:
             ]
             subprocess.run(cmd_aud, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        # 4. Generate SRT Subtitles
+        # 4. Generate SRT Subtitles & YouTube Chapters
         sub_gen = SubtitleGenerator()
         sub_srt = p_dir / "subtitles.srt"
         sub_gen.generate_srt(scenes, sub_srt)
+
+        chapters_lines = []
+        t_cursor = 0.0
+        for idx, sc in enumerate(scenes):
+            mins = int(t_cursor // 60)
+            secs = int(t_cursor % 60)
+            ch_label = sc.get("chapter") or sc.get("title") or f"Scene {idx + 1}"
+            chapters_lines.append(f"{mins:02d}:{secs:02d} {ch_label}")
+            t_cursor += float(sc.get("duration", 5.0))
+        (p_dir / "chapters.txt").write_text("\n".join(chapters_lines) + "\n", encoding="utf-8")
 
         # 5. Render Animated 9:16 Vertical Instagram Reel
         total_scenes = len(scenes)
@@ -760,7 +773,7 @@ class VideoRenderer:
             audio_file = audio_dir / f"{scene_id}.wav"
             narration_text = scene.get("narration", scene.get("title", ""))
             self.tts.synthesize_speech(narration_text, audio_file)
-            dur = max(self.get_audio_duration(audio_file), 4.0)
+            dur = max(self.get_audio_duration(audio_file), 4.0) + 0.45
 
             scene["start_timestamp"] = round(total_time, 2)
             scene["end_timestamp"] = round(total_time + dur, 2)
@@ -806,6 +819,7 @@ class VideoRenderer:
             "master_16x9": f"/media/{project_id}/master_16x9.mp4",
             "reel_9x16": f"/media/{project_id}/reel_9x16.mp4",
             "subtitles": f"/media/{project_id}/subtitles.srt",
+            "chapters": f"/media/{project_id}/chapters.txt",
             "narration_audio": f"/media/{project_id}/full_narration.wav",
             "manifest": f"/media/{project_id}/production_manifest.json"
         }

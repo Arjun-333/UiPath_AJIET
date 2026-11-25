@@ -112,7 +112,15 @@ class ShrinithiScriptAgent(BaseAgent):
 
     async def execute(self, task_context: Dict[str, Any]) -> Dict[str, Any]:
         prompt = task_context.get("prompt", "UiPath Document Understanding")
-        script_raw = await self.llm.generate(prompt, role="scriptwriter")
+        system_prompt = (
+            "You are Shrinithi, Lead Scriptwriter for UiPath Community AJIET. "
+            "Return ONLY valid JSON with keys 'title' and 'scenes' (6 scenes). "
+            "Target a ~5-minute YouTube tutorial (~750 spoken words total, ~125 words per scene). "
+            "Each scene must include: scene_number, chapter, title, visual_type "
+            "(one of: challenge_comparison, studio_ide_walkthrough, workflow_sequence_builder, "
+            "variables_data_manager, live_execution_console, deployment_outro), steps (3-4 short bullets), and narration."
+        )
+        script_raw = await self.llm.generate(prompt, system_prompt=system_prompt, role="scriptwriter")
         script_data = json.loads(script_raw) if isinstance(script_raw, str) and script_raw.startswith("{") else {}
         return {"script": script_data}
 
