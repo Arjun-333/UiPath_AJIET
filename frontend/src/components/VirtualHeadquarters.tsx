@@ -274,6 +274,8 @@ export const VirtualHeadquarters: React.FC<Props> = ({
   const [viewPreference, setViewPreference] = useState<'isometric' | 'legacy'>(viewModePreference || (isLegacyUrl ? 'legacy' : 'isometric'));
   const [zoom, setZoom] = useState<number>(1.0);
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState<boolean>(false);
+  const panStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const [viewMode, setViewMode] = useState<'multi_tower' | 'floor_focus'>('floor_focus');
   const [pacingMode, setPacingMode] = useState<'calm' | 'break' | 'active'>('calm');
   const [hoveredAgent, setHoveredAgent] = useState<HoveredAgentInfo | null>(null);
@@ -284,12 +286,35 @@ export const VirtualHeadquarters: React.FC<Props> = ({
   const animFrameRef = useRef<number>(0);
   const [activeActionLog, setActiveActionLog] = useState<string>("Calm focus mode active: Employees performing deep departmental tasks.");
 
-  // Sync viewModePreference
+  // Sync viewModePreference & clear stale screen-space labels when switching to Legacy mode
   useEffect(() => {
     if (viewModePreference) {
       setViewPreference(viewModePreference);
+      if (viewModePreference === 'legacy') {
+        setAgentPositions([]);
+      }
     }
   }, [viewModePreference]);
+
+  const handleViewportMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('[role="button"]')) return;
+    setIsPanning(true);
+    panStartRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+  };
+
+  const handleViewportMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isPanning) return;
+    setPan({
+      x: e.clientX - panStartRef.current.x,
+      y: e.clientY - panStartRef.current.y
+    });
+  };
+
+  const handleViewportMouseUp = () => {
+    if (isPanning) setIsPanning(false);
+  };
 
   // Fit to View calculation per Spec 5.B
   const handleFitToView = () => {
@@ -1552,7 +1577,14 @@ export const VirtualHeadquarters: React.FC<Props> = ({
   return (
     <div className="relative flex-1 w-full h-full min-h-0 bg-[#080c14] text-slate-100 rounded-2xl border border-slate-800/80 shadow-2xl overflow-hidden select-none flex flex-col">
       {/* Main Viewport: Modern Isometric Cutaway Rooms vs Legacy Diamond Canvas with Contextual Glass Overlays */}
-      <div ref={viewportRef} className="relative flex-1 w-full h-full min-h-0 overflow-hidden bg-[#080c14]">
+      <div
+        ref={viewportRef}
+        onMouseDown={handleViewportMouseDown}
+        onMouseMove={handleViewportMouseMove}
+        onMouseUp={handleViewportMouseUp}
+        onMouseLeave={handleViewportMouseUp}
+        className={`relative flex-1 w-full h-full min-h-0 overflow-hidden bg-[#080c14] ${isPanning ? 'cursor-grabbing' : ''}`}
+      >
         {viewPreference === 'isometric' && activeFloor === 0 && viewMode === 'floor_focus' ? (
           <Floor0IsometricRoom
             agents={agents}
