@@ -11,7 +11,15 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-function buildDefaultCertHtml(item, meta) {
+function loadDataUrl(filePath) {
+  if (!filePath || !fs.existsSync(filePath)) return null;
+  const ext = path.extname(filePath).toLowerCase().replace('.', '') || 'png';
+  const mime = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : 'image/png';
+  const b64 = fs.readFileSync(filePath).toString('base64');
+  return `data:${mime};base64,${b64}`;
+}
+
+function buildDefaultCertHtml(item, meta, logos) {
   const name = escapeHtml(item.name);
   const dept = escapeHtml(item.department || '');
   const certId = escapeHtml(item.certId);
@@ -37,7 +45,7 @@ function buildDefaultCertHtml(item, meta) {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 36px;
+    padding: 32px;
   }
   .frame-outer {
     width: 100%;
@@ -51,7 +59,7 @@ function buildDefaultCertHtml(item, meta) {
     width: 100%;
     height: 100%;
     border: 2px solid #ea580c;
-    padding: 48px 64px;
+    padding: 34px 58px 36px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -69,59 +77,83 @@ function buildDefaultCertHtml(item, meta) {
   .tr { top: 10px; right: 10px; border-width: 4px 4px 0 0; }
   .bl { bottom: 10px; left: 10px; border-width: 0 0 4px 4px; }
   .br { bottom: 10px; right: 10px; border-width: 0 4px 4px 0; }
+  .logo-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px 12px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .logo-ajiet {
+    height: 72px;
+    object-fit: contain;
+  }
+  .logo-community {
+    width: 78px;
+    height: 78px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ea580c;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+  }
+  .logo-uipath {
+    height: 36px;
+    object-fit: contain;
+  }
   .org {
     font-family: 'Ubuntu', sans-serif;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 700;
     letter-spacing: 3.5px;
     text-transform: uppercase;
     color: #ea580c;
+    margin-top: 12px;
   }
   .heading {
-    font-size: 46px;
+    font-size: 42px;
     font-weight: 700;
     letter-spacing: 2px;
     color: #0f172a;
-    margin-top: 10px;
+    margin-top: 6px;
     text-transform: uppercase;
   }
   .divider {
     width: 160px;
     height: 3px;
     background: linear-gradient(90deg, transparent, #ea580c, transparent);
-    margin: 14px auto 0;
+    margin: 12px auto 0;
   }
   .present-text {
     font-family: 'Ubuntu', sans-serif;
-    font-size: 17px;
+    font-size: 16px;
     color: #475569;
     letter-spacing: 1px;
     text-transform: uppercase;
-    margin-top: 22px;
+    margin-top: 14px;
   }
   .recipient {
-    font-size: 52px;
+    font-size: 50px;
     font-weight: 700;
     color: #0f172a;
-    margin: 14px auto 6px;
-    padding: 0 30px 10px;
+    margin: 10px auto 6px;
+    padding: 0 30px 8px;
     border-bottom: 2px solid #cbd5e1;
     display: inline-block;
     min-width: 480px;
   }
   .dept {
     font-family: 'Ubuntu', sans-serif;
-    font-size: 16px;
+    font-size: 15px;
     color: #64748b;
     margin-top: 4px;
   }
   .body-copy {
     font-family: 'Ubuntu', sans-serif;
-    font-size: 19px;
-    line-height: 1.6;
+    font-size: 18px;
+    line-height: 1.55;
     color: #334155;
     max-width: 780px;
-    margin: 18px auto 0;
+    margin: 14px auto 0;
   }
   .event-name {
     font-weight: 700;
@@ -131,11 +163,11 @@ function buildDefaultCertHtml(item, meta) {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    margin-top: 28px;
-    padding-top: 16px;
+    margin-top: 18px;
+    padding-top: 10px;
   }
   .sig-block {
-    width: 240px;
+    width: 250px;
     text-align: center;
     font-family: 'Ubuntu', sans-serif;
   }
@@ -159,15 +191,15 @@ function buildDefaultCertHtml(item, meta) {
     line-height: 1.6;
   }
   .seal {
-    width: 84px;
-    height: 84px;
+    width: 78px;
+    height: 78px;
     border-radius: 50%;
     border: 3px double #ea580c;
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: 'Ubuntu', sans-serif;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     color: #ea580c;
     letter-spacing: 1px;
@@ -184,7 +216,12 @@ function buildDefaultCertHtml(item, meta) {
       <div class="corner bl"></div>
       <div class="corner br"></div>
       <div>
-        <div class="org">UiPath Community AJIET</div>
+        <div class="logo-bar">
+          <div>${logos.ajiet ? `<img class="logo-ajiet" src="${logos.ajiet}" alt="AJIET" />` : ''}</div>
+          <div>${logos.community ? `<img class="logo-community" src="${logos.community}" alt="UiPath Community AJIET" />` : ''}</div>
+          <div>${logos.uipath ? `<img class="logo-uipath" src="${logos.uipath}" alt="UiPath" />` : ''}</div>
+        </div>
+        <div class="org">A J Institute of Engineering &amp; Technology • UiPath Community AJIET</div>
         <div class="heading">${subtitle}</div>
         <div class="divider"></div>
       </div>
@@ -284,13 +321,14 @@ async function main() {
   const payload = JSON.parse(fs.readFileSync(cfgPath, 'utf-8'));
   const { items = [], meta = {}, templatePath = null } = payload;
 
-  let templateDataUrl = null;
-  if (templatePath && fs.existsSync(templatePath)) {
-    const ext = path.extname(templatePath).toLowerCase().replace('.', '') || 'png';
-    const mime = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : 'image/png';
-    const b64 = fs.readFileSync(templatePath).toString('base64');
-    templateDataUrl = `data:${mime};base64,${b64}`;
-  }
+  const brandingDir = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../../frontend/public/assets/branding');
+  const logos = {
+    ajiet: loadDataUrl(path.join(brandingDir, 'ajiet_logo.png')),
+    community: loadDataUrl(path.join(brandingDir, 'uipath_community_ajiet_logo.jpg')),
+    uipath: loadDataUrl(path.join(brandingDir, 'uipath_logo.png'))
+  };
+
+  let templateDataUrl = loadDataUrl(templatePath);
 
   const browser = await chromium.launch({
     executablePath: '/usr/bin/google-chrome',
@@ -302,8 +340,11 @@ async function main() {
   for (const item of items) {
     const html = templateDataUrl
       ? buildCustomImageCertHtml(item, meta, templateDataUrl)
-      : buildDefaultCertHtml(item, meta);
+      : buildDefaultCertHtml(item, meta, logos);
     await page.setContent(html, { waitUntil: 'load' });
+    if (item.previewPngPath) {
+      await page.screenshot({ path: item.previewPngPath, fullPage: false });
+    }
     await page.pdf({
       path: item.outputPath,
       width: '1123px',
