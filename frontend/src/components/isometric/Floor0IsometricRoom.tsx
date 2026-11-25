@@ -10,6 +10,7 @@ import {
   createMeetingTable,
   createLoungeSofa,
   createPottedTree,
+  createStaircaseUp,
   createCharacterRenderItem,
   RenderItem,
   IsoCharacterRenderData
@@ -19,6 +20,7 @@ interface Props {
   agents: Agent[];
   onSelectAgent: (agent: Agent) => void;
   orbiState: string;
+  onNavigateFloor?: (floor: number) => void;
 }
 
 interface AgentSimState {
@@ -42,12 +44,14 @@ interface AgentSimState {
 export const Floor0IsometricRoom: React.FC<Props> = ({
   agents,
   onSelectAgent,
-  orbiState
+  orbiState,
+  onNavigateFloor
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [pacingMode, setPacingMode] = useState<'calm' | 'break' | 'active'>('calm');
   const [zoom, setZoom] = useState<number>(1.0);
   const [hoveredAgent, setHoveredAgent] = useState<AgentSimState | null>(null);
+  const [hoveredStairs, setHoveredStairs] = useState<boolean>(false);
 
   // Cache loaded images
   const imagesRef = useRef<Map<string, HTMLImageElement>>(new Map());
@@ -183,8 +187,11 @@ export const Floor0IsometricRoom: React.FC<Props> = ({
       // D. Executive Lounge Area (Deep Indigo Sofa + Modern Coffee Table)
       queue.push(createLoungeSofa(7.2, 2.4, 2.4, 1.2));
 
-      // E. Indoor Potted Fig Trees (Lush greenery)
-      queue.push(createPottedTree(0.6, 8.8));
+      // E. Architectural Staircase leading Upward to Floor 1: Media Studio
+      queue.push(...createStaircaseUp(0.2, 9.4, 5.0, 1));
+
+      // F. Indoor Potted Fig Trees (Lush greenery framing room & staircase entrance)
+      queue.push(createPottedTree(2.0, 9.4)); // Framed gracefully at foot of staircase
       queue.push(createPottedTree(8.8, 0.8));
 
       // 3. Update Agents Simulation Motion
@@ -253,14 +260,44 @@ export const Floor0IsometricRoom: React.FC<Props> = ({
         item.render(ctx, originX, originY);
       });
 
+      // 6. Interactive Floating Staircase Navigation Badge when hovered
+      if (hoveredStairs) {
+        ctx.save();
+        const sPortal = toScreen(0.4, 5.2, 130, originX, originY);
+        ctx.font = 'bold 11px monospace';
+        const txt = '▲ ASCEND TO FLOOR 1 (MEDIA STUDIO) • CLICK TO TRANSIT';
+        const tw = ctx.measureText(txt).width + 28;
+        const th = 26;
+
+        // Glowing backdrop pill
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+        ctx.fillRect(sPortal.x - tw / 2, sPortal.y - th / 2, tw, th);
+        ctx.strokeStyle = '#38BDF8';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(sPortal.x - tw / 2, sPortal.y - th / 2, tw, th);
+
+        // Blinking emerald LED
+        ctx.fillStyle = '#10B981';
+        ctx.beginPath();
+        ctx.arc(sPortal.x - tw / 2 + 12, sPortal.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Label text
+        ctx.fillStyle = '#38BDF8';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(txt, sPortal.x + 8, sPortal.y);
+        ctx.restore();
+      }
+
       animId = requestAnimationFrame(render);
     };
 
     render();
     return () => cancelAnimationFrame(animId);
-  }, [pacingMode, orbiState]);
+  }, [pacingMode, orbiState, hoveredStairs]);
 
-  // Handle Mouse Hover on Personnel
+  // Handle Mouse Hover on Personnel and Staircase
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -271,6 +308,7 @@ export const Floor0IsometricRoom: React.FC<Props> = ({
     const originX = canvas.width / 2;
     const originY = 270;
 
+    // A. Detect Hover over Personnel
     let found: AgentSimState | null = null;
     simAgentsRef.current.forEach(sim => {
       const pos = toScreen(sim.gx, sim.gy, sim.isSeated ? 8 : 0, originX, originY);
@@ -279,11 +317,29 @@ export const Floor0IsometricRoom: React.FC<Props> = ({
         found = sim;
       }
     });
-
     setHoveredAgent(found);
+
+    // B. Detect Hover over Staircase (gx in [0, 1.8], gy in [4.6, 9.8])
+    const sPortal = toScreen(0, 4.8, 140, originX, originY);
+    const sBottom = toScreen(1.8, 9.6, 0, originX, originY);
+    const sLeft = toScreen(0, 9.6, 0, originX, originY);
+    const sRight = toScreen(1.8, 4.8, 70, originX, originY);
+
+    const isOverStairs =
+      cx >= sLeft.x - 30 &&
+      cx <= sRight.x + 30 &&
+      cy >= sPortal.y - 15 &&
+      cy <= sBottom.y + 25;
+
+    setHoveredStairs(isOverStairs);
   };
 
   const handleClick = () => {
+    if (hoveredStairs && onNavigateFloor) {
+      onNavigateFloor(1);
+      return;
+    }
+
     if (hoveredAgent) {
       const realAgent = agents.find(a => a.id === hoveredAgent.id) || {
         id: hoveredAgent.id,
@@ -314,6 +370,16 @@ export const Floor0IsometricRoom: React.FC<Props> = ({
 
         {/* Action Controls */}
         <div className="flex items-center space-x-2">
+          {onNavigateFloor && (
+            <button
+              onClick={() => onNavigateFloor(1)}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-sm"
+              title="Ascend staircase to Floor 1: Media & Creative Studio"
+            >
+              <span>▲ Ascend to Floor 1</span>
+            </button>
+          )}
+
           <button
             onClick={() => setPacingMode(prev => prev === 'break' ? 'calm' : 'break')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm ${
@@ -364,7 +430,7 @@ export const Floor0IsometricRoom: React.FC<Props> = ({
             style={{
               imageRendering: 'pixelated',
               display: 'block',
-              cursor: hoveredAgent ? 'pointer' : 'default'
+              cursor: (hoveredAgent || hoveredStairs) ? 'pointer' : 'default'
             }}
           />
         </div>

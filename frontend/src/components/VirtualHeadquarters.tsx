@@ -1690,6 +1690,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             agents={agents}
             onSelectAgent={onSelectAgent}
             orbiState={orbiState}
+            onNavigateFloor={(floor) => setActiveFloor(floor)}
           />
         </div>
       ) : (
