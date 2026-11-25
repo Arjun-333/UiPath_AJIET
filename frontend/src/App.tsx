@@ -188,6 +188,26 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleResolveAllApprovals = async (action: 'approve' | 'reject', feedback: string) => {
+    const pending = approvals.filter(a => a.status === 'pending');
+    const errors: string[] = [];
+    for (const appr of pending) {
+      const res = await fetch(`/api/approvals/${appr.id}/resolve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, feedback })
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ detail: `Failed on ${appr.id}` }));
+        errors.push(errorData.detail || errorData.error || `Failed on ${appr.id}`);
+      }
+    }
+    await fetchData();
+    if (errors.length > 0) {
+      throw new Error(`${errors.length} of ${pending.length} approvals failed: ${errors[0]}`);
+    }
+  };
+
   const handleSendMessage = async (senderId: string, recipientId: string, content: string, messageType: string) => {
     const res = await fetch('/api/messages', {
       method: 'POST',
@@ -328,6 +348,7 @@ export const App: React.FC = () => {
         <ApprovalsModal
           approvals={approvals}
           onResolve={handleResolveApproval}
+          onResolveAll={handleResolveAllApprovals}
           onClose={() => setShowApprovalsModal(false)}
         />
       )}

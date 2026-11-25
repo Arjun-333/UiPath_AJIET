@@ -5,12 +5,16 @@ import { ShieldCheck, CheckCircle2, XCircle, AlertCircle, Play, Video, ExternalL
 interface Props {
   approvals: Approval[];
   onResolve: (approvalId: string, action: 'approve' | 'reject', feedback: string) => Promise<void>;
+  onResolveAll?: (action: 'approve' | 'reject', feedback: string) => Promise<void>;
   onClose: () => void;
 }
 
-export const ApprovalsModal: React.FC<Props> = ({ approvals, onResolve, onClose }) => {
+export const ApprovalsModal: React.FC<Props> = ({ approvals, onResolve, onResolveAll, onClose }) => {
   const [feedbackMap, setFeedbackMap] = useState<Record<string, string>>({});
   const [submittingId, setSubmittingId] = useState<string | null>(null);
+  const [confirmBulkAction, setConfirmBulkAction] = useState<'approve' | 'reject' | null>(null);
+  const [bulkFeedback, setBulkFeedback] = useState<string>('');
+  const [isBulkSubmitting, setIsBulkSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const pendingList = approvals.filter(a => a.status === 'pending');
@@ -24,6 +28,27 @@ export const ApprovalsModal: React.FC<Props> = ({ approvals, onResolve, onClose 
       setErrorMessage(err.message || 'Action resolution failed. Please try again.');
     } finally {
       setSubmittingId(null);
+    }
+  };
+
+  const handleBulkAction = async (action: 'approve' | 'reject') => {
+    if (pendingList.length === 0) return;
+    setIsBulkSubmitting(true);
+    setErrorMessage(null);
+    try {
+      if (onResolveAll) {
+        await onResolveAll(action, bulkFeedback);
+      } else {
+        for (const appr of pendingList) {
+          await onResolve(appr.id, action, bulkFeedback || feedbackMap[appr.id] || '');
+        }
+      }
+      setConfirmBulkAction(null);
+      setBulkFeedback('');
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Bulk action resolution failed. Please check remaining items.');
+    } finally {
+      setIsBulkSubmitting(false);
     }
   };
 
@@ -69,6 +94,81 @@ export const ApprovalsModal: React.FC<Props> = ({ approvals, onResolve, onClose 
             ✕
           </button>
         </div>
+
+        {/* Bulk Actions Bar when multiple approvals are pending */}
+        {pendingList.length > 1 && (
+          <div className="px-6 py-3 bg-slate-900/95 border-b border-slate-800 flex flex-col gap-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span className="text-xs font-mono text-slate-300">
+                <strong className="text-amber-400">{pendingList.length}</strong> pending requests awaiting CEO signature
+              </span>
+              {confirmBulkAction === null ? (
+                <div className="flex items-center space-x-2.5">
+                  <button
+                    onClick={() => setConfirmBulkAction('reject')}
+                    disabled={isBulkSubmitting || submittingId !== null}
+                    className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-red-950/50 hover:text-red-300 text-slate-300 rounded-lg text-xs font-bold transition-all border border-slate-700 disabled:opacity-50"
+                  >
+                    <XCircle className="w-3.5 h-3.5" />
+                    <span>Reject All ({pendingList.length})</span>
+                  </button>
+                  <button
+                    onClick={() => setConfirmBulkAction('approve')}
+                    disabled={isBulkSubmitting || submittingId !== null}
+                    className="flex items-center space-x-1.5 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-emerald-600/20 disabled:opacity-50"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Approve All ({pendingList.length})</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => {
+                      setConfirmBulkAction(null);
+                      setBulkFeedback('');
+                    }}
+                    disabled={isBulkSubmitting}
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold border border-slate-700 disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleBulkAction(confirmBulkAction)}
+                    disabled={isBulkSubmitting}
+                    className={`flex items-center space-x-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50 ${
+                      confirmBulkAction === 'approve'
+                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/30'
+                        : 'bg-red-600 hover:bg-red-500 text-white shadow-md shadow-red-600/30'
+                    }`}
+                  >
+                    {confirmBulkAction === 'approve' ? (
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    ) : (
+                      <XCircle className="w-3.5 h-3.5" />
+                    )}
+                    <span>
+                      {isBulkSubmitting
+                        ? `Processing ${pendingList.length} items...`
+                        : `Confirm ${confirmBulkAction === 'approve' ? 'Approve' : 'Reject'} All (${pendingList.length})`}
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {confirmBulkAction !== null && (
+              <input
+                type="text"
+                value={bulkFeedback}
+                onChange={(e) => setBulkFeedback(e.target.value)}
+                disabled={isBulkSubmitting}
+                placeholder={`Optional CEO note applied to all ${pendingList.length} ${confirmBulkAction === 'approve' ? 'approved' : 'rejected'} requests...`}
+                className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-orange-500"
+              />
+            )}
+          </div>
+        )}
 
         {errorMessage && (
           <div className="mx-6 mt-4 p-3 bg-red-950/60 border border-red-500/40 rounded-xl flex items-center space-x-2 text-xs text-red-300">
@@ -175,7 +275,7 @@ export const ApprovalsModal: React.FC<Props> = ({ approvals, onResolve, onClose 
                 <div className="flex justify-end space-x-3 pt-2">
                   <button
                     onClick={() => handleAction(appr.id, 'reject')}
-                    disabled={submittingId === appr.id}
+                    disabled={isBulkSubmitting || submittingId === appr.id}
                     className="flex items-center space-x-1.5 px-4 py-2 bg-slate-800 hover:bg-red-950/40 hover:text-red-400 text-slate-300 rounded-lg text-xs font-bold transition-all border border-slate-700 disabled:opacity-50"
                   >
                     <XCircle className="w-4 h-4" />
@@ -184,7 +284,7 @@ export const ApprovalsModal: React.FC<Props> = ({ approvals, onResolve, onClose 
 
                   <button
                     onClick={() => handleAction(appr.id, 'approve')}
-                    disabled={submittingId === appr.id}
+                    disabled={isBulkSubmitting || submittingId === appr.id}
                     className="flex items-center space-x-1.5 px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-lg shadow-emerald-600/30 disabled:opacity-50"
                   >
                     <CheckCircle2 className="w-4 h-4" />
