@@ -1446,36 +1446,29 @@ export const VirtualHeadquarters: React.FC<Props> = ({
 
   return (
     <div className="flex flex-col h-full bg-[#0b0f17] text-slate-100 rounded-2xl border border-slate-800/80 shadow-2xl overflow-hidden select-none">
-      {/* Unified Studio Floor Console Header */}
-      <div className="flex items-center justify-between px-6 py-3 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/80 shrink-0">
-        {/* Left: Active Floor Identity Capsule */}
-        <div className="flex items-center space-x-3.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500/20 to-amber-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 shadow-sm shadow-orange-500/10">
-            <Building2 className="w-4 h-4" />
+      {/* Streamlined Studio Floor Console HUD */}
+      <div className="flex items-center justify-between px-5 py-2 bg-slate-950/85 backdrop-blur-xl border-b border-slate-800/80 shrink-0">
+        {/* Left: Active Floor Identity */}
+        <div className="flex items-center space-x-2.5 shrink-0">
+          <div className="w-7 h-7 rounded-lg bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400">
+            <Building2 className="w-3.5 h-3.5" />
           </div>
-          <div className="flex flex-col">
-            <div className="flex items-center space-x-2">
-              <span className="font-pixel text-xs text-white tracking-wider">
-                {viewMode === 'multi_tower'
-                  ? '6-TIER CAMPUS ATRIUM'
-                  : FLOOR_CONFIG.find(f => f.floor === activeFloor)?.name.toUpperCase()}
-              </span>
-              <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                {viewMode === 'multi_tower'
-                  ? 'MULTI-TOWER'
-                  : FLOOR_CONFIG.find(f => f.floor === activeFloor)?.badge}
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400 font-mono">
+          <div className="flex items-center space-x-2">
+            <span className="font-mono text-xs font-bold text-white tracking-wide">
               {viewMode === 'multi_tower'
-                ? 'Ground Foundation (F0/F1) ➔ Mid Wings (F2/F3) ➔ Cloud Penthouse (F4/F5)'
-                : FLOOR_CONFIG.find(f => f.floor === activeFloor)?.subtitle}
-            </p>
+                ? 'Campus Atrium'
+                : `Floor ${activeFloor}: ${FLOOR_CONFIG.find(f => f.floor === activeFloor)?.name.split(':')[1]?.trim() || FLOOR_CONFIG.find(f => f.floor === activeFloor)?.name}`}
+            </span>
+            <span className="text-slate-500 text-xs font-mono hidden xl:inline">
+              {viewMode === 'multi_tower'
+                ? '• 6-Tier Overview'
+                : `• ${FLOOR_CONFIG.find(f => f.floor === activeFloor)?.subtitle}`}
+            </span>
           </div>
         </div>
 
-        {/* Center: Segmented Floor Switcher Micro-Dock */}
-        <div className="flex items-center space-x-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800/80 shadow-inner">
+        {/* Center: Segmented Floor Switcher */}
+        <div className="flex items-center space-x-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800/80 shadow-inner">
           {FLOOR_CONFIG.map(f => {
             const isActive = activeFloor === f.floor && viewMode === 'floor_focus';
             return (
@@ -1485,11 +1478,10 @@ export const VirtualHeadquarters: React.FC<Props> = ({
                   setViewMode('floor_focus');
                   setActiveFloor(f.floor);
                 }}
-                className={`relative px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all duration-200 ${
-                  isActive
-                    ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-md shadow-orange-600/30'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                }`}
+                className={`relative px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all duration-150 ${isActive
+                  ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-md shadow-orange-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  }`}
                 title={f.name}
               >
                 <span>F{f.floor}</span>
@@ -1502,26 +1494,26 @@ export const VirtualHeadquarters: React.FC<Props> = ({
         </div>
 
         {/* Right: Consolidated Controls Strip */}
-        <div className="flex items-center space-x-2">
-          {/* Inter-Floor Stairs Transit Buttons */}
-          <div className="flex items-center space-x-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800/80">
+        <div className="flex items-center space-x-2 shrink-0">
+          {/* Inter-Floor Stairs Transit */}
+          <div className="flex items-center bg-slate-900/80 rounded-lg border border-slate-800/80 overflow-hidden">
             <button
               onClick={() => handleUseStairs(activeFloor - 1)}
               disabled={activeFloor <= 0}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center space-x-1 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-amber-300 hover:bg-amber-500/20"
+              className="px-2 py-1 text-xs font-mono font-semibold flex items-center space-x-1 transition-all disabled:opacity-25 disabled:cursor-not-allowed text-amber-300 hover:bg-amber-500/20"
               title={activeFloor > 0 ? `Stairs down to Floor ${activeFloor - 1}` : 'Ground floor'}
             >
-              <ArrowDown className="w-3.5 h-3.5" />
+              <ArrowDown className="w-3 h-3" />
               <span>Down</span>
             </button>
-            <span className="text-[10px] text-slate-700">|</span>
+            <span className="text-slate-700 text-xs">|</span>
             <button
               onClick={() => handleUseStairs(activeFloor + 1)}
               disabled={activeFloor >= 5}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center space-x-1 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-emerald-300 hover:bg-emerald-500/20"
+              className="px-2 py-1 text-xs font-mono font-semibold flex items-center space-x-1 transition-all disabled:opacity-25 disabled:cursor-not-allowed text-emerald-300 hover:bg-emerald-500/20"
               title={activeFloor < 5 ? `Stairs up to Floor ${activeFloor + 1}` : 'Top floor'}
             >
-              <ArrowUp className="w-3.5 h-3.5" />
+              <ArrowUp className="w-3 h-3" />
               <span>Up</span>
             </button>
           </div>
@@ -1535,54 +1527,53 @@ export const VirtualHeadquarters: React.FC<Props> = ({
                 handleTriggerTeamBreak();
               }
             }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center space-x-1.5 border transition-all ${
-              pacingMode === 'break'
-                ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold shadow-md shadow-amber-500/20'
-                : 'bg-slate-900/90 text-amber-300 border-slate-800 hover:bg-slate-800/80'
-            }`}
+            className={`px-2.5 py-1 rounded-lg text-xs font-mono font-semibold flex items-center space-x-1.5 border transition-all ${pacingMode === 'break'
+              ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold shadow-sm'
+              : 'bg-slate-900/80 text-amber-300 border-slate-800 hover:bg-slate-800/80'
+              }`}
             title="Toggle Employee Coffee Break / Work Workstation Pacing"
           >
-            <Coffee className="w-3.5 h-3.5" />
-            <span>{pacingMode === 'break' ? 'Return to Work' : 'Coffee Break'}</span>
+            <Coffee className="w-3 h-3" />
+            <span>{pacingMode === 'break' ? 'Return' : 'Coffee Break'}</span>
           </button>
 
           {/* View Preference: Modern 2:1 Isometric Cutaway vs Legacy */}
-          <div className="flex items-center space-x-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800/80">
+          <div className="flex items-center space-x-0.5 bg-slate-900/80 p-0.5 rounded-lg border border-slate-800/80">
             <button
               onClick={() => {
                 setViewPreference('isometric');
                 setViewMode('floor_focus');
               }}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center space-x-1 ${viewPreference === 'isometric'
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                  : 'text-slate-400 hover:text-white'
+              className={`px-2 py-1 rounded text-xs font-mono font-semibold transition-all ${viewPreference === 'isometric'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-white'
                 }`}
               title="2:1 Isometric Cutaway Room View"
             >
-              <span>🏢 Isometric</span>
+              <span>Isometric</span>
             </button>
             <button
               onClick={() => setViewPreference('legacy')}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center space-x-1 ${viewPreference === 'legacy'
-                  ? 'bg-slate-700 text-white'
-                  : 'text-slate-500 hover:text-white'
+              className={`px-2 py-1 rounded text-xs font-mono font-semibold transition-all ${viewPreference === 'legacy'
+                ? 'bg-slate-700 text-white'
+                : 'text-slate-500 hover:text-white'
                 }`}
               title="Legacy Tower View (?view=legacy)"
             >
-              <span>📐 Legacy</span>
+              <span>Legacy</span>
             </button>
           </div>
 
           {/* Zoom Controls */}
-          <div className="flex items-center space-x-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800/80">
+          <div className="flex items-center bg-slate-900/80 rounded-lg border border-slate-800/80 px-1 py-0.5">
             <button
               onClick={() => setZoom(z => Math.max(0.7, z - 0.15))}
               className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800"
               title="Zoom Out"
             >
-              <ZoomOut className="w-3.5 h-3.5" />
+              <ZoomOut className="w-3 h-3" />
             </button>
-            <span className="text-[11px] font-mono px-1 font-bold text-slate-300">
+            <span className="text-[10px] font-mono px-1 font-bold text-slate-300">
               {Math.round(zoom * 100)}%
             </span>
             <button
@@ -1590,7 +1581,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
               className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800"
               title="Zoom In"
             >
-              <ZoomIn className="w-3.5 h-3.5" />
+              <ZoomIn className="w-3 h-3" />
             </button>
           </div>
         </div>
