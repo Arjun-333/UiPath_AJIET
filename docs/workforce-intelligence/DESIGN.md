@@ -413,19 +413,19 @@ CREATE INDEX idx_audit_target_time ON workforce_audit_log(target_agent_id, times
 
 | Operation / Endpoint | CEO (Arjun) | Dept Head (COO, CTO, Director) | Viewer / Auditor | AI Agent (Advisor, AURI) |
 | :--- | :---: | :---: | :---: | :---: |
-| View Leaderboard & Metrics | ✅ Allowed | ✅ Allowed | ✅ Allowed | ✅ Allowed (Read-only) |
-| View Agent Dossier & History | ✅ Allowed | ✅ Allowed | ✅ Allowed | ✅ Allowed (Read-only) |
-| Run Sandbox Recruitment Test | ✅ Allowed | ✅ Allowed | ❌ Forbidden | ❌ Forbidden |
-| Submit Lifecycle Request (Draft) | ✅ Allowed | ✅ Allowed | ❌ Forbidden | ❌ Forbidden (Only recs) |
-| **Authorize / Execute Hire** | **✅ EXCLUSIVE** | ❌ Forbidden (HTTP 403) | ❌ Forbidden (HTTP 403) | ❌ Forbidden (HTTP 403) |
-| **Authorize / Execute Promotion** | **✅ EXCLUSIVE** | ❌ Forbidden (HTTP 403) | ❌ Forbidden (HTTP 403) | ❌ Forbidden (HTTP 403) |
-| **Authorize / Execute Retraining** | **✅ EXCLUSIVE** | ❌ Forbidden (HTTP 403) | ❌ Forbidden (HTTP 403) | ❌ Forbidden (HTTP 403) |
-| **Authorize / Execute Reassign** | **✅ EXCLUSIVE** | ❌ Forbidden (HTTP 403) | ❌ Forbidden (HTTP 403) | ❌ Forbidden (HTTP 403) |
-| **Authorize / Execute Suspend** | **✅ EXCLUSIVE** | ❌ Forbidden (HTTP 403) | ❌ Forbidden (HTTP 403) | ❌ Forbidden (HTTP 403) |
-| **Authorize / Execute Terminate** | **✅ EXCLUSIVE** | ❌ Forbidden (HTTP 403) | ❌ Forbidden (HTTP 403) | ❌ Forbidden (HTTP 403) |
-| **Authorize / Execute Rollback** | **✅ EXCLUSIVE** | ❌ Forbidden (HTTP 403) | ❌ Forbidden (HTTP 403) | ❌ Forbidden (HTTP 403) |
-| View Append-Only Audit Log | ✅ Allowed | ✅ Allowed (Read-only) | ✅ Allowed (Read-only) | ❌ Forbidden |
-| Update / Delete Audit Records | **❌ BLOCKED FOR ALL** | **❌ BLOCKED FOR ALL** | **❌ BLOCKED FOR ALL** | **❌ BLOCKED FOR ALL** |
+| View Leaderboard & Metrics | Allowed | Allowed | Allowed | Allowed (Read-only) |
+| View Agent Dossier & History | Allowed | Allowed | Allowed | Allowed (Read-only) |
+| Run Sandbox Recruitment Test | Allowed | Allowed | Forbidden | Forbidden |
+| Submit Lifecycle Request (Draft) | Allowed | Allowed | Forbidden | Forbidden (Only recs) |
+| **Authorize / Execute Hire** | **EXCLUSIVE** | Forbidden (HTTP 403) | Forbidden (HTTP 403) | Forbidden (HTTP 403) |
+| **Authorize / Execute Promotion** | **EXCLUSIVE** | Forbidden (HTTP 403) | Forbidden (HTTP 403) | Forbidden (HTTP 403) |
+| **Authorize / Execute Retraining** | **EXCLUSIVE** | Forbidden (HTTP 403) | Forbidden (HTTP 403) | Forbidden (HTTP 403) |
+| **Authorize / Execute Reassign** | **EXCLUSIVE** | Forbidden (HTTP 403) | Forbidden (HTTP 403) | Forbidden (HTTP 403) |
+| **Authorize / Execute Suspend** | **EXCLUSIVE** | Forbidden (HTTP 403) | Forbidden (HTTP 403) | Forbidden (HTTP 403) |
+| **Authorize / Execute Terminate** | **EXCLUSIVE** | Forbidden (HTTP 403) | Forbidden (HTTP 403) | Forbidden (HTTP 403) |
+| **Authorize / Execute Rollback** | **EXCLUSIVE** | Forbidden (HTTP 403) | Forbidden (HTTP 403) | Forbidden (HTTP 403) |
+| View Append-Only Audit Log | Allowed | Allowed (Read-only) | Allowed (Read-only) | Forbidden |
+| Update / Delete Audit Records | **BLOCKED FOR ALL** | **BLOCKED FOR ALL** | **BLOCKED FOR ALL** | **BLOCKED FOR ALL** |
 
 ### 6.2 Consequential Action Execution Flow
 
@@ -480,10 +480,10 @@ Lifecycle operations trigger immediate visual reactions in the Virtual Campus wi
 | **Hire Deployed** | `employee_hired` | Character spawns at Floor 0 Reception / Campus entrance, walks down aisle to designated desk. | Confetti / sparkles, name badge revealed, sits at desk. |
 | **Promoted** | `employee_promoted` | Character stands up from desk, plays brief celebration animation, updates shirt/collar trim. | Golden star overhead icon, updated title badge. |
 | **Reassigned** | `employee_reassigned` | Stands up, walks to escalator/stairwell, changes floor, enters new department room, sits at new desk. | Brief luggage / transit thought bubble. |
-| **Suspended** | `employee_suspended` | Desk monitor turns off, character turns grey/faded (50% opacity), workstation marked "SUSPENDED". | Yellow pause badge `⏸` overhead. |
-| **Retraining** | `employee_retraining` | Character seated at testing booth or study desk with holographic terminal open. | Animated rotating gear / book icon `📖`. |
+| **Suspended** | `employee_suspended` | Desk monitor turns off, character turns grey/faded (50% opacity), workstation marked "SUSPENDED". | Yellow pause badge overhead. |
+| **Retraining** | `employee_retraining` | Character seated at testing booth or study desk with holographic terminal open. | Animated rotating gear / training icon. |
 | **Terminated** | `employee_terminated` | Stands up, walks along corridor out the exit door, disappears from active floor map; archived in roster. | Brief wave farewell, desk cleared of personal items. |
-| **Reactivated** | `employee_reactivated` | Re-enters floor from elevator, walks back to assigned desk, opacity restored to 100%. | Green checkmark `✔` overhead. |
+| **Reactivated** | `employee_reactivated` | Re-enters floor from elevator, walks back to assigned desk, opacity restored to 100%. | Green active checkmark overhead. |
 
 ---
 

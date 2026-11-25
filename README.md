@@ -5,16 +5,16 @@ Welcome to **Project Autonomia** — the autonomous digital media organization f
 
 ---
 
-## 🏛️ Leadership & Official Department Roster
+## Leadership & Official Department Roster
 
-### 👑 Executive Leadership (Floor 0)
+### Executive Leadership (Floor 0)
 - **Arjun**: Founder, CEO & Overall Main Director
 - **AURI**: Official Mascot & Executive AI Interface to CEO Arjun
 - **Marcus Vance**: Chief Operations Officer (Workflow Sequencing & Operations Coordinator)
 
 ---
 
-### 💻 Technology & Infrastructure Department (Floor 5)
+### Technology & Infrastructure Department (Floor 5)
 - **Pratham**: Chief Technology Officer & Technical Architecture Lead
 - **Mallika**: Lead API & Database Systems Manager
 - **Vaibhav**: DevOps & Infrastructure Security Supervisor
@@ -22,7 +22,7 @@ Welcome to **Project Autonomia** — the autonomous digital media organization f
 
 ---
 
-### 🎬 Media & Creative Department (Floor 1 & Social Media)
+### Media & Creative Department (Floor 1 & Social Media)
 - **Darshan**: Lead Video Director & Production Head (FFmpeg Video Compositor)
 - **Shrinithi**: Lead Scriptwriter & Content Strategist (Tutorial & Promo Narration)
 - **Vaishnavi**: Thumbnail & Creative Visual Designer (1280x720 High-CTR Visuals)
@@ -30,21 +30,21 @@ Welcome to **Project Autonomia** — the autonomous digital media organization f
 
 ---
 
-### 📚 Documentation & Campus Operations Department (Floor 4)
+### Documentation & Campus Operations Department (Floor 4)
 - **Iffah**: Lead Documentation & Campus Outreach Lead (Managing Automate Campus Quest Emails & Campaigns)
 - **Jiya**: Research & Technical Documentation Specialist (UiPath Documentation & Knowledge Base)
 - **Srijana**: Quality & Compliance Inspector (Audio/Video Sync & Standards Inspection)
 
 ---
 
-## 🤖 AURI Mascot Source of Truth
+## AURI Mascot Source of Truth
 - **Reference Image**: Located at `frontend/public/assets/branding/auri-reference.png` (and `orbi-reference.png`).
 - **8 Dynamic States**: `idle`, `walking`, `waving`, `thinking`, `working`, `celebrating`, `waiting`, `error`.
 - Driven in real time by backend WebSockets matching organizational events.
 
 ---
 
-## 🚀 Quickstart Guide
+## Quickstart Guide
 
 ### 1. Launch Autonomia
 ```bash
@@ -59,7 +59,7 @@ http://localhost:8080/app/
 
 ---
 
-## 🛠️ Manual Running Instructions
+## Manual Running Instructions
 
 If you prefer to set up and run the backend and frontend manually (without `./run_autonomia.sh`):
 
@@ -119,7 +119,7 @@ From the CEO Command Centre, issue natural-language instructions:
 
 ---
 
-## 🧪 Automated Test Verification
+## Automated Test Verification
 Run all backend, multi-agent, and legacy email test suites:
 ```bash
 source .venv/bin/activate
