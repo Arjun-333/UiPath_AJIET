@@ -54,10 +54,63 @@ Welcome to **Project Autonomia** — the autonomous digital media organization f
 ### 2. Open the Virtual Headquarters
 Visit in your browser:
 ```
-http://localhost:8000/app/
+http://localhost:8080/app/
 ```
 
-### 3. Issue Directives as CEO Arjun
+---
+
+## 🛠️ Manual Running Instructions
+
+If you prefer to set up and run the backend and frontend manually (without `./run_autonomia.sh`):
+
+### 1. First-Time Setup
+```bash
+# Create & activate Python virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Install frontend dependencies
+cd frontend
+npm install
+cd ..
+```
+
+### 2. Option A — Production Build (Single Server)
+Build the frontend bundle and serve everything from FastAPI on port `8080`:
+```bash
+# 1. Build the frontend
+cd frontend
+npm run build
+cd ..
+
+# 2. Initialize the database
+source .venv/bin/activate
+python3 -c "import asyncio; from backend.app.database.session import init_db; asyncio.run(init_db())"
+
+# 3. Start the FastAPI server
+uvicorn backend.app.main:app --host 0.0.0.0 --port 8080
+```
+Open `http://localhost:8080/app/` in your browser.
+
+### 3. Option B — Development Mode (Hot Reload)
+Run the backend and Vite dev server in two separate terminals:
+
+**Terminal 1 (Backend API & WebSockets):**
+```bash
+source .venv/bin/activate
+uvicorn backend.app.main:app --host 0.0.0.0 --port 8080 --reload
+```
+
+**Terminal 2 (Frontend Dev Server):**
+```bash
+cd frontend
+npm run dev
+```
+
+### 4. Issue Directives as CEO Arjun
 From the CEO Command Centre, issue natural-language instructions:
 - `"Create a YouTube video explaining UiPath Document Understanding"`
 - `"Prepare three Instagram Reels from our latest YouTube video"`
@@ -72,4 +125,3 @@ Run all backend, multi-agent, and legacy email test suites:
 source .venv/bin/activate
 pytest -v
 ```
-All 14 unit and integration tests pass with 100% coverage.
