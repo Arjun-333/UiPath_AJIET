@@ -987,7 +987,8 @@ export function createStaircaseUp(
   gx: number = 0.2,
   gyBottom: number = 9.4,
   gyTop: number = 5.2,
-  targetFloor: number = 1
+  targetFloor: number = 1,
+  signLabel: string = '▲ TO FLOOR 1: MEDIA STUDIO'
 ): RenderItem[] {
   const items: RenderItem[] = [];
   const stairWidth = 1.4; // Width in X axis (from gx to gx + stairWidth)
@@ -995,7 +996,7 @@ export function createStaircaseUp(
   const stepRise = 8; // gz rise per step
   const landingHeight = numSteps * stepRise + 8; // gz = 72px
 
-  // A. Entrance Threshold Mat on Floor 0 (gz = 0)
+  // A. Entrance Threshold Mat on Floor (gz = 0)
   items.push({
     depth: (gx + stairWidth / 2 + gyBottom + 0.2) * 100,
     render: (ctx, originX, originY) => {
@@ -1034,7 +1035,6 @@ export function createStaircaseUp(
   const gySpan = (gyBottom - gyTop) / numSteps;
 
   for (let i = 0; i < numSteps; i++) {
-    const stepIdx = i;
     const gyStart = gyBottom - i * gySpan;
     const gyEnd = gyStart - gySpan;
     const gz = (i + 1) * stepRise;
@@ -1288,9 +1288,9 @@ export function createStaircaseUp(
       ctx.lineTo(d1.x, d1.y);
       ctx.stroke();
 
-      // 3. Directional Signboard above Doorway (▲ TO FLOOR 1: MEDIA STUDIO)
+      // 3. Directional Signboard above Doorway
       const sCenter = toScreen(0, (doorGyStart + doorGyEnd) / 2, doorTop + 14, originX, originY);
-      const signW = 164;
+      const signW = 175;
       const signH = 22;
 
       ctx.save();
@@ -1310,14 +1310,835 @@ export function createStaircaseUp(
       ctx.fill();
 
       // Signboard text
-      ctx.font = 'bold 10px monospace';
+      ctx.font = 'bold 9.5px monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillStyle = '#FFFFFF';
-      ctx.fillText('▲ TO FLOOR 1: MEDIA STUDIO', sCenter.x + 5, sCenter.y);
+      ctx.fillText(signLabel, sCenter.x + 5, sCenter.y);
       ctx.restore();
     }
   });
 
   return items;
+}
+
+// -------------------------------------------------------------
+// 11. Architectural Isometric Staircase Leading Downward
+// -------------------------------------------------------------
+// Connects upper floors back down to lower floors through a cutaway
+// stairwell aperture in the floor slab with glass balustrades & directional sign.
+export function createStaircaseDown(
+  gx: number = 0.2,
+  gyTop: number = 5.2,
+  gyBottom: number = 9.4,
+  targetFloor: number = 0,
+  signLabel: string = '▼ TO FLOOR 0: EXECUTIVE SUITE'
+): RenderItem[] {
+  const items: RenderItem[] = [];
+  const stairWidth = 1.4;
+  const numSteps = 7;
+  const gySpan = (gyBottom - gyTop) / numSteps;
+
+  // A. Stairwell Cutaway Cavity & Descending Steps
+  items.push({
+    depth: (gx + stairWidth / 2 + (gyTop + gyBottom) / 2) * 100 - 10,
+    render: (ctx, originX, originY) => {
+      // Dark stairwell cavity beneath the floor opening
+      const c0 = toScreen(gx, gyTop, 0, originX, originY);
+      const c1 = toScreen(gx + stairWidth, gyTop, 0, originX, originY);
+      const c2 = toScreen(gx + stairWidth, gyBottom, 0, originX, originY);
+      const c3 = toScreen(gx, gyBottom, 0, originX, originY);
+
+      ctx.fillStyle = '#0F172A';
+      ctx.beginPath();
+      ctx.moveTo(c0.x, c0.y);
+      ctx.lineTo(c1.x, c1.y);
+      ctx.lineTo(c2.x, c2.y);
+      ctx.lineTo(c3.x, c3.y);
+      ctx.closePath();
+      ctx.fill();
+
+      // Outer rim safety trim
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Descending treads into stairwell
+      for (let i = 0; i < numSteps; i++) {
+        const yS = gyTop + i * gySpan;
+        const yE = yS + gySpan;
+        const z = -((i + 1) * 7);
+
+        const s0 = toScreen(gx + 0.1, yS, z, originX, originY);
+        const s1 = toScreen(gx + stairWidth - 0.1, yS, z, originX, originY);
+        const s2 = toScreen(gx + stairWidth - 0.1, yE, z, originX, originY);
+        const s3 = toScreen(gx + 0.1, yE, z, originX, originY);
+
+        ctx.fillStyle = i % 2 === 0 ? '#BD8036' : '#7C4F1A';
+        ctx.beginPath();
+        ctx.moveTo(s0.x, s0.y);
+        ctx.lineTo(s1.x, s1.y);
+        ctx.lineTo(s2.x, s2.y);
+        ctx.lineTo(s3.x, s3.y);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = '#451A03';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    }
+  });
+
+  // B. Upper Floor Guardrail & Entry Portal at Floor Level (gz = 0 to 24)
+  items.push({
+    depth: (gx + stairWidth / 2 + (gyTop + gyBottom) / 2) * 100 + 35,
+    render: (ctx, originX, originY) => {
+      // Guardrail along outer edge of descending stairwell (gx + stairWidth)
+      const gr0 = toScreen(gx + stairWidth, gyTop, 22, originX, originY);
+      const gr1 = toScreen(gx + stairWidth, gyBottom - 0.4, 22, originX, originY);
+
+      // Glass Balustrade panel
+      const gb0 = toScreen(gx + stairWidth, gyTop, 0, originX, originY);
+      const gb1 = toScreen(gx + stairWidth, gyBottom - 0.4, 0, originX, originY);
+
+      ctx.fillStyle = 'rgba(186, 230, 253, 0.45)';
+      ctx.beginPath();
+      ctx.moveTo(gb0.x, gb0.y);
+      ctx.lineTo(gb1.x, gb1.y);
+      ctx.lineTo(gr1.x, gr1.y);
+      ctx.lineTo(gr0.x, gr0.y);
+      ctx.closePath();
+      ctx.fill();
+
+      // Handrail
+      ctx.strokeStyle = ISO_PALETTE.wood_outline;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(gr0.x, gr0.y);
+      ctx.lineTo(gr1.x, gr1.y);
+      ctx.stroke();
+
+      // Posts
+      const pMid = toScreen(gx + stairWidth, (gyTop + gyBottom) / 2, 0, originX, originY);
+      const pMidTop = toScreen(gx + stairWidth, (gyTop + gyBottom) / 2, 22, originX, originY);
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(pMid.x, pMid.y);
+      ctx.lineTo(pMidTop.x, pMidTop.y);
+      ctx.moveTo(gb0.x, gb0.y);
+      ctx.lineTo(gr0.x, gr0.y);
+      ctx.stroke();
+
+      // Downward Directional Signboard on Wall
+      const sCenter = toScreen(0, (gyTop + gyBottom) / 2 - 0.6, 75, originX, originY);
+      const signW = 180;
+      const signH = 22;
+
+      ctx.save();
+      ctx.fillStyle = '#0F172A';
+      ctx.fillRect(sCenter.x - signW / 2, sCenter.y - signH / 2, signW, signH);
+      ctx.strokeStyle = '#F59E0B'; // Amber portal border for downward connection
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(sCenter.x - signW / 2, sCenter.y - signH / 2, signW, signH);
+
+      // Status indicator LED
+      ctx.fillStyle = '#F59E0B';
+      ctx.beginPath();
+      ctx.arc(sCenter.x - signW / 2 + 10, sCenter.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.font = 'bold 9.5px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillText(signLabel, sCenter.x + 5, sCenter.y);
+      ctx.restore();
+    }
+  });
+
+  return items;
+}
+
+// -------------------------------------------------------------
+// 12. Architectural Isometric Staircase Ascending Along Left Wall
+// -------------------------------------------------------------
+// Ascends along the Left Back Wall (gy = 0, along X axis) towards
+// an upper mezzanine portal leading up to Floor 2 (Marketing & Growth).
+export function createStaircaseUpAlongLeftWall(
+  gy: number = 0.2,
+  gxBottom: number = 9.4,
+  gxTop: number = 5.6,
+  targetFloor: number = 2,
+  signLabel: string = '▲ TO FLOOR 2: MARKETING & GROWTH'
+): RenderItem[] {
+  const items: RenderItem[] = [];
+  const stairDepth = 1.3; // Depth in Y axis
+  const numSteps = 7;
+  const stepRise = 9;
+  const landingHeight = numSteps * stepRise + 9; // gz = 72px
+  const gxSpan = (gxBottom - gxTop) / numSteps;
+
+  // A. Entrance Threshold Mat on Floor (gz = 0)
+  items.push({
+    depth: (gxBottom + 0.2 + gy + stairDepth / 2) * 100,
+    render: (ctx, originX, originY) => {
+      const m0 = toScreen(gxBottom, gy - 0.1, 0, originX, originY);
+      const m1 = toScreen(gxBottom, gy + stairDepth + 0.1, 0, originX, originY);
+      const m2 = toScreen(gxBottom + 0.5, gy + stairDepth + 0.1, 0, originX, originY);
+      const m3 = toScreen(gxBottom + 0.5, gy - 0.1, 0, originX, originY);
+
+      ctx.fillStyle = '#E2E8F0';
+      ctx.beginPath();
+      ctx.moveTo(m0.x, m0.y);
+      ctx.lineTo(m1.x, m1.y);
+      ctx.lineTo(m2.x, m2.y);
+      ctx.lineTo(m3.x, m3.y);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = '#94A3B8';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  });
+
+  // B. Ascending Steps along X
+  for (let i = 0; i < numSteps; i++) {
+    const gxStart = gxBottom - i * gxSpan;
+    const gxEnd = gxStart - gxSpan;
+    const gz = (i + 1) * stepRise;
+    const gxMid = (gxStart + gxEnd) / 2;
+
+    items.push({
+      depth: (gxMid + gy + stairDepth / 2) * 100 + gz,
+      render: (ctx, originX, originY) => {
+        // 1. Step Tread (Top Face in Honey Oak)
+        const t0 = toScreen(gxEnd, gy, gz, originX, originY);
+        const t1 = toScreen(gxStart, gy, gz, originX, originY);
+        const t2 = toScreen(gxStart, gy + stairDepth, gz, originX, originY);
+        const t3 = toScreen(gxEnd, gy + stairDepth, gz, originX, originY);
+
+        ctx.fillStyle = ISO_PALETTE.wood_top;
+        ctx.beginPath();
+        ctx.moveTo(t0.x, t0.y);
+        ctx.lineTo(t1.x, t1.y);
+        ctx.lineTo(t2.x, t2.y);
+        ctx.lineTo(t3.x, t3.y);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = ISO_PALETTE.wood_outline;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // 2. Step Riser (Vertical Face facing viewer at gxStart, along Y)
+        const rB0 = toScreen(gxStart, gy, gz - stepRise, originX, originY);
+        const rB1 = toScreen(gxStart, gy + stairDepth, gz - stepRise, originX, originY);
+        const rT1 = toScreen(gxStart, gy + stairDepth, gz, originX, originY);
+        const rT0 = toScreen(gxStart, gy, gz, originX, originY);
+
+        ctx.fillStyle = '#E2E8F0';
+        ctx.beginPath();
+        ctx.moveTo(rB0.x, rB0.y);
+        ctx.lineTo(rB1.x, rB1.y);
+        ctx.lineTo(rT1.x, rT1.y);
+        ctx.lineTo(rT0.x, rT0.y);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = '#94A3B8';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // 3. Outer Stringer Face (along gy + stairDepth, down to floor)
+        const sT0 = toScreen(gxEnd, gy + stairDepth, gz, originX, originY);
+        const sT1 = toScreen(gxStart, gy + stairDepth, gz, originX, originY);
+        const sB1 = toScreen(gxStart, gy + stairDepth, 0, originX, originY);
+        const sB0 = toScreen(gxEnd, gy + stairDepth, 0, originX, originY);
+
+        ctx.fillStyle = '#CBD5E1';
+        ctx.beginPath();
+        ctx.moveTo(sT0.x, sT0.y);
+        ctx.lineTo(sT1.x, sT1.y);
+        ctx.lineTo(sB1.x, sB1.y);
+        ctx.lineTo(sB0.x, sB0.y);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = '#64748B';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // 4. Baluster Post & Handrail segment at outer edge (gy + stairDepth)
+        const bBase = toScreen(gxMid, gy + stairDepth - 0.05, gz, originX, originY);
+        const bTop = toScreen(gxMid, gy + stairDepth - 0.05, gz + 22, originX, originY);
+
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(bBase.x, bBase.y);
+        ctx.lineTo(bTop.x, bTop.y);
+        ctx.stroke();
+
+        // Handrail segment
+        const prevMid = gxMid + gxSpan;
+        const prevZ = gz - stepRise;
+        const hrStart = toScreen(prevMid, gy + stairDepth - 0.05, prevZ + 22, originX, originY);
+
+        ctx.strokeStyle = ISO_PALETTE.wood_outline;
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(hrStart.x, hrStart.y);
+        ctx.lineTo(bTop.x, bTop.y);
+        ctx.stroke();
+
+        ctx.strokeStyle = ISO_PALETTE.wood_top;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(hrStart.x, hrStart.y - 1);
+        ctx.lineTo(bTop.x, bTop.y - 1);
+        ctx.stroke();
+      }
+    });
+  }
+
+  // C. Upper Mezzanine Landing & Left Wall Portal
+  const landingGxStart = gxTop;
+  const landingGxEnd = gxTop - 0.8;
+  const landingGz = landingHeight;
+
+  items.push({
+    depth: ((landingGxStart + landingGxEnd) / 2 + gy + stairDepth / 2) * 100 + landingGz,
+    render: (ctx, originX, originY) => {
+      // Landing Platform Top Face
+      const lp0 = toScreen(landingGxEnd, 0, landingGz, originX, originY);
+      const lp1 = toScreen(landingGxStart, 0, landingGz, originX, originY);
+      const lp2 = toScreen(landingGxStart, gy + stairDepth, landingGz, originX, originY);
+      const lp3 = toScreen(landingGxEnd, gy + stairDepth, landingGz, originX, originY);
+
+      ctx.fillStyle = ISO_PALETTE.wood_top;
+      ctx.beginPath();
+      ctx.moveTo(lp0.x, lp0.y);
+      ctx.lineTo(lp1.x, lp1.y);
+      ctx.lineTo(lp2.x, lp2.y);
+      ctx.lineTo(lp3.x, lp3.y);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = ISO_PALETTE.wood_outline;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Platform Outer Face down to floor
+      const lf0 = toScreen(landingGxEnd, gy + stairDepth, 0, originX, originY);
+      const lf1 = toScreen(landingGxStart, gy + stairDepth, 0, originX, originY);
+      const lf2 = toScreen(landingGxStart, gy + stairDepth, landingGz, originX, originY);
+      const lf3 = toScreen(landingGxEnd, gy + stairDepth, landingGz, originX, originY);
+
+      ctx.fillStyle = '#CBD5E1';
+      ctx.beginPath();
+      ctx.moveTo(lf0.x, lf0.y);
+      ctx.lineTo(lf1.x, lf1.y);
+      ctx.lineTo(lf2.x, lf2.y);
+      ctx.lineTo(lf3.x, lf3.y);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = '#64748B';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Safety Railing on landing
+      const rP0 = toScreen(landingGxStart, gy + stairDepth - 0.05, landingGz + 22, originX, originY);
+      const rP1 = toScreen(landingGxEnd, gy + stairDepth - 0.05, landingGz + 22, originX, originY);
+      ctx.strokeStyle = ISO_PALETTE.wood_outline;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(rP0.x, rP0.y);
+      ctx.lineTo(rP1.x, rP1.y);
+      ctx.stroke();
+
+      // Doorway Portal Aperture cut into Left Wall (gy = 0)
+      const doorBottom = landingGz;
+      const doorTop = landingGz + 64;
+
+      const d0 = toScreen(landingGxStart, 0, doorBottom, originX, originY);
+      const d1 = toScreen(landingGxEnd, 0, doorBottom, originX, originY);
+      const d2 = toScreen(landingGxEnd, 0, doorTop, originX, originY);
+      const d3 = toScreen(landingGxStart, 0, doorTop, originX, originY);
+
+      ctx.fillStyle = '#0F172A';
+      ctx.beginPath();
+      ctx.moveTo(d0.x, d0.y);
+      ctx.lineTo(d1.x, d1.y);
+      ctx.lineTo(d2.x, d2.y);
+      ctx.lineTo(d3.x, d3.y);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(d0.x, d0.y);
+      ctx.lineTo(d3.x, d3.y);
+      ctx.lineTo(d2.x, d2.y);
+      ctx.lineTo(d1.x, d1.y);
+      ctx.stroke();
+
+      // Directional Signboard above Doorway on Left Wall
+      const sCenter = toScreen((landingGxStart + landingGxEnd) / 2, 0, doorTop + 14, originX, originY);
+      const signW = 180;
+      const signH = 22;
+
+      ctx.save();
+      ctx.fillStyle = '#0F172A';
+      ctx.fillRect(sCenter.x - signW / 2, sCenter.y - signH / 2, signW, signH);
+      ctx.strokeStyle = '#38BDF8';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(sCenter.x - signW / 2, sCenter.y - signH / 2, signW, signH);
+
+      // Status indicator LED
+      ctx.fillStyle = '#10B981';
+      ctx.beginPath();
+      ctx.arc(sCenter.x - signW / 2 + 10, sCenter.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.font = 'bold 9.5px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillText(signLabel, sCenter.x + 5, sCenter.y);
+      ctx.restore();
+    }
+  });
+
+  return items;
+}
+
+// -------------------------------------------------------------
+// 12. Media Studio Specialized Isometric Pixel Sprites
+// -------------------------------------------------------------
+
+// A. Professional Studio Video Camera on Tripod
+export function createStudioCamera(
+  gx: number,
+  gy: number,
+  facing: 'SE' | 'SW' = 'SE'
+): RenderItem {
+  return {
+    depth: (gx + gy) * 100 + 45,
+    render: (ctx, originX, originY) => {
+      const basePos = toScreen(gx, gy, 0, originX, originY);
+      const camPos = toScreen(gx, gy, 34, originX, originY);
+
+      // 1. Soft Tripod Shadow
+      ctx.save();
+      ctx.fillStyle = ISO_PALETTE.shadow_soft;
+      ctx.beginPath();
+      ctx.ellipse(basePos.x, basePos.y, 18, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // 2. Tripod Three-Legged Stand (Metal Struts)
+      const leg0 = toScreen(gx - 0.35, gy - 0.2, 0, originX, originY);
+      const leg1 = toScreen(gx + 0.35, gy - 0.2, 0, originX, originY);
+      const leg2 = toScreen(gx, gy + 0.35, 0, originX, originY);
+
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(camPos.x, camPos.y + 2);
+      ctx.lineTo(leg0.x, leg0.y);
+      ctx.moveTo(camPos.x, camPos.y + 2);
+      ctx.lineTo(leg1.x, leg1.y);
+      ctx.moveTo(camPos.x, camPos.y + 2);
+      ctx.lineTo(leg2.x, leg2.y);
+      ctx.stroke();
+
+      // Tripod Spreader Ring
+      const sp0 = toScreen(gx - 0.2, gy - 0.1, 14, originX, originY);
+      const sp1 = toScreen(gx + 0.2, gy - 0.1, 14, originX, originY);
+      const sp2 = toScreen(gx, gy + 0.2, 14, originX, originY);
+      ctx.strokeStyle = '#64748B';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(sp0.x, sp0.y);
+      ctx.lineTo(sp1.x, sp1.y);
+      ctx.lineTo(sp2.x, sp2.y);
+      ctx.closePath();
+      ctx.stroke();
+
+      // 3. Camera Body (Heavy Broadcast Camera)
+      const camColors: BoxColors = {
+        top: '#334155',
+        left: '#1E293B',
+        right: '#0F172A',
+        outline: '#020617'
+      };
+      drawShadedBox(ctx, originX, originY, gx - 0.25, gy - 0.2, 34, 0.5, 0.4, 12, camColors);
+
+      // 4. Telephoto Cine Lens with Matte Box
+      const lensPos = toScreen(
+        facing === 'SE' ? gx + 0.35 : gx - 0.35,
+        gy,
+        38,
+        originX, originY
+      );
+      ctx.fillStyle = '#0F172A';
+      ctx.beginPath();
+      ctx.arc(lensPos.x, lensPos.y, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#38BDF8'; // Blue anti-reflective lens coating ring
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // 5. Flip-Out LCD Screen
+      const lcdPos = toScreen(gx - 0.1, gy + 0.25, 40, originX, originY);
+      ctx.fillStyle = '#38BDF8';
+      ctx.fillRect(lcdPos.x - 6, lcdPos.y - 4, 12, 8);
+      ctx.strokeStyle = '#1E293B';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(lcdPos.x - 6, lcdPos.y - 4, 12, 8);
+
+      // 6. Top-Mounted Shotgun Mic & Red Recording Tally LED
+      const tallyPos = toScreen(gx, gy, 48, originX, originY);
+      ctx.fillStyle = '#EF4444'; // Glowing Red Tally
+      ctx.beginPath();
+      ctx.arc(tallyPos.x, tallyPos.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Shotgun Mic
+      ctx.strokeStyle = '#1E293B';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(tallyPos.x - 5, tallyPos.y - 3);
+      ctx.lineTo(tallyPos.x + 8, tallyPos.y - 3);
+      ctx.stroke();
+    }
+  };
+}
+
+// B. Studio Softbox Diffuser Light on Tall Stand
+export function createStudioSoftboxLight(
+  gx: number,
+  gy: number,
+  lightAngle: 'SE' | 'SW' = 'SE'
+): RenderItem {
+  return {
+    depth: (gx + gy) * 100 + 75,
+    render: (ctx, originX, originY) => {
+      const basePos = toScreen(gx, gy, 0, originX, originY);
+      const topPos = toScreen(gx, gy, 68, originX, originY);
+
+      // Stand Base & Shadow
+      ctx.save();
+      ctx.fillStyle = ISO_PALETTE.shadow_soft;
+      ctx.beginPath();
+      ctx.ellipse(basePos.x, basePos.y, 16, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Vertical Chrome Shaft
+      ctx.strokeStyle = '#94A3B8';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(basePos.x, basePos.y);
+      ctx.lineTo(topPos.x, topPos.y);
+      ctx.stroke();
+
+      // Softbox Diffuser Panel (Rectangular Light Head)
+      const boxW = 28;
+      const boxH = 36;
+      ctx.save();
+      // Black outer baffle
+      ctx.fillStyle = '#0F172A';
+      ctx.fillRect(topPos.x - boxW / 2 - 2, topPos.y - boxH / 2 - 2, boxW + 4, boxH + 4);
+
+      // White Translucent Diffuser Face
+      const diffGrad = ctx.createRadialGradient(
+        topPos.x, topPos.y, 4,
+        topPos.x, topPos.y, boxW / 2
+      );
+      diffGrad.addColorStop(0, '#FFFFFF');
+      diffGrad.addColorStop(0.7, '#FEF08A'); // Warm studio light
+      diffGrad.addColorStop(1, '#E2E8F0');
+      ctx.fillStyle = diffGrad;
+      ctx.fillRect(topPos.x - boxW / 2, topPos.y - boxH / 2, boxW, boxH);
+
+      ctx.strokeStyle = '#64748B';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(topPos.x - boxW / 2, topPos.y - boxH / 2, boxW, boxH);
+      ctx.restore();
+    }
+  };
+}
+
+// C. Video Editing Desk with Ultrawide Display, Timeline & Audio Monitors
+export function createVideoEditingDesk(
+  gx: number,
+  gy: number,
+  deskWidth: number = 3.2,
+  deskDepth: number = 1.4,
+  deskHeight: number = 38
+): RenderItem {
+  return {
+    depth: (gx + gy + deskWidth / 2 + deskDepth / 2) * 100 + 15,
+    render: (ctx, originX, originY) => {
+      const woodColors: BoxColors = {
+        top: '#334155', // Sleek dark slate studio desk surface
+        left: '#1E293B',
+        right: '#0F172A',
+        outline: '#020617'
+      };
+
+      // Tabletop Slab
+      drawShadedBox(ctx, originX, originY, gx, gy, deskHeight - 6, deskWidth, deskDepth, 6, woodColors, { hasShadow: true });
+
+      // Steel Desk Frame Legs
+      drawShadedBox(ctx, originX, originY, gx + 0.1, gy + 0.1, 0, 0.25, deskDepth - 0.2, deskHeight - 6, woodColors);
+      drawShadedBox(ctx, originX, originY, gx + deskWidth - 0.35, gy + 0.1, 0, 0.25, deskDepth - 0.2, deskHeight - 6, woodColors);
+
+      // 1. Ultrawide Curved Video Editing Display
+      const scrW = deskWidth * 0.65;
+      const scrD = 0.2;
+      const scrH = 26;
+      const scrZ = deskHeight;
+      const scrX = gx + (deskWidth - scrW) / 2;
+      const scrY = gy + 0.2;
+
+      // Stand
+      drawShadedBox(ctx, originX, originY, scrX + scrW / 2 - 0.2, scrY + 0.1, deskHeight, 0.4, 0.3, 6, {
+        top: '#64748B', left: '#475569', right: '#334155', outline: '#1E293B'
+      });
+
+      // Ultrawide Bezel
+      drawShadedBox(ctx, originX, originY, scrX, scrY, scrZ + 6, scrW, scrD, scrH, {
+        top: '#1E293B', left: '#0F172A', right: '#020617', outline: '#000000'
+      });
+
+      // Screen Face with Video Multi-Track Timeline
+      const s0 = toScreen(scrX + 0.1, scrY + scrD, scrZ + 8, originX, originY);
+      const s1 = toScreen(scrX + scrW - 0.1, scrY + scrD, scrZ + 8, originX, originY);
+      const s2 = toScreen(scrX + scrW - 0.1, scrY + scrD, scrZ + scrH + 4, originX, originY);
+      const s3 = toScreen(scrX + 0.1, scrY + scrD, scrZ + scrH + 4, originX, originY);
+
+      ctx.fillStyle = '#0F172A';
+      ctx.beginPath();
+      ctx.moveTo(s0.x, s0.y);
+      ctx.lineTo(s1.x, s1.y);
+      ctx.lineTo(s2.x, s2.y);
+      ctx.lineTo(s3.x, s3.y);
+      ctx.closePath();
+      ctx.fill();
+
+      // Colorful Video Timeline Tracks on Screen (Blue video track, Pink effect track, Green audio track)
+      const trackColors = ['#38BDF8', '#F43F5E', '#10B981'];
+      trackColors.forEach((color, idx) => {
+        const tY = scrZ + 10 + idx * 5;
+        const pL = toScreen(scrX + 0.2, scrY + scrD, tY, originX, originY);
+        const pR = toScreen(scrX + scrW - 0.2, scrY + scrD, tY, originX, originY);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(pL.x, pL.y);
+        ctx.lineTo(pR.x, pR.y);
+        ctx.stroke();
+      });
+
+      // 2. Desktop Studio Audio Monitor Speakers (Left & Right)
+      const speakerColors: BoxColors = {
+        top: '#1E293B', left: '#0F172A', right: '#020617', outline: '#000000'
+      };
+      // Left speaker
+      drawShadedBox(ctx, originX, originY, gx + 0.2, gy + 0.2, deskHeight, 0.45, 0.4, 16, speakerColors);
+      // Right speaker
+      drawShadedBox(ctx, originX, originY, gx + deskWidth - 0.65, gy + 0.2, deskHeight, 0.45, 0.4, 16, speakerColors);
+
+      // Yellow/Gold cone highlights on speakers
+      const spL = toScreen(gx + 0.42, gy + 0.55, deskHeight + 7, originX, originY);
+      const spR = toScreen(gx + deskWidth - 0.42, gy + 0.55, deskHeight + 7, originX, originY);
+      ctx.fillStyle = '#F59E0B';
+      ctx.beginPath();
+      ctx.arc(spL.x, spL.y, 3, 0, Math.PI * 2);
+      ctx.arc(spR.x, spR.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 3. Keyboard & Editing Jog Wheel Deck
+      const kbPos = toScreen(gx + deskWidth / 2 - 0.5, gy + deskDepth - 0.35, deskHeight, originX, originY);
+      ctx.fillStyle = '#1E293B';
+      ctx.fillRect(kbPos.x - 14, kbPos.y - 6, 28, 8);
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(kbPos.x - 14, kbPos.y - 6, 28, 8);
+    }
+  };
+}
+
+// D. Graphic & Thumbnail Design Desk with Tablet & Pen
+export function createDesignDesk(
+  gx: number,
+  gy: number,
+  deskWidth: number = 2.8,
+  deskDepth: number = 1.3,
+  deskHeight: number = 38
+): RenderItem {
+  return {
+    depth: (gx + gy + deskWidth / 2 + deskDepth / 2) * 100 + 15,
+    render: (ctx, originX, originY) => {
+      const woodColors: BoxColors = {
+        top: ISO_PALETTE.wood_top,
+        left: ISO_PALETTE.wood_left,
+        right: ISO_PALETTE.wood_right,
+        outline: ISO_PALETTE.wood_outline
+      };
+
+      // Tabletop Slab & Legs
+      drawShadedBox(ctx, originX, originY, gx, gy, deskHeight - 6, deskWidth, deskDepth, 6, woodColors, { hasShadow: true });
+      drawShadedBox(ctx, originX, originY, gx + 0.1, gy + 0.1, 0, 0.25, deskDepth - 0.2, deskHeight - 6, woodColors);
+      drawShadedBox(ctx, originX, originY, gx + deskWidth - 0.35, gy + 0.1, 0, 0.25, deskDepth - 0.2, deskHeight - 6, woodColors);
+
+      // Color-Calibrated Display showing YouTube Thumbnail Art
+      const monW = 1.6;
+      drawShadedBox(ctx, originX, originY, gx + 0.3, gy + 0.15, deskHeight + 6, monW, 0.2, 22, {
+        top: '#1E293B', left: '#0F172A', right: '#020617', outline: '#000000'
+      });
+
+      // Thumbnail Artwork Preview on Screen (Vibrant Orange & Mascot)
+      const sc0 = toScreen(gx + 0.38, gy + 0.35, deskHeight + 8, originX, originY);
+      const sc1 = toScreen(gx + 0.38 + monW - 0.16, gy + 0.35, deskHeight + 8, originX, originY);
+      const sc2 = toScreen(gx + 0.38 + monW - 0.16, gy + 0.35, deskHeight + 26, originX, originY);
+      const sc3 = toScreen(gx + 0.38, gy + 0.35, deskHeight + 26, originX, originY);
+
+      ctx.fillStyle = '#EA580C'; // Vibrant thumbnail background
+      ctx.beginPath();
+      ctx.moveTo(sc0.x, sc0.y);
+      ctx.lineTo(sc1.x, sc1.y);
+      ctx.lineTo(sc2.x, sc2.y);
+      ctx.lineTo(sc3.x, sc3.y);
+      ctx.closePath();
+      ctx.fill();
+
+      // Bold Thumbnail Text / Graphic bar on display
+      ctx.fillStyle = '#FFFFFF';
+      const tMid = toScreen(gx + 0.38 + monW / 2, gy + 0.35, deskHeight + 17, originX, originY);
+      ctx.font = 'bold 8px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('4K MASTER', tMid.x, tMid.y);
+
+      // Graphics Tablet with Stylus Pen on desk
+      const tabPos = toScreen(gx + deskWidth - 0.7, gy + deskDepth - 0.45, deskHeight, originX, originY);
+      ctx.fillStyle = '#1E293B';
+      ctx.fillRect(tabPos.x - 10, tabPos.y - 8, 20, 14);
+      ctx.strokeStyle = '#38BDF8';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(tabPos.x - 10, tabPos.y - 8, 20, 14);
+
+      // Stylus Pen
+      ctx.strokeStyle = '#94A3B8';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(tabPos.x + 12, tabPos.y - 4);
+      ctx.lineTo(tabPos.x + 16, tabPos.y + 4);
+      ctx.stroke();
+    }
+  };
+}
+
+// E. Studio Production Bookshelf & Tape Archive
+export function createStudioBookcase(
+  gx: number,
+  gy: number,
+  width: number = 1.8,
+  depth: number = 0.7,
+  height: number = 65
+): RenderItem {
+  return {
+    depth: (gx + gy + width / 2 + depth / 2) * 100 + 20,
+    render: (ctx, originX, originY) => {
+      const woodColors: BoxColors = {
+        top: ISO_PALETTE.wood_top,
+        left: ISO_PALETTE.wood_left,
+        right: ISO_PALETTE.wood_right,
+        outline: ISO_PALETTE.wood_outline
+      };
+
+      // Frame
+      drawShadedBox(ctx, originX, originY, gx, gy, 0, width, depth, height, woodColors, { hasShadow: true });
+
+      // Shelves with Tape Cases & Golden Award
+      const numShelves = 3;
+      for (let s = 1; s <= numShelves; s++) {
+        const sZ = (height / (numShelves + 1)) * s;
+        // Shelf divider line
+        const p0 = toScreen(gx, gy + depth, sZ, originX, originY);
+        const p1 = toScreen(gx + width, gy + depth, sZ, originX, originY);
+        ctx.strokeStyle = ISO_PALETTE.wood_outline;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y);
+        ctx.lineTo(p1.x, p1.y);
+        ctx.stroke();
+
+        // Tape boxes & books on shelves
+        const colors = ['#EF4444', '#38BDF8', '#10B981', '#F59E0B', '#818CF8'];
+        for (let b = 0; b < 4; b++) {
+          const bPos = toScreen(gx + 0.3 + b * 0.32, gy + depth, sZ + 6, originX, originY);
+          ctx.fillStyle = colors[(s + b) % colors.length];
+          ctx.fillRect(bPos.x - 3, bPos.y - 8, 6, 12);
+        }
+      }
+
+      // Golden Creator Play Button / Award on Top Shelf
+      const awPos = toScreen(gx + width / 2, gy + depth / 2, height + 8, originX, originY);
+      ctx.fillStyle = '#FACC15';
+      ctx.beginPath();
+      ctx.arc(awPos.x, awPos.y, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#B45309';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  };
+}
+
+// F. Studio Coffee Bar & Refreshment Counter
+export function createStudioCoffeeBar(
+  gx: number,
+  gy: number,
+  width: number = 2.0,
+  depth: number = 1.0,
+  height: number = 36
+): RenderItem {
+  return {
+    depth: (gx + gy + width / 2 + depth / 2) * 100 + 10,
+    render: (ctx, originX, originY) => {
+      // Counter Base
+      drawShadedBox(ctx, originX, originY, gx, gy, 0, width, depth, height, {
+        top: '#F8FAFC', left: '#E2E8F0', right: '#CBD5E1', outline: '#64748B'
+      }, { hasShadow: true });
+
+      // Espresso Machine on top
+      const espColors: BoxColors = {
+        top: '#E2E8F0', left: '#94A3B8', right: '#64748B', outline: '#1E293B'
+      };
+      drawShadedBox(ctx, originX, originY, gx + 0.3, gy + 0.2, height, 0.7, 0.6, 16, espColors);
+
+      // Portafilter & Drip Tray
+      const dripPos = toScreen(gx + 0.65, gy + 0.7, height + 4, originX, originY);
+      ctx.fillStyle = '#1E293B';
+      ctx.fillRect(dripPos.x - 6, dripPos.y - 2, 12, 4);
+
+      // Ceramic Mugs on counter
+      const mug0 = toScreen(gx + 1.3, gy + 0.4, height + 4, originX, originY);
+      const mug1 = toScreen(gx + 1.6, gy + 0.5, height + 4, originX, originY);
+      ctx.fillStyle = '#38BDF8';
+      ctx.fillRect(mug0.x - 3, mug0.y - 5, 6, 6);
+      ctx.fillStyle = '#F43F5E';
+      ctx.fillRect(mug1.x - 3, mug1.y - 5, 6, 6);
+    }
+  };
 }

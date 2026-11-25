@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Agent, AgentMessage, AgentTransitEvent } from '../types';
 import { Floor0IsometricRoom } from './isometric/Floor0IsometricRoom';
+import { Floor1IsometricRoom } from './isometric/Floor1IsometricRoom';
 import { 
   Building2, Users, Coffee, Laptop, Sparkles, MessageSquare, 
   ChevronRight, ZoomIn, ZoomOut, Maximize2, Layers, Compass, 
@@ -1683,10 +1684,19 @@ export const VirtualHeadquarters: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Main Viewport: Modern Isometric Cutaway Room (Floor 0) vs Legacy Diamond Canvas */}
+      {/* Main Viewport: Modern Isometric Cutaway Rooms (Floor 0, Floor 1) vs Legacy Diamond Canvas */}
       {viewPreference === 'isometric' && activeFloor === 0 && viewMode === 'floor_focus' ? (
         <div className="relative flex-1 w-full h-full overflow-hidden bg-[#E6E9F5]">
           <Floor0IsometricRoom
+            agents={agents}
+            onSelectAgent={onSelectAgent}
+            orbiState={orbiState}
+            onNavigateFloor={(floor) => setActiveFloor(floor)}
+          />
+        </div>
+      ) : viewPreference === 'isometric' && activeFloor === 1 && viewMode === 'floor_focus' ? (
+        <div className="relative flex-1 w-full h-full overflow-hidden bg-[#E6E9F5]">
+          <Floor1IsometricRoom
             agents={agents}
             onSelectAgent={onSelectAgent}
             orbiState={orbiState}
