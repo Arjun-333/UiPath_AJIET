@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Agent, AgentMessage, AgentTransitEvent } from '../types';
+import { Floor0IsometricRoom } from './isometric/Floor0IsometricRoom';
 import { 
   Building2, Users, Coffee, Laptop, Sparkles, MessageSquare, 
   ChevronRight, ZoomIn, ZoomOut, Maximize2, Layers, Compass, 
@@ -261,8 +262,10 @@ export const VirtualHeadquarters: React.FC<Props> = ({
   pendingTransit = null
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const isLegacyUrl = typeof window !== 'undefined' && window.location.search.includes('view=legacy');
+  const [viewPreference, setViewPreference] = useState<'isometric' | 'legacy'>(isLegacyUrl ? 'legacy' : 'isometric');
   const [zoom, setZoom] = useState<number>(1.0);
-  const [viewMode, setViewMode] = useState<'multi_tower' | 'floor_focus'>('multi_tower');
+  const [viewMode, setViewMode] = useState<'multi_tower' | 'floor_focus'>('floor_focus');
   const [pacingMode, setPacingMode] = useState<'calm' | 'active' | 'paused'>('calm');
   const [hoveredAgent, setHoveredAgent] = useState<HoveredAgentInfo | null>(null);
   const simRef = useRef<CharacterSim[]>([]);
@@ -1563,6 +1566,36 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             </button>
           </div>
 
+          {/* View Preference Switcher (Modern Isometric Cutaway vs Legacy Tower) */}
+          <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+            <button
+              onClick={() => {
+                setViewPreference('isometric');
+                setViewMode('floor_focus');
+                setActiveFloor(0);
+              }}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center space-x-1 ${
+                viewPreference === 'isometric'
+                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+              title="2:1 Isometric Cutaway Room (Screenshot 2 Match)"
+            >
+              <span>🏢 Isometric Room</span>
+            </button>
+            <button
+              onClick={() => setViewPreference('legacy')}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center space-x-1 ${
+                viewPreference === 'legacy'
+                  ? 'bg-slate-700 text-white shadow-md'
+                  : 'text-slate-500 hover:text-white hover:bg-slate-800'
+              }`}
+              title="Legacy Diamond Tower View (?view=legacy)"
+            >
+              <span>📐 Legacy View</span>
+            </button>
+          </div>
+
           {/* View Mode Toggle */}
           <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
             <button
@@ -1650,77 +1683,87 @@ export const VirtualHeadquarters: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Main Isometric Canvas Viewport */}
-      <div className="relative flex-1 bg-[#090d14] overflow-auto flex items-center justify-center p-6">
-        <div
-          className="relative transition-transform duration-150 origin-center"
-          style={{ transform: `scale(${zoom})` }}
-        >
-          <canvas
-            ref={canvasRef}
-            width={1240}
-            height={740}
-            onClick={handleCanvasClick}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={() => setHoveredAgent(null)}
-            className="rounded-2xl border-4 border-slate-800/90 shadow-2xl bg-[#080c16] cursor-pointer"
+      {/* Main Viewport: Modern Isometric Cutaway Room (Floor 0) vs Legacy Diamond Canvas */}
+      {viewPreference === 'isometric' && activeFloor === 0 && viewMode === 'floor_focus' ? (
+        <div className="relative flex-1 w-full h-full overflow-hidden bg-[#E6E9F5]">
+          <Floor0IsometricRoom
+            agents={agents}
+            onSelectAgent={onSelectAgent}
+            orbiState={orbiState}
           />
+        </div>
+      ) : (
+        <div className="relative flex-1 bg-[#090d14] overflow-auto flex items-center justify-center p-6">
+          <div
+            className="relative transition-transform duration-150 origin-center"
+            style={{ transform: `scale(${zoom})` }}
+          >
+            <canvas
+              ref={canvasRef}
+              width={1240}
+              height={740}
+              onClick={handleCanvasClick}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={() => setHoveredAgent(null)}
+              className="rounded-2xl border-4 border-slate-800/90 shadow-2xl bg-[#080c16] cursor-pointer"
+            />
 
-          {/* Floating Hover Activity Inspector Card */}
-          {hoveredAgent && (
-            <div 
-              className="absolute pointer-events-none z-30 transition-all duration-75"
-              style={{ 
-                left: `${hoveredAgent.screenX}px`, 
-                top: `${hoveredAgent.screenY - 84}px`,
-                transform: 'translate(-50%, -100%)'
-              }}
-            >
-              <div className="bg-slate-950/95 border border-slate-700/80 p-3.5 rounded-xl shadow-2xl backdrop-blur-md w-72 text-left space-y-2">
-                <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
-                  <div>
-                    <div className="font-bold text-xs text-white flex items-center space-x-1.5">
-                      <span>{hoveredAgent.name}</span>
-                      <span className="text-[10px] text-slate-400 font-mono">Floor {hoveredAgent.floor}</span>
+            {/* Floating Hover Activity Inspector Card */}
+            {hoveredAgent && (
+              <div 
+                className="absolute pointer-events-none z-30 transition-all duration-75"
+                style={{ 
+                  left: `${hoveredAgent.screenX}px`, 
+                  top: `${hoveredAgent.screenY - 84}px`,
+                  transform: 'translate(-50%, -100%)'
+                }}
+              >
+                <div className="bg-slate-950/95 border border-slate-700/80 p-3.5 rounded-xl shadow-2xl backdrop-blur-md w-72 text-left space-y-2">
+                  <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
+                    <div>
+                      <div className="font-bold text-xs text-white flex items-center space-x-1.5">
+                        <span>{hoveredAgent.name}</span>
+                        <span className="text-[10px] text-slate-400 font-mono">Floor {hoveredAgent.floor}</span>
+                      </div>
+                      <div className="text-[11px] text-slate-400">{hoveredAgent.role}</div>
                     </div>
-                    <div className="text-[11px] text-slate-400">{hoveredAgent.role}</div>
+                    <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold border ${getStatusBadge(hoveredAgent.state).color}`}>
+                      {getStatusBadge(hoveredAgent.state).label}
+                    </span>
                   </div>
-                  <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold border ${getStatusBadge(hoveredAgent.state).color}`}>
-                    {getStatusBadge(hoveredAgent.state).label}
-                  </span>
-                </div>
 
-                <div className="text-[11px] text-slate-200 bg-slate-900/90 p-2 rounded-lg border border-slate-800 space-y-0.5">
-                  <div className="text-[9px] font-mono text-orange-400 font-bold uppercase tracking-wider">CURRENT FOCUS:</div>
-                  <div className="leading-snug">{hoveredAgent.currentActivity}</div>
-                </div>
+                  <div className="text-[11px] text-slate-200 bg-slate-900/90 p-2 rounded-lg border border-slate-800 space-y-0.5">
+                    <div className="text-[9px] font-mono text-orange-400 font-bold uppercase tracking-wider">CURRENT FOCUS:</div>
+                    <div className="leading-snug">{hoveredAgent.currentActivity}</div>
+                  </div>
 
-                <div className="text-[9px] text-slate-500 font-mono text-center">
-                  Click agent to open personnel dossier & history
+                  <div className="text-[9px] text-slate-500 font-mono text-center">
+                    Click agent to open personnel dossier & history
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Live Action Ticker at bottom */}
-          <div className="absolute bottom-5 left-6 bg-slate-950/90 border border-slate-800 px-4 py-2.5 rounded-xl shadow-xl flex items-center space-x-4 text-[11px] font-mono text-slate-400 pointer-events-none backdrop-blur-sm">
-            <span className="flex items-center space-x-1.5 text-emerald-400 font-bold">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>LIVE HQ FOCUS:</span>
-            </span>
-            <span className="text-slate-200">
-              {hoveredAgent 
-                ? `${hoveredAgent.name} (${hoveredAgent.role}): ${hoveredAgent.currentActivity}` 
-                : activeActionLog
-              }
-            </span>
-            <span className="text-slate-600">|</span>
-            <span className="text-amber-400">
-              {pacingMode === 'paused' ? 'Mobility Paused' : pacingMode === 'calm' ? 'Calm Focus Active (7s Read)' : 'Active Flow'}
-            </span>
+            {/* Live Action Ticker at bottom */}
+            <div className="absolute bottom-5 left-6 bg-slate-950/90 border border-slate-800 px-4 py-2.5 rounded-xl shadow-xl flex items-center space-x-4 text-[11px] font-mono text-slate-400 pointer-events-none backdrop-blur-sm">
+              <span className="flex items-center space-x-1.5 text-emerald-400 font-bold">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>LIVE HQ FOCUS:</span>
+              </span>
+              <span className="text-slate-200">
+                {hoveredAgent 
+                  ? `${hoveredAgent.name} (${hoveredAgent.role}): ${hoveredAgent.currentActivity}` 
+                  : activeActionLog
+                }
+              </span>
+              <span className="text-slate-600">|</span>
+              <span className="text-amber-400">
+                {pacingMode === 'paused' ? 'Mobility Paused' : pacingMode === 'calm' ? 'Calm Focus Active (7s Read)' : 'Active Flow'}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
