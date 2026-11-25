@@ -42,7 +42,9 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Project Autonomia API", version="1.0.0", lifespan=lifespan)
 
 from backend.app.workforce.router import router as workforce_router
+from backend.app.certificates.router import router as certificates_router
 app.include_router(workforce_router)
+app.include_router(certificates_router)
 
 app.add_middleware(
     CORSMiddleware,

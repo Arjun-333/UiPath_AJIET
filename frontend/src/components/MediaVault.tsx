@@ -1,7 +1,10 @@
-import React from 'react';
-import { Film, Video, Download, Play, CheckCircle2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Film, Video, Download, Play, CheckCircle2, Award } from 'lucide-react';
+import { CertificateStudioModal } from './CertificateStudioModal';
 
 export const MediaVault: React.FC = () => {
+  const [showCertStudio, setShowCertStudio] = useState(false);
+
   return (
     <div className="space-y-6 overflow-y-auto h-full pr-2">
       <div className="flex items-center justify-between p-6 bg-slate-900 border border-slate-800 rounded-2xl">
@@ -11,9 +14,16 @@ export const MediaVault: React.FC = () => {
           </div>
           <div>
             <h2 className="text-lg font-bold text-white">Media Production Vault</h2>
-            <p className="text-xs text-slate-400">Rendered 1080p MP4s, 9:16 Instagram Reels, Thumbnails & Subtitles</p>
+            <p className="text-xs text-slate-400">Rendered 1080p MP4s, 9:16 Instagram Reels, Thumbnails &amp; Subtitles</p>
           </div>
         </div>
+        <button
+          onClick={() => setShowCertStudio(true)}
+          className="flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-orange-600/25 transition-all"
+        >
+          <Award className="w-4 h-4" />
+          <span>E-Certificate PDF Studio</span>
+        </button>
       </div>
 
       {/* Rendered Project Showcase */}
@@ -60,6 +70,10 @@ export const MediaVault: React.FC = () => {
           className="w-full max-w-2xl rounded-lg border border-slate-800 shadow-xl"
         />
       </div>
+
+      {showCertStudio && (
+        <CertificateStudioModal onClose={() => setShowCertStudio(false)} />
+      )}
     </div>
   );
 };
