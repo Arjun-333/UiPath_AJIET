@@ -269,7 +269,6 @@ function buildDefaultCertHtml(item, meta, logos) {
         <div class="meta-block">
           <div>Date: <strong>${issueDate}</strong></div>
         </div>
-        <div class="seal">Verified<br/>AJIET</div>
         <div class="sig-block">
           <div class="sig-line">${issuerName}</div>
           <div class="sig-sub">${issuerRole}</div>
