@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense, lazy } from 'react';
 import { Film, Download, Award, Copy, Check, FileText, FolderOpen } from 'lucide-react';
-import { CertificateStudioModal } from './CertificateStudioModal';
+
+const CertificateStudioModal = lazy(() => import('./CertificateStudioModal').then(m => ({ default: m.CertificateStudioModal })));
 
 interface VaultProject {
   id: string;
@@ -207,9 +208,11 @@ export const MediaVault: React.FC = () => {
         )}
       </div>
 
-      {showCertStudio && (
-        <CertificateStudioModal onClose={() => setShowCertStudio(false)} />
-      )}
+      <Suspense fallback={null}>
+        {showCertStudio && (
+          <CertificateStudioModal onClose={() => setShowCertStudio(false)} />
+        )}
+      </Suspense>
     </div>
   );
 };

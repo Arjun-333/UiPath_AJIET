@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Agent, Project, Approval, RosterSummary, AgentMessage, AgentTransitEvent } from './types';
 import { VirtualHeadquarters } from './components/VirtualHeadquarters';
-import { CeoCommandCenter } from './components/CeoCommandCenter';
-import { ApprovalsModal } from './components/ApprovalsModal';
 import { EmployeeInspector } from './components/EmployeeInspector';
-import { MediaVault } from './components/MediaVault';
-import { WorkforceCommsCenter } from './components/WorkforceCommsCenter';
-import { VideoQualityInspector } from './components/VideoQualityInspector';
-import { WorkforceManagementView } from './components/workforce/WorkforceManagementView';
 import { Header } from './components/Header';
 import { CommandPalette } from './components/CommandPalette';
-import { Building2, Terminal, Film, ShieldCheck, Activity, Users, Sparkles, MessageSquare, ShieldAlert } from 'lucide-react';
+
+const CeoCommandCenter = lazy(() => import('./components/CeoCommandCenter').then(m => ({ default: m.CeoCommandCenter })));
+const MediaVault = lazy(() => import('./components/MediaVault').then(m => ({ default: m.MediaVault })));
+const VideoQualityInspector = lazy(() => import('./components/VideoQualityInspector').then(m => ({ default: m.VideoQualityInspector })));
+const WorkforceManagementView = lazy(() => import('./components/workforce/WorkforceManagementView').then(m => ({ default: m.WorkforceManagementView })));
+const ApprovalsModal = lazy(() => import('./components/ApprovalsModal').then(m => ({ default: m.ApprovalsModal })));
+const WorkforceCommsCenter = lazy(() => import('./components/WorkforceCommsCenter').then(m => ({ default: m.WorkforceCommsCenter })));
 
 const getInitialTab = (): 'hq' | 'command' | 'vault' | 'qa' | 'workforce' => {
   if (typeof window !== 'undefined') {
@@ -286,42 +286,44 @@ export const App: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-h-0 overflow-hidden px-2 md:px-6 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-6">
-        {activeTab === 'hq' && (
-          <VirtualHeadquarters
-            agents={agents}
-            onSelectAgent={setSelectedAgent}
-            activeFloor={activeFloor}
-            setActiveFloor={setActiveFloor}
-            orbiState={orbiState}
-            onOpenComms={() => setShowCommsModal(true)}
-            recentMessages={messages}
-            pendingTransit={pendingTransit}
-            viewModePreference={viewMode}
-          />
-        )}
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center text-xs font-mono text-slate-400">Loading module...</div>}>
+          {activeTab === 'hq' && (
+            <VirtualHeadquarters
+              agents={agents}
+              onSelectAgent={setSelectedAgent}
+              activeFloor={activeFloor}
+              setActiveFloor={setActiveFloor}
+              orbiState={orbiState}
+              onOpenComms={() => setShowCommsModal(true)}
+              recentMessages={messages}
+              pendingTransit={pendingTransit}
+              viewModePreference={viewMode}
+            />
+          )}
 
-        {activeTab === 'command' && (
-          <CeoCommandCenter
-            summary={summary}
-            projects={projects}
-            approvals={approvals}
-            onSendCommand={handleSendCommand}
-            onOpenApprovals={() => setShowApprovalsModal(true)}
-            orbiState={orbiState}
-          />
-        )}
+          {activeTab === 'command' && (
+            <CeoCommandCenter
+              summary={summary}
+              projects={projects}
+              approvals={approvals}
+              onSendCommand={handleSendCommand}
+              onOpenApprovals={() => setShowApprovalsModal(true)}
+              orbiState={orbiState}
+            />
+          )}
 
-        {activeTab === 'vault' && <MediaVault />}
+          {activeTab === 'vault' && <MediaVault />}
 
-        {activeTab === 'qa' && (
-          <VideoQualityInspector
-            projectId={selectedProjectId || (projects.length > 0 ? projects[0].id : 'proj_02bbb199')}
-            projects={projects}
-            onSelectProject={(id) => setSelectedProjectId(id)}
-          />
-        )}
+          {activeTab === 'qa' && (
+            <VideoQualityInspector
+              projectId={selectedProjectId || (projects.length > 0 ? projects[0].id : 'proj_02bbb199')}
+              projects={projects}
+              onSelectProject={(id) => setSelectedProjectId(id)}
+            />
+          )}
 
-        {activeTab === 'workforce' && <WorkforceManagementView />}
+          {activeTab === 'workforce' && <WorkforceManagementView />}
+        </Suspense>
       </main>
 
       {/* Command Palette Modal */}
@@ -344,25 +346,27 @@ export const App: React.FC = () => {
         />
       )}
 
-      {showApprovalsModal && (
-        <ApprovalsModal
-          approvals={approvals}
-          onResolve={handleResolveApproval}
-          onResolveAll={handleResolveAllApprovals}
-          onClose={() => setShowApprovalsModal(false)}
-        />
-      )}
+      <Suspense fallback={null}>
+        {showApprovalsModal && (
+          <ApprovalsModal
+            approvals={approvals}
+            onResolve={handleResolveApproval}
+            onResolveAll={handleResolveAllApprovals}
+            onClose={() => setShowApprovalsModal(false)}
+          />
+        )}
 
-      {showCommsModal && (
-        <WorkforceCommsCenter
-          agents={agents}
-          messages={messages}
-          onSendMessage={handleSendMessage}
-          onTriggerTransit={handleTriggerTransit}
-          isOpen={showCommsModal}
-          onClose={() => setShowCommsModal(false)}
-        />
-      )}
+        {showCommsModal && (
+          <WorkforceCommsCenter
+            agents={agents}
+            messages={messages}
+            onSendMessage={handleSendMessage}
+            onTriggerTransit={handleTriggerTransit}
+            isOpen={showCommsModal}
+            onClose={() => setShowCommsModal(false)}
+          />
+        )}
+      </Suspense>
     </div>
   );
 };

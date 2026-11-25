@@ -58,14 +58,15 @@ def parse_csv_roster(csv_text: str) -> List[Dict[str, str]]:
 
     students: List[Dict[str, str]] = []
     for row in reader:
-        raw_name = (row.get(name_col) if name_col else None) or ""
-        if not raw_name.strip():
-            # Fallback to first non-empty cell
+        if name_col:
+            raw_name = (row.get(name_col) or "").strip()
+        else:
+            raw_name = ""
             for v in row.values():
                 if v and v.strip():
                     raw_name = v.strip()
                     break
-        if not raw_name.strip():
+        if not raw_name:
             continue
         students.append({
             "name": raw_name.strip(),
