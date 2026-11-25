@@ -311,15 +311,18 @@ export function drawEnclosedRoomStructure(
   ctx.stroke();
 
   // F. Left Wall Window with Horizontal Blinds (Matches Screenshot 2)
-  if (gridSize >= 14) {
-    drawOfficeWindow(ctx, originX, originY, 2.4, 6.0, 45, 88);
-    drawOfficeWindow(ctx, originX, originY, 9.0, 12.6, 45, 88);
+  const sz = wallHeight / 140;
+  const winBottom = Math.round(34 * sz + 8);
+  const winHeight = Math.round(64 * sz);
+  if (gridSize >= 13) {
+    drawOfficeWindow(ctx, originX, originY, 2.4, 6.0, winBottom, winHeight);
+    drawOfficeWindow(ctx, originX, originY, 9.0, 12.6, winBottom, winHeight);
   } else {
-    drawOfficeWindow(ctx, originX, originY, 2.2, 5.2, 45, 85);
+    drawOfficeWindow(ctx, originX, originY, 2.2, 5.2, winBottom, winHeight);
   }
 
   // G. Wall Decorations (Orange Clock, Pinboards, Framed Photo)
-  drawWallDecor(ctx, originX, originY, gridSize);
+  drawWallDecor(ctx, originX, originY, gridSize, wallHeight);
 }
 
 // -------------------------------------------------------------
@@ -367,9 +370,9 @@ function drawOfficeWindow(
   // Horizontal Venetian Blinds Slats
   ctx.strokeStyle = '#0284C7';
   ctx.lineWidth = 1.2;
-  const numSlats = 12;
+  const numSlats = 10;
   for (let i = 1; i <= numSlats; i++) {
-    const gz = gzBottom + 4 + (gzHeight - 8) * (i / (numSlats + 1));
+    const gz = gzBottom + 3 + (gzHeight - 6) * (i / (numSlats + 1));
     const sL = toScreen(gxStart + 0.12, 0, gz, originX, originY);
     const sR = toScreen(gxEnd - 0.12, 0, gz, originX, originY);
     ctx.beginPath();
@@ -390,14 +393,18 @@ function drawOfficeWindow(
   ctx.stroke();
 }
 
-function drawWallDecor(ctx: CanvasRenderingContext2D, originX: number, originY: number, gridSize: number = 10) {
+function drawWallDecor(ctx: CanvasRenderingContext2D, originX: number, originY: number, gridSize: number = 10, wallHeight: number = 110) {
+  const sz = wallHeight / 140;
+  const certBottom = Math.round(50 * sz + 8);
+  const certTop = Math.round(74 * sz + 8);
+
   // 1. Certificates on Left Wall (gx = 0.8 and 1.5, gy = 0)
   for (let idx = 0; idx < 2; idx++) {
     const gx = 0.7 + idx * 0.75;
-    const c0 = toScreen(gx, 0, 65, originX, originY);
-    const c1 = toScreen(gx + 0.5, 0, 65, originX, originY);
-    const c2 = toScreen(gx + 0.5, 0, 95, originX, originY);
-    const c3 = toScreen(gx, 0, 95, originX, originY);
+    const c0 = toScreen(gx, 0, certBottom, originX, originY);
+    const c1 = toScreen(gx + 0.5, 0, certBottom, originX, originY);
+    const c2 = toScreen(gx + 0.5, 0, certTop, originX, originY);
+    const c3 = toScreen(gx, 0, certTop, originX, originY);
 
     ctx.fillStyle = '#FFFFFF';
     ctx.beginPath();
@@ -414,7 +421,7 @@ function drawWallDecor(ctx: CanvasRenderingContext2D, originX: number, originY: 
 
     // Text rows inside certificate
     ctx.strokeStyle = '#CBD5E1';
-    for (let r = 72; r <= 88; r += 6) {
+    for (let r = certBottom + 5; r <= certTop - 4; r += 5) {
       const l1 = toScreen(gx + 0.08, 0, r, originX, originY);
       const l2 = toScreen(gx + 0.42, 0, r, originX, originY);
       ctx.beginPath();
@@ -425,11 +432,13 @@ function drawWallDecor(ctx: CanvasRenderingContext2D, originX: number, originY: 
   }
 
   // 1b. Autonomia Brand Plaque on Left Wall between windows if wide grid
-  if (gridSize >= 14) {
-    const bp0 = toScreen(7.0, 0, 68, originX, originY);
-    const bp1 = toScreen(8.2, 0, 68, originX, originY);
-    const bp2 = toScreen(8.2, 0, 102, originX, originY);
-    const bp3 = toScreen(7.0, 0, 102, originX, originY);
+  if (gridSize >= 13) {
+    const plaqueBottom = Math.round(52 * sz + 8);
+    const plaqueTop = Math.round(82 * sz + 8);
+    const bp0 = toScreen(7.0, 0, plaqueBottom, originX, originY);
+    const bp1 = toScreen(8.2, 0, plaqueBottom, originX, originY);
+    const bp2 = toScreen(8.2, 0, plaqueTop, originX, originY);
+    const bp3 = toScreen(7.0, 0, plaqueTop, originX, originY);
 
     ctx.fillStyle = '#0F172A';
     ctx.beginPath();
@@ -448,18 +457,18 @@ function drawWallDecor(ctx: CanvasRenderingContext2D, originX: number, originY: 
     ctx.font = 'bold 9px monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const bMid = toScreen(7.6, 0, 85, originX, originY);
+    const bMid = toScreen(7.6, 0, Math.round((plaqueBottom + plaqueTop) / 2), originX, originY);
     ctx.fillText('AUTONOMIA', bMid.x, bMid.y - 4);
     ctx.font = '7px monospace';
     ctx.fillStyle = '#38BDF8';
     ctx.fillText('AI HQ', bMid.x, bMid.y + 5);
   }
 
-  // 2. Orange Wall Clock on Right Wall (gx = 0, gy = 1.3, gz = 112)
-  const clockP = toScreen(0, 1.3, 112, originX, originY);
+  // 2. Orange Wall Clock on Right Wall (gx = 0, gy = 1.3, placed 22px below wall top)
+  const clockP = toScreen(0, 1.3, wallHeight - 22, originX, originY);
   ctx.fillStyle = ISO_PALETTE.accent_clock;
   ctx.beginPath();
-  ctx.arc(clockP.x, clockP.y, 14, 0, Math.PI * 2);
+  ctx.arc(clockP.x, clockP.y, 12, 0, Math.PI * 2);
   ctx.fill();
   ctx.strokeStyle = '#9A3412';
   ctx.lineWidth = 1.5;
@@ -467,7 +476,7 @@ function drawWallDecor(ctx: CanvasRenderingContext2D, originX: number, originY: 
 
   ctx.fillStyle = '#FFFFFF';
   ctx.beginPath();
-  ctx.arc(clockP.x, clockP.y, 10, 0, Math.PI * 2);
+  ctx.arc(clockP.x, clockP.y, 9, 0, Math.PI * 2);
   ctx.fill();
 
   // Clock Hands
@@ -475,16 +484,18 @@ function drawWallDecor(ctx: CanvasRenderingContext2D, originX: number, originY: 
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.moveTo(clockP.x, clockP.y);
-  ctx.lineTo(clockP.x + 3, clockP.y - 5);
+  ctx.lineTo(clockP.x + 3, clockP.y - 4);
   ctx.moveTo(clockP.x, clockP.y);
-  ctx.lineTo(clockP.x - 4, clockP.y);
+  ctx.lineTo(clockP.x - 3, clockP.y);
   ctx.stroke();
 
-  // 3. Wooden Pinboard / Corkboard on Right Wall (gx = 0, gy = 2.0 to 3.0, gz = 70)
-  const pb0 = toScreen(0, 2.0, 70, originX, originY);
-  const pb1 = toScreen(0, 3.0, 70, originX, originY);
-  const pb2 = toScreen(0, 3.0, 106, originX, originY);
-  const pb3 = toScreen(0, 2.0, 106, originX, originY);
+  // 3. Wooden Pinboard / Corkboard on Right Wall (gx = 0, gy = 2.0 to 3.0)
+  const pbBottom = Math.round(52 * sz + 8);
+  const pbTop = Math.round(82 * sz + 8);
+  const pb0 = toScreen(0, 2.0, pbBottom, originX, originY);
+  const pb1 = toScreen(0, 3.0, pbBottom, originX, originY);
+  const pb2 = toScreen(0, 3.0, pbTop, originX, originY);
+  const pb3 = toScreen(0, 2.0, pbTop, originX, originY);
 
   ctx.fillStyle = '#D97706';
   ctx.beginPath();
@@ -503,11 +514,11 @@ function drawWallDecor(ctx: CanvasRenderingContext2D, originX: number, originY: 
   const stickyColors = ['#F43F5E', '#FBBF24', '#38BDF8'];
   stickyColors.forEach((col, i) => {
     const gyNote = 2.15 + i * 0.3;
-    const gzNote = 76 + (i % 2) * 14;
+    const gzNote = pbBottom + 5 + (i % 2) * 10;
     const n0 = toScreen(0, gyNote, gzNote, originX, originY);
     const n1 = toScreen(0, gyNote + 0.22, gzNote, originX, originY);
-    const n2 = toScreen(0, gyNote + 0.22, gzNote + 9, originX, originY);
-    const n3 = toScreen(0, gyNote, gzNote + 9, originX, originY);
+    const n2 = toScreen(0, gyNote + 0.22, gzNote + 8, originX, originY);
+    const n3 = toScreen(0, gyNote, gzNote + 8, originX, originY);
 
     ctx.fillStyle = col;
     ctx.beginPath();
@@ -519,11 +530,11 @@ function drawWallDecor(ctx: CanvasRenderingContext2D, originX: number, originY: 
     ctx.fill();
   });
 
-  // 4. Framed Architecture Blueprint / Team Photo (gx = 0, gy = 3.3 to 4.2, gz = 68)
-  const pic0 = toScreen(0, 3.3, 68, originX, originY);
-  const pic1 = toScreen(0, 4.3, 68, originX, originY);
-  const pic2 = toScreen(0, 4.3, 106, originX, originY);
-  const pic3 = toScreen(0, 3.3, 106, originX, originY);
+  // 4. Framed Architecture Blueprint / Team Photo (gx = 0, gy = 3.3 to 4.2)
+  const pic0 = toScreen(0, 3.3, pbBottom, originX, originY);
+  const pic1 = toScreen(0, 4.3, pbBottom, originX, originY);
+  const pic2 = toScreen(0, 4.3, pbTop, originX, originY);
+  const pic3 = toScreen(0, 3.3, pbTop, originX, originY);
 
   ctx.fillStyle = '#1E293B';
   ctx.beginPath();
