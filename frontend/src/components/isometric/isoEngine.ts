@@ -311,10 +311,15 @@ export function drawEnclosedRoomStructure(
   ctx.stroke();
 
   // F. Left Wall Window with Horizontal Blinds (Matches Screenshot 2)
-  drawOfficeWindow(ctx, originX, originY, 2.2, 5.2, 45, 85);
+  if (gridSize >= 14) {
+    drawOfficeWindow(ctx, originX, originY, 2.4, 6.0, 45, 88);
+    drawOfficeWindow(ctx, originX, originY, 9.0, 12.6, 45, 88);
+  } else {
+    drawOfficeWindow(ctx, originX, originY, 2.2, 5.2, 45, 85);
+  }
 
   // G. Wall Decorations (Orange Clock, Pinboards, Framed Photo)
-  drawWallDecor(ctx, originX, originY);
+  drawWallDecor(ctx, originX, originY, gridSize);
 }
 
 // -------------------------------------------------------------
@@ -385,7 +390,7 @@ function drawOfficeWindow(
   ctx.stroke();
 }
 
-function drawWallDecor(ctx: CanvasRenderingContext2D, originX: number, originY: number) {
+function drawWallDecor(ctx: CanvasRenderingContext2D, originX: number, originY: number, gridSize: number = 10) {
   // 1. Certificates on Left Wall (gx = 0.8 and 1.5, gy = 0)
   for (let idx = 0; idx < 2; idx++) {
     const gx = 0.7 + idx * 0.75;
@@ -417,6 +422,37 @@ function drawWallDecor(ctx: CanvasRenderingContext2D, originX: number, originY: 
       ctx.lineTo(l2.x, l2.y);
       ctx.stroke();
     }
+  }
+
+  // 1b. Autonomia Brand Plaque on Left Wall between windows if wide grid
+  if (gridSize >= 14) {
+    const bp0 = toScreen(7.0, 0, 68, originX, originY);
+    const bp1 = toScreen(8.2, 0, 68, originX, originY);
+    const bp2 = toScreen(8.2, 0, 102, originX, originY);
+    const bp3 = toScreen(7.0, 0, 102, originX, originY);
+
+    ctx.fillStyle = '#0F172A';
+    ctx.beginPath();
+    ctx.moveTo(bp0.x, bp0.y);
+    ctx.lineTo(bp1.x, bp1.y);
+    ctx.lineTo(bp2.x, bp2.y);
+    ctx.lineTo(bp3.x, bp3.y);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = '#F97316';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#FBBF24';
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const bMid = toScreen(7.6, 0, 85, originX, originY);
+    ctx.fillText('AUTONOMIA', bMid.x, bMid.y - 4);
+    ctx.font = '7px monospace';
+    ctx.fillStyle = '#38BDF8';
+    ctx.fillText('AI HQ', bMid.x, bMid.y + 5);
   }
 
   // 2. Orange Wall Clock on Right Wall (gx = 0, gy = 1.3, gz = 112)
@@ -513,6 +549,41 @@ function drawWallDecor(ctx: CanvasRenderingContext2D, originX: number, originY: 
   ctx.lineTo(g2.x, g2.y);
   ctx.lineTo(g3.x, g3.y);
   ctx.stroke();
+
+  // 5. Strategic Roadmap / OKR Banner if wide grid
+  if (gridSize >= 14) {
+    const rm0 = toScreen(0, 7.6, 65, originX, originY);
+    const rm1 = toScreen(0, 10.2, 65, originX, originY);
+    const rm2 = toScreen(0, 10.2, 102, originX, originY);
+    const rm3 = toScreen(0, 7.6, 102, originX, originY);
+
+    ctx.fillStyle = '#0F172A';
+    ctx.beginPath();
+    ctx.moveTo(rm0.x, rm0.y);
+    ctx.lineTo(rm1.x, rm1.y);
+    ctx.lineTo(rm2.x, rm2.y);
+    ctx.lineTo(rm3.x, rm3.y);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = '#38BDF8';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // Roadmap Milestone Bars (emerald, amber, violet)
+    const barColors = ['#10B981', '#F59E0B', '#8B5CF6'];
+    barColors.forEach((barCol, bIdx) => {
+      const bz = 72 + bIdx * 9;
+      const bL = toScreen(0, 7.8, bz, originX, originY);
+      const bR = toScreen(0, 7.8 + 1.2 + bIdx * 0.4, bz, originX, originY);
+      ctx.strokeStyle = barCol;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(bL.x, bL.y);
+      ctx.lineTo(bR.x, bR.y);
+      ctx.stroke();
+    });
+  }
 }
 
 // -------------------------------------------------------------

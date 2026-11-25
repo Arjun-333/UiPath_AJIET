@@ -23,10 +23,10 @@ async function capture() {
 
   await page.waitForTimeout(1500);
 
-  // Click on "▲ Ascend to Floor 1" or the "F1" button in the floor bar
+  // Click on Floor 1 button in the floor bar
   console.log('Switching to Floor 1...');
-  const f1Button = page.locator('button:has-text("F1"), button:has-text("Ascend to Floor 1")').first();
-  await f1Button.click();
+  await page.waitForSelector('button[title*="Floor 1"]', { timeout: 10000 });
+  await page.click('button[title*="Floor 1"]');
 
   // Wait 2.5s for Floor 1 sprites, animations, and diorama to settle
   await page.waitForTimeout(2500);

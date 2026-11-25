@@ -9,6 +9,7 @@ import {
   createFilingCabinetWithCat,
   createMeetingTable,
   createLoungeSofa,
+  createStudioCoffeeBar,
   createPottedTree,
   createStaircaseUp,
   createCharacterRenderItem,
@@ -80,52 +81,52 @@ export const Floor0IsometricRoom: React.FC<Props> = ({
       id: 'arjun_ceo',
       name: 'Arjun (CEO)',
       role: 'Chief Executive Officer',
-      gx: 3.5,
-      gy: 2.2,
-      targetGx: 3.5,
-      targetGy: 2.2,
+      gx: 4.4,
+      gy: 2.4,
+      targetGx: 4.4,
+      targetGy: 2.4,
       isSeated: true,
       isWalking: false,
       facing: 'NW',
       avatarFile: 'arjun_ceo.png',
       isAuri: false,
       statusText: 'Directing AI Operations',
-      deskPos: { gx: 3.5, gy: 2.2 },
-      loungePos: { gx: 8.5, gy: 3.0 }
+      deskPos: { gx: 4.4, gy: 2.4 },
+      loungePos: { gx: 11.5, gy: 2.4 }
     },
     {
       id: 'coo_01',
       name: 'Marcus Vance',
       role: 'Chief Operating Officer',
-      gx: 5.5,
-      gy: 7.2,
-      targetGx: 5.5,
-      targetGy: 7.2,
+      gx: 5.8,
+      gy: 7.4,
+      targetGx: 5.8,
+      targetGy: 7.4,
       isSeated: true,
       isWalking: false,
       facing: 'NW',
       avatarFile: 'coo_01.png',
       isAuri: false,
       statusText: 'Reviewing Pipeline Deliverables',
-      deskPos: { gx: 5.5, gy: 7.2 },
-      loungePos: { gx: 8.2, gy: 4.2 }
+      deskPos: { gx: 5.8, gy: 7.4 },
+      loungePos: { gx: 12.5, gy: 3.2 }
     },
     {
       id: 'auri_ceo_interface',
       name: 'AURI Mascot',
       role: 'Executive Intelligence Mascot',
-      gx: 1.8,
-      gy: 1.8,
-      targetGx: 1.8,
-      targetGy: 1.8,
+      gx: 3.2,
+      gy: 4.8,
+      targetGx: 3.2,
+      targetGy: 4.8,
       isSeated: false,
       isWalking: false,
       facing: 'SE',
       avatarFile: 'auri',
       isAuri: true,
       statusText: 'Standing by for CEO Directives',
-      deskPos: { gx: 1.8, gy: 1.8 },
-      loungePos: { gx: 7.5, gy: 3.5 }
+      deskPos: { gx: 3.2, gy: 4.8 },
+      loungePos: { gx: 10.2, gy: 3.8 }
     }
   ]);
 
@@ -157,42 +158,50 @@ export const Floor0IsometricRoom: React.FC<Props> = ({
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Canvas Fixed Camera Center (Centering 499px room within 740px canvas)
+      // Canvas Fixed Camera Center (Enlarged 15x15 desktop cutaway room)
       const originX = canvas.width / 2;
-      const originY = 270;
-      const roomSize = 10; // 10x10 Grid Units cutaway room
+      const originY = 175;
+      const roomSize = 15; // Spacious 15x15 Grid Units cutaway room
 
-      // 1. Draw Architectural Cutaway Enclosure (Slab + Walls + Window + Blinds + Clock)
+      // 1. Draw Architectural Cutaway Enclosure (Slab + Walls + Windows + Blinds + Decor)
       drawEnclosedRoomStructure(ctx, originX, originY, roomSize, 150, 24);
 
       // 2. Prepare Render Items Queue for Painter's Algorithm Depth Sorting
       const queue: RenderItem[] = [];
 
-      // A. CEO Arjun's Workstation (Desks, Screens, PC Tower, Chair, Accessories)
-      // Matches Screenshot 2 placement near Left Wall Window
-      queue.push(createExecutiveDesk(2.0, 0.8, 3.4, 1.4, 38));
+      // A. CEO Arjun's Workstation (Desk, Screens, PC Tower, Chair, Accessories)
+      // Placed with generous space along Left Wall Window
+      queue.push(createExecutiveDesk(2.6, 1.4, 3.6, 1.4, 38));
       const arjunSim = simAgentsRef.current.find(a => a.id === 'arjun_ceo');
-      queue.push(createErgonomicChair(3.2, 2.0, arjunSim?.isSeated));
+      queue.push(createErgonomicChair(4.4, 2.4, arjunSim?.isSeated));
 
       // B. Filing Cabinet with Cute Cat & Succulent on Top + Wastebasket (Screenshot 2 Match!)
-      queue.push(createFilingCabinetWithCat(6.2, 0.7));
+      queue.push(createFilingCabinetWithCat(1.2, 4.8));
 
-      // C. Executive Conference / Strategy Meeting Table with Tabletop Tablet
-      queue.push(createMeetingTable(3.6, 4.8, 3.2, 2.0));
-      // Conference Chairs
-      queue.push(createErgonomicChair(3.4, 4.0, false));
-      queue.push(createErgonomicChair(5.4, 4.0, false));
-      queue.push(createErgonomicChair(3.4, 6.8, false));
+      // C. Executive Conference / Strategy Boardroom Table (6.8, 6.2)
+      queue.push(createMeetingTable(6.8, 6.2, 4.4, 2.4));
+      // Conference Chairs with ample walkway clearance
+      queue.push(createErgonomicChair(7.6, 5.2, false));
+      queue.push(createErgonomicChair(10.2, 5.2, false));
+      queue.push(createErgonomicChair(7.6, 9.0, false));
+      queue.push(createErgonomicChair(10.2, 9.0, false));
+      const cooSim = simAgentsRef.current.find(a => a.id === 'coo_01');
+      queue.push(createErgonomicChair(5.8, 7.4, cooSim?.isSeated)); // Head of table
+      queue.push(createErgonomicChair(11.8, 7.4, false)); // Foot of table
 
-      // D. Executive Lounge Area (Deep Indigo Sofa + Modern Coffee Table)
-      queue.push(createLoungeSofa(7.2, 2.4, 2.4, 1.2));
+      // D. Executive Lounge Area (Deep Indigo Sofa + Modern Coffee Counter)
+      queue.push(createLoungeSofa(10.8, 1.6, 3.2, 1.4));
+      queue.push(createStudioCoffeeBar(13.2, 1.2, 1.4, 1.0, 36));
 
       // E. Architectural Staircase leading Upward to Floor 1: Media Studio
-      queue.push(...createStaircaseUp(0.2, 9.4, 5.0, 1));
+      queue.push(...createStaircaseUp(0.2, 14.0, 9.5, 1));
 
-      // F. Indoor Potted Fig Trees (Lush greenery framing room & staircase entrance)
-      queue.push(createPottedTree(2.0, 9.4)); // Framed gracefully at foot of staircase
-      queue.push(createPottedTree(8.8, 0.8));
+      // F. Indoor Potted Fig Trees (Lush greenery framing executive zones)
+      queue.push(createPottedTree(1.2, 7.8));
+      queue.push(createPottedTree(6.6, 1.2));
+      queue.push(createPottedTree(14.2, 4.6));
+      queue.push(createPottedTree(1.8, 14.2));
+      queue.push(createPottedTree(14.2, 14.2));
 
       // 3. Update Agents Simulation Motion
       simAgentsRef.current.forEach(sim => {
@@ -263,7 +272,7 @@ export const Floor0IsometricRoom: React.FC<Props> = ({
       // 6. Interactive Floating Staircase Navigation Badge when hovered
       if (hoveredStairs) {
         ctx.save();
-        const sPortal = toScreen(0.4, 5.2, 130, originX, originY);
+        const sPortal = toScreen(0.4, 9.5, 130, originX, originY);
         ctx.font = 'bold 11px monospace';
         const txt = '▲ ASCEND TO FLOOR 1 (MEDIA STUDIO) • CLICK TO TRANSIT';
         const tw = ctx.measureText(txt).width + 28;
@@ -306,24 +315,24 @@ export const Floor0IsometricRoom: React.FC<Props> = ({
     const cy = (e.clientY - rect.top) / zoom;
 
     const originX = canvas.width / 2;
-    const originY = 270;
+    const originY = 175;
 
     // A. Detect Hover over Personnel
     let found: AgentSimState | null = null;
     simAgentsRef.current.forEach(sim => {
       const pos = toScreen(sim.gx, sim.gy, sim.isSeated ? 8 : 0, originX, originY);
       const dist = Math.hypot(cx - pos.x, cy - (pos.y - 25));
-      if (dist < 28) {
+      if (dist < 32) {
         found = sim;
       }
     });
     setHoveredAgent(found);
 
-    // B. Detect Hover over Staircase (gx in [0, 1.8], gy in [4.6, 9.8])
-    const sPortal = toScreen(0, 4.8, 140, originX, originY);
-    const sBottom = toScreen(1.8, 9.6, 0, originX, originY);
-    const sLeft = toScreen(0, 9.6, 0, originX, originY);
-    const sRight = toScreen(1.8, 4.8, 70, originX, originY);
+    // B. Detect Hover over Staircase (gx in [0, 2.0], gy in [9.0, 14.5])
+    const sPortal = toScreen(0, 9.5, 140, originX, originY);
+    const sBottom = toScreen(2.0, 14.2, 0, originX, originY);
+    const sLeft = toScreen(0, 14.2, 0, originX, originY);
+    const sRight = toScreen(2.0, 9.5, 70, originX, originY);
 
     const isOverStairs =
       cx >= sLeft.x - 30 &&
@@ -369,8 +378,8 @@ export const Floor0IsometricRoom: React.FC<Props> = ({
         >
           <canvas
             ref={canvasRef}
-            width={1240}
-            height={740}
+            width={1400}
+            height={800}
             onMouseMove={handleMouseMove}
             onClick={handleClick}
             style={{

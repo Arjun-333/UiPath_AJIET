@@ -86,69 +86,69 @@ export const Floor1IsometricRoom: React.FC<Props> = ({
       id: 'shrinithi_script',
       name: 'Shrinithi (Script)',
       role: 'Scriptwriter & Narrative Lead',
-      gx: 2.2,
-      gy: 1.4,
-      targetGx: 2.2,
-      targetGy: 1.4,
+      gx: 3.8,
+      gy: 2.4,
+      targetGx: 3.8,
+      targetGy: 2.4,
       isSeated: true,
       isWalking: false,
       facing: 'SE',
       avatarFile: 'shrinithi_script.png',
       isAuri: false,
       statusText: 'Drafting UiPath Script Narrative',
-      deskPos: { gx: 2.2, gy: 1.4 },
-      loungePos: { gx: 7.2, gy: 7.0 }
+      deskPos: { gx: 3.8, gy: 2.4 },
+      loungePos: { gx: 8.5, gy: 11.8 }
     },
     {
       id: 'darshan_director',
       name: 'Darshan (Director)',
       role: 'Director of Video Production',
-      gx: 2.2,
-      gy: 7.2,
-      targetGx: 2.2,
-      targetGy: 7.2,
+      gx: 3.6,
+      gy: 8.0,
+      targetGx: 3.6,
+      targetGy: 8.0,
       isSeated: true,
       isWalking: false,
       facing: 'NE',
       avatarFile: 'darshan_director.png',
       isAuri: false,
       statusText: 'Directing 1080p Video Composition',
-      deskPos: { gx: 2.2, gy: 7.2 },
-      loungePos: { gx: 7.6, gy: 7.6 }
+      deskPos: { gx: 3.6, gy: 8.0 },
+      loungePos: { gx: 7.8, gy: 12.5 }
     },
     {
       id: 'shreyank_editor',
       name: 'Shreyank (Editor)',
       role: 'Lead Video Editor & Motion Graphics',
-      gx: 4.8,
-      gy: 3.6,
-      targetGx: 4.8,
-      targetGy: 3.6,
+      gx: 10.6,
+      gy: 2.4,
+      targetGx: 10.6,
+      targetGy: 2.4,
       isSeated: true,
       isWalking: false,
       facing: 'NW',
       avatarFile: 'shreyank_editor.png',
       isAuri: false,
       statusText: 'Editing Subtitle Tracks & Scene Cuts',
-      deskPos: { gx: 4.8, gy: 3.6 },
-      loungePos: { gx: 7.2, gy: 6.4 }
+      deskPos: { gx: 10.6, gy: 2.4 },
+      loungePos: { gx: 9.8, gy: 11.8 }
     },
     {
       id: 'vaishnavi_design',
       name: 'Vaishnavi (Design)',
       role: 'Lead Thumbnail & Brand Designer',
-      gx: 5.4,
-      gy: 7.6,
-      targetGx: 5.4,
-      targetGy: 7.6,
+      gx: 10.6,
+      gy: 8.0,
+      targetGx: 10.6,
+      targetGy: 8.0,
       isSeated: true,
       isWalking: false,
       facing: 'NW',
       avatarFile: 'vaishnavi_design.png',
       isAuri: false,
       statusText: 'Compositing YouTube Thumbnail Art',
-      deskPos: { gx: 5.4, gy: 7.6 },
-      loungePos: { gx: 7.6, gy: 8.2 }
+      deskPos: { gx: 10.6, gy: 8.0 },
+      loungePos: { gx: 11.2, gy: 12.0 }
     }
   ]);
 
@@ -180,10 +180,10 @@ export const Floor1IsometricRoom: React.FC<Props> = ({
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Canvas Fixed Camera Center
+      // Canvas Fixed Camera Center (Enlarged 15x15 desktop studio floor)
       const originX = canvas.width / 2;
-      const originY = 270;
-      const roomSize = 10;
+      const originY = 175;
+      const roomSize = 15; // Spacious 15x15 Grid Units cutaway room
 
       // 1. Draw Architectural Enclosed Cutaway Room Structure
       drawEnclosedRoomStructure(ctx, originX, originY, roomSize, 150, 24);
@@ -191,48 +191,52 @@ export const Floor1IsometricRoom: React.FC<Props> = ({
       // 2. Prepare Render Items Queue for Depth Sorting
       const queue: RenderItem[] = [];
 
-      // A. Production Media Archive Bookshelf (Back corner gx: 0.8)
-      queue.push(createStudioBookcase(0.8, 0.6, 1.4, 0.6, 62));
+      // A. Production Media Archive Bookshelf (Back corner gx: 0.8, gy: 1.2)
+      queue.push(createStudioBookcase(0.8, 1.2, 1.4, 0.6, 62));
 
-      // B. Shrinithi's Scriptwriting Workstation under Left Wall Window (gx: 1.6, gy: 0.8)
-      queue.push(createExecutiveDesk(1.6, 0.8, 2.4, 1.2, 38));
+      // B. Shrinithi's Scriptwriting Workstation under Left Wall Window (gx: 2.4, gy: 1.4)
+      queue.push(createExecutiveDesk(2.4, 1.4, 3.0, 1.3, 38));
       const shrinithiSim = simAgentsRef.current.find(a => a.id === 'shrinithi_script');
-      queue.push(createErgonomicChair(2.2, 1.4, shrinithiSim?.isSeated));
+      queue.push(createErgonomicChair(3.8, 2.4, shrinithiSim?.isSeated));
 
-      // C. Staircase Up to Floor 2 (Marketing & Growth) along Left Wall (gx: 9.4 -> 5.6)
-      queue.push(...createStaircaseUpAlongLeftWall(0.2, 9.4, 5.6, 2, '▲ TO FLOOR 2: MARKETING & GROWTH'));
-
-      // D. Shreyank's Video Editing Suite (gx: 4.2, gy: 2.8)
-      queue.push(createVideoEditingDesk(4.2, 2.8, 2.8, 1.3, 38));
+      // C. Shreyank's Triple-Monitor Video Editing Bay (gx: 9.0, gy: 1.4)
+      queue.push(createVideoEditingDesk(9.0, 1.4, 3.4, 1.4, 38));
       const shreyankSim = simAgentsRef.current.find(a => a.id === 'shreyank_editor');
-      queue.push(createErgonomicChair(4.8, 3.6, shreyankSim?.isSeated));
+      queue.push(createErgonomicChair(10.6, 2.4, shreyankSim?.isSeated));
 
-      // E. Darshan's Director Desk on Left Side (gx: 1.6, gy: 6.4)
-      queue.push(createExecutiveDesk(1.6, 6.4, 2.4, 1.2, 38));
+      // D. Central Professional Studio Camera & Lighting Soundstage (gx: 6.8, gy: 6.2)
+      queue.push(createStudioCamera(6.8, 6.2, 'NE'));
+      queue.push(createStudioSoftboxLight(5.4, 5.2));
+      queue.push(createStudioSoftboxLight(8.6, 7.8));
+
+      // E. Darshan's Director Desk on Left Side (gx: 2.2, gy: 7.0)
+      queue.push(createExecutiveDesk(2.2, 7.0, 3.0, 1.3, 38));
       const darshanSim = simAgentsRef.current.find(a => a.id === 'darshan_director');
-      queue.push(createErgonomicChair(2.2, 7.2, darshanSim?.isSeated));
+      queue.push(createErgonomicChair(3.6, 8.0, darshanSim?.isSeated));
 
-      // F. Professional Studio Camera & Lighting Equipment in Center Stage
-      queue.push(createStudioCamera(3.6, 5.0, 'NE'));
-      queue.push(createStudioSoftboxLight(5.2, 5.0));
-
-      // G. Vaishnavi's Graphic & Thumbnail Design Desk in Foreground (gx: 4.8, gy: 7.0)
-      queue.push(createDesignDesk(4.8, 7.0, 2.6, 1.3, 38));
+      // F. Vaishnavi's Graphic & Thumbnail Design Desk (gx: 9.2, gy: 7.0)
+      queue.push(createDesignDesk(9.2, 7.0, 3.2, 1.4, 38));
       const vaishnaviSim = simAgentsRef.current.find(a => a.id === 'vaishnavi_design');
-      queue.push(createErgonomicChair(5.4, 7.6, vaishnaviSim?.isSeated));
+      queue.push(createErgonomicChair(10.6, 8.0, vaishnaviSim?.isSeated));
 
-      // H. Studio Coffee Bar & Refreshment Counter (gx: 7.0, gy: 4.6)
-      queue.push(createStudioCoffeeBar(7.0, 4.6, 1.8, 1.0, 36));
+      // G. Studio Coffee Bar & Refreshment Counter (gx: 12.6, gy: 10.8)
+      queue.push(createStudioCoffeeBar(12.6, 10.8, 1.8, 1.0, 36));
 
-      // I. Creative Lounge Area (Break Sofa & Coffee Table, gx: 7.0, gy: 6.6)
-      queue.push(createLoungeSofa(7.0, 6.6, 2.2, 1.2));
+      // H. Creative Lounge Area (Break Sofa & Coffee Table, gx: 7.8, gy: 11.2)
+      queue.push(createLoungeSofa(7.8, 11.2, 3.0, 1.3));
 
-      // J. Staircase Down to Floor 0 (Executive Suite) along Right Wall (gy: 5.2 -> 9.4)
-      queue.push(...createStaircaseDown(0.2, 5.2, 9.4, 0, '▼ TO FLOOR 0: EXECUTIVE SUITE'));
+      // I. Staircase Down to Floor 0 (Executive Suite) along Right Wall (gy: 9.5 -> 14.0)
+      queue.push(...createStaircaseDown(0.2, 9.5, 14.0, 0, '▼ TO FLOOR 0: EXECUTIVE SUITE'));
 
-      // K. Potted Trees framing the room edges
-      queue.push(createPottedTree(0.6, 9.6));
-      queue.push(createPottedTree(9.0, 2.0));
+      // J. Staircase Up to Floor 2 (Marketing & Growth) along Left Wall (gx: 14.0 -> 9.5)
+      queue.push(...createStaircaseUpAlongLeftWall(0.2, 14.0, 9.5, 2, '▲ TO FLOOR 2: MARKETING & GROWTH'));
+
+      // K. Potted Trees framing the studio room
+      queue.push(createPottedTree(6.2, 1.2));
+      queue.push(createPottedTree(0.8, 5.8));
+      queue.push(createPottedTree(14.0, 9.5));
+      queue.push(createPottedTree(1.8, 14.2));
+      queue.push(createPottedTree(14.2, 14.2));
 
       // 3. Update Agents Simulation Motion
       simAgentsRef.current.forEach(sim => {
@@ -292,7 +296,7 @@ export const Floor1IsometricRoom: React.FC<Props> = ({
       // 6. Interactive Floating Staircase Navigation Badges
       if (hoveredStairsDown) {
         ctx.save();
-        const sDown = toScreen(0.4, 7.2, 50, originX, originY);
+        const sDown = toScreen(0.4, 9.5, 130, originX, originY);
         ctx.font = 'bold 11px monospace';
         const txt = '▼ DESCEND TO FLOOR 0 (EXECUTIVE SUITE) • CLICK TO TRANSIT';
         const tw = ctx.measureText(txt).width + 28;
@@ -318,7 +322,7 @@ export const Floor1IsometricRoom: React.FC<Props> = ({
 
       if (hoveredStairsUp) {
         ctx.save();
-        const sUp = toScreen(5.2, 0.4, 130, originX, originY);
+        const sUp = toScreen(9.5, 0.4, 130, originX, originY);
         ctx.font = 'bold 11px monospace';
         const txt = '▲ ASCEND TO FLOOR 2 (MARKETING & GROWTH) • CLICK TO TRANSIT';
         const tw = ctx.measureText(txt).width + 28;
@@ -358,41 +362,41 @@ export const Floor1IsometricRoom: React.FC<Props> = ({
     const cy = (e.clientY - rect.top) / zoom;
 
     const originX = canvas.width / 2;
-    const originY = 270;
+    const originY = 175;
 
     // A. Detect Hover over Personnel
     let found: AgentSimState | null = null;
     simAgentsRef.current.forEach(sim => {
       const pos = toScreen(sim.gx, sim.gy, sim.isSeated ? 8 : 0, originX, originY);
       const dist = Math.hypot(cx - pos.x, cy - (pos.y - 25));
-      if (dist < 28) {
+      if (dist < 32) {
         found = sim;
       }
     });
     setHoveredAgent(found);
 
-    // B. Detect Hover over Stairs Down (gx in [0, 1.8], gy in [5.0, 9.6])
-    const sdTop = toScreen(0, 5.0, 80, originX, originY);
-    const sdBottom = toScreen(1.8, 9.6, 0, originX, originY);
-    const sdLeft = toScreen(0, 9.6, 0, originX, originY);
-    const sdRight = toScreen(1.8, 5.0, 0, originX, originY);
+    // B. Detect Hover over Stairs Down (gx in [0, 2.0], gy in [9.0, 14.5])
+    const sdTop = toScreen(0, 9.5, 80, originX, originY);
+    const sdBottom = toScreen(2.0, 14.2, 0, originX, originY);
+    const sdLeft = toScreen(0, 14.2, 0, originX, originY);
+    const sdRight = toScreen(2.0, 9.5, 0, originX, originY);
 
     const isOverStairsDown =
-      cx >= sdLeft.x - 25 &&
-      cx <= sdRight.x + 25 &&
+      cx >= sdLeft.x - 30 &&
+      cx <= sdRight.x + 30 &&
       cy >= sdTop.y - 20 &&
       cy <= sdBottom.y + 20;
     setHoveredStairsDown(isOverStairsDown);
 
-    // C. Detect Hover over Stairs Up along Left Wall (gx in [5.4, 9.6], gy in [0, 1.8])
-    const suTop = toScreen(5.4, 0, 140, originX, originY);
-    const suBottom = toScreen(9.6, 1.8, 0, originX, originY);
-    const suLeft = toScreen(5.4, 1.8, 0, originX, originY);
-    const suRight = toScreen(9.6, 0, 0, originX, originY);
+    // C. Detect Hover over Stairs Up along Left Wall (gx in [9.0, 14.5], gy in [0, 2.0])
+    const suTop = toScreen(9.5, 0, 140, originX, originY);
+    const suBottom = toScreen(14.2, 2.0, 0, originX, originY);
+    const suLeft = toScreen(9.5, 2.0, 0, originX, originY);
+    const suRight = toScreen(14.2, 0, 0, originX, originY);
 
     const isOverStairsUp =
-      cx >= suLeft.x - 25 &&
-      cx <= suRight.x + 25 &&
+      cx >= suLeft.x - 30 &&
+      cx <= suRight.x + 30 &&
       cy >= suTop.y - 20 &&
       cy <= suBottom.y + 20;
     setHoveredStairsUp(isOverStairsUp);
@@ -438,8 +442,8 @@ export const Floor1IsometricRoom: React.FC<Props> = ({
         >
           <canvas
             ref={canvasRef}
-            width={1240}
-            height={740}
+            width={1400}
+            height={800}
             onMouseMove={handleMouseMove}
             onClick={handleClick}
             style={{

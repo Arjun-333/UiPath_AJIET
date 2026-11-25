@@ -210,7 +210,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-hidden px-6 pb-6">
+      <main className="flex-1 flex flex-col min-h-0 overflow-hidden px-6 pb-6">
         {activeTab === 'hq' && (
           <VirtualHeadquarters
             agents={agents}
