@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Agent, AgentMessage, AgentTransitEvent } from '../types';
-import { Floor0IsometricRoom } from './isometric/Floor0IsometricRoom';
+import { Floor0IsometricRoom, AgentPositionInfo } from './isometric/Floor0IsometricRoom';
 import { Floor1IsometricRoom } from './isometric/Floor1IsometricRoom';
 import { Floor2IsometricRoom } from './isometric/Floor2IsometricRoom';
 import {
@@ -274,6 +274,9 @@ export const VirtualHeadquarters: React.FC<Props> = ({
   const [viewMode, setViewMode] = useState<'multi_tower' | 'floor_focus'>('floor_focus');
   const [pacingMode, setPacingMode] = useState<'calm' | 'break' | 'active'>('calm');
   const [hoveredAgent, setHoveredAgent] = useState<HoveredAgentInfo | null>(null);
+  const [agentPositions, setAgentPositions] = useState<AgentPositionInfo[]>([]);
+  const [hoveredLabelId, setHoveredLabelId] = useState<string | null>(null);
+  const [mobileFloorMenuOpen, setMobileFloorMenuOpen] = useState<boolean>(false);
   const simRef = useRef<CharacterSim[]>([]);
   const animFrameRef = useRef<number>(0);
   const [activeActionLog, setActiveActionLog] = useState<string>("Calm focus mode active: Employees performing deep departmental tasks.");
@@ -1524,150 +1527,28 @@ export const VirtualHeadquarters: React.FC<Props> = ({
     }
   };
 
+  const activeFloorConfig = FLOOR_CONFIG.find(f => f.floor === activeFloor);
+  const floorAgents = agents.filter(a => a.floor === activeFloor);
+
+  // Overlap prevention algorithm for screen-space labels per Spec 7.C
+  const displayedLabels = (() => {
+    const list = [...agentPositions];
+    const withOffsets = list.map(item => ({ ...item, overlapOffset: 0 }));
+    for (let i = 0; i < withOffsets.length; i++) {
+      for (let j = i + 1; j < withOffsets.length; j++) {
+        const dx = Math.abs(withOffsets[i].screenX - withOffsets[j].screenX);
+        const dy = Math.abs(withOffsets[i].screenY - withOffsets[j].screenY);
+        if (dx < 75 && dy < 28) {
+          withOffsets[j].overlapOffset -= 24;
+        }
+      }
+    }
+    return withOffsets;
+  })();
+
   return (
-    <div className="flex flex-col h-full bg-[#0b0f17] text-slate-100 rounded-2xl border border-slate-800/80 shadow-2xl overflow-hidden select-none">
-      {/* Streamlined Studio Floor Console HUD */}
-      <div className="flex items-center justify-between px-5 py-2 bg-slate-950/85 backdrop-blur-xl border-b border-slate-800/80 shrink-0">
-        {/* Left: Active Floor Identity */}
-        <div className="flex items-center space-x-2.5 shrink-0">
-          <div className="w-7 h-7 rounded-lg bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400">
-            <Building2 className="w-3.5 h-3.5" />
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="font-mono text-xs font-bold text-white tracking-wide">
-              {viewMode === 'multi_tower'
-                ? 'Campus Atrium'
-                : `Floor ${activeFloor}: ${FLOOR_CONFIG.find(f => f.floor === activeFloor)?.name.split(':')[1]?.trim() || FLOOR_CONFIG.find(f => f.floor === activeFloor)?.name}`}
-            </span>
-            <span className="text-slate-500 text-xs font-mono hidden xl:inline">
-              {viewMode === 'multi_tower'
-                ? '• 6-Tier Overview'
-                : `• ${FLOOR_CONFIG.find(f => f.floor === activeFloor)?.subtitle}`}
-            </span>
-          </div>
-        </div>
-
-        {/* Center: Segmented Floor Switcher */}
-        <div className="flex items-center space-x-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800/80 shadow-inner">
-          {FLOOR_CONFIG.map(f => {
-            const isActive = activeFloor === f.floor && viewMode === 'floor_focus';
-            return (
-              <button
-                key={f.floor}
-                onClick={() => {
-                  setViewMode('floor_focus');
-                  setActiveFloor(f.floor);
-                }}
-                className={`relative px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all duration-150 ${isActive
-                  ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-md shadow-orange-600/30'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                  }`}
-                title={f.name}
-              >
-                <span>F{f.floor}</span>
-                {isActive && (
-                  <span className="absolute bottom-0 inset-x-2 h-0.5 bg-white/70 rounded-full" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Right: Consolidated Controls Strip */}
-        <div className="flex items-center space-x-2 shrink-0">
-          {/* Inter-Floor Stairs Transit */}
-          <div className="flex items-center bg-slate-900/80 rounded-lg border border-slate-800/80 overflow-hidden">
-            <button
-              onClick={() => handleUseStairs(activeFloor - 1)}
-              disabled={activeFloor <= 0}
-              className="px-2 py-1 text-xs font-mono font-semibold flex items-center space-x-1 transition-all disabled:opacity-25 disabled:cursor-not-allowed text-amber-300 hover:bg-amber-500/20"
-              title={activeFloor > 0 ? `Stairs down to Floor ${activeFloor - 1}` : 'Ground floor'}
-            >
-              <ArrowDown className="w-3 h-3" />
-              <span>Down</span>
-            </button>
-            <span className="text-slate-700 text-xs">|</span>
-            <button
-              onClick={() => handleUseStairs(activeFloor + 1)}
-              disabled={activeFloor >= 5}
-              className="px-2 py-1 text-xs font-mono font-semibold flex items-center space-x-1 transition-all disabled:opacity-25 disabled:cursor-not-allowed text-emerald-300 hover:bg-emerald-500/20"
-              title={activeFloor < 5 ? `Stairs up to Floor ${activeFloor + 1}` : 'Top floor'}
-            >
-              <ArrowUp className="w-3 h-3" />
-              <span>Up</span>
-            </button>
-          </div>
-
-          {/* Quick Pacing Command (Coffee Break / Work) */}
-          <button
-            onClick={() => {
-              if (pacingMode === 'break') {
-                handleSummonToDesks();
-              } else {
-                handleTriggerTeamBreak();
-              }
-            }}
-            className={`px-2.5 py-1 rounded-lg text-xs font-mono font-semibold flex items-center space-x-1.5 border transition-all ${pacingMode === 'break'
-              ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold shadow-sm'
-              : 'bg-slate-900/80 text-amber-300 border-slate-800 hover:bg-slate-800/80'
-              }`}
-            title="Toggle Employee Coffee Break / Work Workstation Pacing"
-          >
-            <Coffee className="w-3 h-3" />
-            <span>{pacingMode === 'break' ? 'Return' : 'Coffee Break'}</span>
-          </button>
-
-          {/* View Preference: Modern 2:1 Isometric Cutaway vs Legacy */}
-          <div className="flex items-center space-x-0.5 bg-slate-900/80 p-0.5 rounded-lg border border-slate-800/80">
-            <button
-              onClick={() => {
-                setViewPreference('isometric');
-                setViewMode('floor_focus');
-              }}
-              className={`px-2 py-1 rounded text-xs font-mono font-semibold transition-all ${viewPreference === 'isometric'
-                ? 'bg-emerald-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white'
-                }`}
-              title="2:1 Isometric Cutaway Room View"
-            >
-              <span>Isometric</span>
-            </button>
-            <button
-              onClick={() => setViewPreference('legacy')}
-              className={`px-2 py-1 rounded text-xs font-mono font-semibold transition-all ${viewPreference === 'legacy'
-                ? 'bg-slate-700 text-white'
-                : 'text-slate-500 hover:text-white'
-                }`}
-              title="Legacy Tower View (?view=legacy)"
-            >
-              <span>Legacy</span>
-            </button>
-          </div>
-
-          {/* Zoom Controls */}
-          <div className="flex items-center bg-slate-900/80 rounded-lg border border-slate-800/80 px-1 py-0.5">
-            <button
-              onClick={() => setZoom(z => Math.max(0.7, z - 0.15))}
-              className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800"
-              title="Zoom Out"
-            >
-              <ZoomOut className="w-3 h-3" />
-            </button>
-            <span className="text-[10px] font-mono px-1 font-bold text-slate-300">
-              {Math.round(zoom * 100)}%
-            </span>
-            <button
-              onClick={() => setZoom(z => Math.min(1.8, z + 0.15))}
-              className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800"
-              title="Zoom In"
-            >
-              <ZoomIn className="w-3 h-3" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Viewport: Modern Isometric Cutaway Rooms vs Legacy Diamond Canvas */}
+    <div className="relative flex-1 w-full h-full min-h-0 bg-[#080c14] text-slate-100 rounded-2xl border border-slate-800/80 shadow-2xl overflow-hidden select-none flex flex-col">
+      {/* Main Viewport: Modern Isometric Cutaway Rooms vs Legacy Diamond Canvas with Contextual Glass Overlays */}
       <div ref={viewportRef} className="relative flex-1 w-full h-full min-h-0 overflow-hidden bg-[#080c14]">
         {viewPreference === 'isometric' && activeFloor === 0 && viewMode === 'floor_focus' ? (
           <Floor0IsometricRoom
@@ -1679,6 +1560,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             pan={pan}
             pacingMode={pacingMode}
             skipBakedLabels={true}
+            onAgentPositionsUpdate={setAgentPositions}
           />
         ) : viewPreference === 'isometric' && activeFloor === 1 && viewMode === 'floor_focus' ? (
           <Floor1IsometricRoom
@@ -1690,6 +1572,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             pan={pan}
             pacingMode={pacingMode}
             skipBakedLabels={true}
+            onAgentPositionsUpdate={setAgentPositions}
           />
         ) : viewPreference === 'isometric' && activeFloor === 2 && viewMode === 'floor_focus' ? (
           <Floor2IsometricRoom
@@ -1701,6 +1584,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
             pan={pan}
             pacingMode={pacingMode}
             skipBakedLabels={true}
+            onAgentPositionsUpdate={setAgentPositions}
           />
         ) : (
           <div className="relative w-full h-full bg-[#080c14] overflow-auto flex items-center justify-center p-6">
@@ -1774,6 +1658,265 @@ export const VirtualHeadquarters: React.FC<Props> = ({
           </div>
         </div>
       )}
+
+        {/* ============================================================== */}
+        {/* Spec 7: SCREEN-SPACE EMPLOYEE LABEL LAYER                      */}
+        {/* Fixed 12px HTML labels with hover activity details & click to  */}
+        {/* inspect, positioned cleanly above agent heads without zoom blur */}
+        {/* ============================================================== */}
+        <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
+          {displayedLabels.map((item) => {
+            const offset = item.overlapOffset || 0;
+            const isHovered = hoveredLabelId === item.id;
+            return (
+              <div
+                key={item.id}
+                className="absolute pointer-events-auto transition-transform duration-75 select-none"
+                style={{
+                  left: `${item.screenX}px`,
+                  top: `${item.screenY - 48 + offset}px`,
+                  transform: 'translate(-50%, -100%)'
+                }}
+              >
+                <div
+                  onClick={() => {
+                    const real = agents.find(a => a.agent_id === item.id || a.id === item.id);
+                    if (real) onSelectAgent(real);
+                  }}
+                  onMouseEnter={() => setHoveredLabelId(item.id)}
+                  onMouseLeave={() => setHoveredLabelId(null)}
+                  className={`flex items-center space-x-1.5 px-2 py-0.5 rounded-full border shadow-lg cursor-pointer transition-all ${
+                    isHovered
+                      ? 'bg-slate-900 border-orange-500 text-white scale-105 ring-2 ring-orange-500/30'
+                      : 'bg-slate-950/85 backdrop-blur-md border-slate-700/60 text-slate-200 hover:border-slate-500'
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                    item.status === 'break' ? 'bg-amber-400' :
+                    item.status === 'in_transit' ? 'bg-blue-400' :
+                    item.isAuri ? 'bg-orange-400' : 'bg-emerald-400'
+                  }`} />
+                  <span className="text-[11px] font-mono font-medium whitespace-nowrap">
+                    {item.name}
+                  </span>
+                </div>
+
+                {/* Hover / Tap Reveal Card per Spec 7.B */}
+                {isHovered && (
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2.5 rounded-xl bg-slate-950/95 border border-slate-700/80 shadow-2xl backdrop-blur-md text-left space-y-1 pointer-events-none z-30">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-1">
+                      <span className="text-xs font-bold text-white font-mono">{item.name}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">{item.role}</span>
+                    </div>
+                    <div className="text-[11px] text-amber-300 font-mono leading-tight">
+                      {item.statusText || 'Focusing on operations'}
+                    </div>
+                    <div className="text-[9px] text-orange-400 font-mono uppercase tracking-wider pt-0.5">
+                      Click to view dossier →
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ============================================================== */}
+        {/* Spec 6.A: TOP-LEFT FLOOR INFORMATION OVERLAY                   */}
+        {/* Floor Number, Name, Department Badge & Employee Avatar Group   */}
+        {/* ============================================================== */}
+        <div className="absolute top-4 left-4 z-20 flex flex-col space-y-2 pointer-events-auto">
+          <div className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-slate-950/75 backdrop-blur-md border border-slate-700/50 shadow-2xl">
+            <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 shrink-0">
+              <Building2 className="w-4 h-4" />
+            </div>
+            <div className="flex flex-col">
+              <div className="flex items-center space-x-2">
+                <span className="font-mono text-xs font-bold text-white tracking-wide uppercase">
+                  FLOOR {activeFloor}: {activeFloorConfig?.name.split(':')[1]?.trim() || activeFloorConfig?.name}
+                </span>
+                {activeFloorConfig?.badge && (
+                  <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-orange-500/15 text-orange-400 border border-orange-500/30">
+                    {activeFloorConfig.badge}
+                  </span>
+                )}
+              </div>
+              <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">
+                {activeFloorConfig?.subtitle}
+              </span>
+            </div>
+
+            {/* Compact Employee Avatar Group */}
+            {floorAgents.length > 0 && (
+              <div className="flex items-center pl-2 ml-1 border-l border-slate-800 space-x-1">
+                {floorAgents.slice(0, 5).map(agent => (
+                  <button
+                    key={agent.agent_id || agent.id}
+                    onClick={() => onSelectAgent(agent)}
+                    className="relative group p-0.5 rounded-full hover:ring-2 hover:ring-orange-500 transition-all"
+                    title={`${agent.name} (${agent.role}) - Status: ${agent.status}`}
+                  >
+                    <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-800 border border-slate-700">
+                      <img
+                        src={agent.avatar_file?.startsWith('/') ? agent.avatar_file : `/assets/sprites/employees/${agent.avatar_file || `${agent.agent_id}.png`}`}
+                        alt={agent.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = '/assets/sprites/auri/orbi_idle_f0.png';
+                        }}
+                      />
+                    </div>
+                    {/* Real status dot matching agent current state */}
+                    <span className={`absolute bottom-0 right-0 w-2 h-2 rounded-full border border-slate-950 ${
+                      agent.status === 'active' || agent.status === 'working' ? 'bg-emerald-500' :
+                      agent.status === 'waiting_approval' || agent.status === 'blocked' || agent.status === 'error' ? 'bg-amber-500' :
+                      'bg-blue-400'
+                    }`} />
+                  </button>
+                ))}
+                {floorAgents.length > 5 && (
+                  <span className="w-5 h-5 rounded-full bg-slate-800 text-[9px] font-mono font-bold text-slate-300 flex items-center justify-center border border-slate-700">
+                    +{floorAgents.length - 5}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ============================================================== */}
+        {/* Spec 6.B: LEFT EDGE VERTICAL FLOOR ELEVATOR                     */}
+        {/* Natural Building Order F5 (top) to F0 (bottom)                 */}
+        {/* ============================================================== */}
+        <div className="hidden md:flex absolute left-4 top-24 z-20 flex-col space-y-1.5 p-1.5 rounded-xl bg-slate-950/75 backdrop-blur-md border border-slate-700/50 shadow-2xl">
+          {[5, 4, 3, 2, 1, 0].map(fl => {
+            const isActive = activeFloor === fl && viewMode === 'floor_focus';
+            const hasAlert = agents.some(
+              a => a.floor === fl && (a.status === 'error' || a.status === 'waiting_approval' || a.status === 'blocked')
+            );
+            const flConfig = FLOOR_CONFIG.find(c => c.floor === fl);
+            return (
+              <button
+                key={fl}
+                onClick={() => {
+                  setViewMode('floor_focus');
+                  setActiveFloor(fl);
+                }}
+                className={`relative w-8 h-8 rounded-lg flex items-center justify-center font-mono text-xs font-bold transition-all ${
+                  isActive
+                    ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-lg shadow-orange-600/40 ring-1 ring-orange-400'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/80'
+                }`}
+                title={`${flConfig?.name} (Press ${fl})`}
+                aria-label={`Switch to ${flConfig?.name}`}
+              >
+                <span>F{fl}</span>
+                {hasAlert && (
+                  <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Mobile: compact chip with popover menu for <= 768px */}
+        <div className="md:hidden absolute left-4 top-20 z-20">
+          <div className="relative">
+            <button
+              onClick={() => setMobileFloorMenuOpen(!mobileFloorMenuOpen)}
+              className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-slate-950/85 backdrop-blur-md border border-slate-700 text-white font-mono text-xs font-bold shadow-xl"
+            >
+              <span>F{activeFloor}</span>
+              <ChevronRight className={`w-3 h-3 transition-transform ${mobileFloorMenuOpen ? 'rotate-90' : ''}`} />
+            </button>
+            {mobileFloorMenuOpen && (
+              <div className="absolute top-full left-0 mt-1 flex flex-col space-y-1 p-1 bg-slate-950/95 backdrop-blur-lg border border-slate-800 rounded-xl shadow-2xl">
+                {[5, 4, 3, 2, 1, 0].map(fl => (
+                  <button
+                    key={fl}
+                    onClick={() => {
+                      setActiveFloor(fl);
+                      setMobileFloorMenuOpen(false);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold text-left ${
+                      activeFloor === fl ? 'bg-orange-600 text-white' : 'text-slate-300 hover:bg-slate-800'
+                    }`}
+                  >
+                    F{fl} - {FLOOR_CONFIG.find(c => c.floor === fl)?.badge || `Floor ${fl}`}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ============================================================== */}
+        {/* Spec 6.C: BOTTOM-RIGHT FLOATING ACTION CLUSTER                 */}
+        {/* Zoom Out (-), Zoom %, Zoom In (+), Fit to View (F), Break      */}
+        {/* ============================================================== */}
+        <div className="absolute bottom-4 right-4 z-20 flex items-center space-x-2 p-1.5 rounded-xl bg-slate-950/75 backdrop-blur-md border border-slate-700/50 shadow-2xl">
+          {/* Zoom Out (-) */}
+          <button
+            onClick={() => setZoom(z => Math.max(0.5, Math.round((z - 0.15) * 100) / 100))}
+            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/80 transition-colors"
+            title="Zoom Out (-)"
+            aria-label="Zoom Out"
+          >
+            <ZoomOut className="w-4 h-4" />
+          </button>
+
+          {/* Current Zoom % */}
+          <span className="text-xs font-mono font-bold text-slate-300 min-w-[42px] text-center">
+            {Math.round(zoom * 100)}%
+          </span>
+
+          {/* Zoom In (+) */}
+          <button
+            onClick={() => setZoom(z => Math.min(2.5, Math.round((z + 0.15) * 100) / 100))}
+            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/80 transition-colors"
+            title="Zoom In (+)"
+            aria-label="Zoom In"
+          >
+            <ZoomIn className="w-4 h-4" />
+          </button>
+
+          <div className="w-px h-4 bg-slate-700/60 my-auto" />
+
+          {/* Fit to View (F) */}
+          <button
+            onClick={handleFitToView}
+            className="flex items-center space-x-1 px-2 py-1 text-xs font-mono font-semibold text-slate-300 hover:text-white rounded-lg hover:bg-slate-800/80 transition-colors"
+            title="Fit to View (F)"
+            aria-label="Fit to View"
+          >
+            <Maximize2 className="w-3.5 h-3.5 text-orange-400" />
+            <span className="hidden sm:inline">Fit</span>
+          </button>
+
+          <div className="w-px h-4 bg-slate-700/60 my-auto" />
+
+          {/* Coffee Break / Return to Work Toggle */}
+          <button
+            onClick={() => {
+              if (pacingMode === 'break') {
+                handleSummonToDesks();
+              } else {
+                handleTriggerTeamBreak();
+              }
+            }}
+            className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-semibold transition-all ${
+              pacingMode === 'break'
+                ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/30'
+                : 'text-amber-300 hover:text-amber-200 hover:bg-slate-800/80'
+            }`}
+            title={pacingMode === 'break' ? 'Return to Work' : 'Team Coffee Break'}
+          >
+            <Coffee className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">
+              {pacingMode === 'break' ? 'Return to Work' : 'Coffee Break'}
+            </span>
+          </button>
+        </div>
       </div>
     </div>
   );
