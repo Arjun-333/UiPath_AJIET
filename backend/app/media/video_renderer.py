@@ -336,13 +336,9 @@ class VideoRenderer:
 
         draw.text((36, height - 34), f"Masterclass Progress: Scene {scene_idx + 1}/{total_scenes}  |  5+ Min Full Technical Tutorial", font=self.font_footer, fill=(148, 163, 184))
 
-        # 6. Add Official Mascot AURI in bottom-right corner with Audio Waveform Pulse
-        auri_sprite = Path("/home/arjun/Desktop/PROJECTS/UiPathAJIET/frontend/public/assets/sprites/orbi/orbi_waving_f0.png")
-        if auri_sprite.exists():
-            auri_img = Image.open(auri_sprite).convert("RGBA")
-            auri_small = auri_img.resize((120, 120), Image.Resampling.NEAREST)
-            img.paste(auri_small, (width - 150, height - 190), auri_small)
-
+        # 6. Reserve bottom-right space for live animated Mascot AURI overlay & waveform
+        draw.rounded_rectangle([width - 360, height - 90, width - 140, height - 45], radius=6, fill=(15, 23, 42), outline=(51, 65, 85), width=1)
+        draw.text((width - 350, height - 85), "LIVE VOICE WAVEFORM", font=self.font_caption, fill=(100, 116, 139))
         return img
 
     def get_audio_duration(self, audio_path: Path) -> float:
@@ -386,23 +382,106 @@ class VideoRenderer:
         frame_path = temp_dir / f"{scene_id}_frame.png"
         frame_img.save(frame_path)
 
-        # 3. Render Scene Video Segment
+        # 3. Render Scene Video Segment with Cinematic Motion & Dynamic Overlays
         scene_mp4 = scenes_dir / f"{scene_id}.mp4"
-        cmd = [
-            self.ffmpeg_exe, "-y",
-            "-loop", "1",
-            "-i", str(frame_path),
-            "-i", str(audio_path),
-            "-c:v", "libx264",
-            "-t", f"{scene['duration']:.2f}",
-            "-pix_fmt", "yuv420p",
-            "-r", "30",
-            "-c:a", "aac",
-            "-b:a", "192k",
-            "-shortest",
-            str(scene_mp4)
-        ]
-        subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        dur = float(scene["duration"])
+        auri_gif = Path("/home/arjun/Desktop/PROJECTS/UiPathAJIET/frontend/public/assets/sprites/orbi/orbi_working.gif")
+
+        # Dynamic camera Ken Burns motion variation per scene
+        if idx % 3 == 0:
+            zoom_filter = "zoompan=z='min(zoom+0.0006,1.10)':d=125:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1280x720:fps=30"
+        elif idx % 3 == 1:
+            zoom_filter = "zoompan=z=1.07:d=125:x='if(lte(on,1),(iw-iw/zoom)/2,x+0.5)':y='ih/2-(ih/zoom/2)':s=1280x720:fps=30"
+        else:
+            zoom_filter = "zoompan=z='max(1.10-0.0005*on,1.0)':d=125:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1280x720:fps=30"
+
+        # Generate synchronized dynamic chunked subtitles
+        narration_text = scene.get("narration", scene.get("title", ""))
+        words = narration_text.split()
+        sub_filters = []
+        if words:
+            chunk_size = 7
+            chunks = [" ".join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
+            t_per_chunk = max(0.5, dur / len(chunks))
+            for c_idx, chunk in enumerate(chunks):
+                t_s = round(c_idx * t_per_chunk, 2)
+                t_e = round(min(dur, (c_idx + 1) * t_per_chunk), 2)
+                safe_c = chunk.replace(":", "\\:").replace("'", "").replace('"', '').replace("%", "\\%")
+                sub_filters.append(
+                    f"drawtext=fontfile=/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf:text='{safe_c}':"
+                    f"x=(w-text_w)/2:y=h-80:fontsize=22:fontcolor=white:box=1:boxcolor=black@0.75:boxborderw=8:"
+                    f"enable='between(t,{t_s},{t_e})'"
+                )
+
+        try:
+            if auri_gif.exists():
+                filter_complex = (
+                    f"[0:v]{zoom_filter}[bg];"
+                    f"[1:a]showwaves=s=200x40:mode=line:colors=0x38bdf8@0.9:scale=sqrt[wave];"
+                    f"[2:v]scale=100:100[mascot];"
+                    f"[bg][mascot]overlay=W-130:H-160:shortest=1[v1];"
+                    f"[v1][wave]overlay=W-340:H-85[v2];"
+                    f"[v2]drawbox=x=36:y=702:w='(t/{dur:.2f})*(1280-72)':h=8:color=0xff6600:t=fill[v3]"
+                )
+                if sub_filters:
+                    filter_complex += f";[v3]{','.join(sub_filters)}[vout]"
+                    out_map = "[vout]"
+                else:
+                    out_map = "[v3]"
+
+                cmd = [
+                    self.ffmpeg_exe, "-y",
+                    "-loop", "1", "-i", str(frame_path),
+                    "-i", str(audio_path),
+                    "-ignore_loop", "0", "-i", str(auri_gif),
+                    "-filter_complex", filter_complex,
+                    "-map", out_map,
+                    "-map", "1:a",
+                    "-c:v", "libx264",
+                    "-preset", "veryfast",
+                    "-t", f"{dur:.2f}",
+                    "-pix_fmt", "yuv420p",
+                    "-c:a", "aac",
+                    "-b:a", "192k",
+                    str(scene_mp4)
+                ]
+            else:
+                # Fallback without GIF
+                filter_complex = f"[0:v]{zoom_filter}[bg];[bg]drawbox=x=36:y=702:w='(t/{dur:.2f})*(1280-72)':h=8:color=0xff6600:t=fill[vout]"
+                cmd = [
+                    self.ffmpeg_exe, "-y",
+                    "-loop", "1", "-i", str(frame_path),
+                    "-i", str(audio_path),
+                    "-filter_complex", filter_complex,
+                    "-map", "[vout]",
+                    "-map", "1:a",
+                    "-c:v", "libx264",
+                    "-preset", "veryfast",
+                    "-t", f"{dur:.2f}",
+                    "-pix_fmt", "yuv420p",
+                    "-c:a", "aac",
+                    "-b:a", "192k",
+                    str(scene_mp4)
+                ]
+            subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except Exception as exc:
+            # Safe basic fallback in case complex filter fails on edge-case audio
+            cmd_fallback = [
+                self.ffmpeg_exe, "-y",
+                "-loop", "1",
+                "-i", str(frame_path),
+                "-i", str(audio_path),
+                "-c:v", "libx264",
+                "-preset", "veryfast",
+                "-t", f"{dur:.2f}",
+                "-pix_fmt", "yuv420p",
+                "-r", "30",
+                "-c:a", "aac",
+                "-b:a", "192k",
+                "-shortest",
+                str(scene_mp4)
+            ]
+            subprocess.run(cmd_fallback, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Cleanup temp frame
         try:

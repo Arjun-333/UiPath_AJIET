@@ -190,11 +190,10 @@ export const App: React.FC = () => {
         <div className="flex items-center space-x-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
           <button
             onClick={() => setActiveTab('hq')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-              activeTab === 'hq'
-                ? 'bg-orange-600 text-white shadow-md shadow-orange-600/30'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'hq'
+              ? 'bg-orange-600 text-white shadow-md shadow-orange-600/30'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
           >
             <Building2 className="w-4 h-4" />
             <span>Virtual Headquarters</span>
@@ -202,11 +201,10 @@ export const App: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('command')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-              activeTab === 'command'
-                ? 'bg-orange-600 text-white shadow-md shadow-orange-600/30'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'command'
+              ? 'bg-orange-600 text-white shadow-md shadow-orange-600/30'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
           >
             <Terminal className="w-4 h-4" />
             <span>CEO Command Centre</span>
@@ -214,11 +212,10 @@ export const App: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('vault')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-              activeTab === 'vault'
-                ? 'bg-orange-600 text-white shadow-md shadow-orange-600/30'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'vault'
+              ? 'bg-orange-600 text-white shadow-md shadow-orange-600/30'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
           >
             <Film className="w-4 h-4" />
             <span>Media Vault</span>
@@ -226,11 +223,10 @@ export const App: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('qa')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-              activeTab === 'qa'
-                ? 'bg-orange-600 text-white shadow-md shadow-orange-600/30'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'qa'
+              ? 'bg-orange-600 text-white shadow-md shadow-orange-600/30'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
           >
             <ShieldAlert className="w-4 h-4 text-orange-400" />
             <span>Video QA Lab</span>
@@ -238,11 +234,10 @@ export const App: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('workforce')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-              activeTab === 'workforce'
-                ? 'bg-orange-600 text-white shadow-md shadow-orange-600/30'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'workforce'
+              ? 'bg-orange-600 text-white shadow-md shadow-orange-600/30'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
           >
             <Users className="w-4 h-4 text-orange-400" />
             <span>Workforce & Talent</span>
@@ -274,11 +269,10 @@ export const App: React.FC = () => {
           {/* Level 3 Approvals Button */}
           <button
             onClick={() => setShowApprovalsModal(true)}
-            className={`relative flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-              pendingApprovalsCount > 0
-                ? 'bg-orange-600 text-white border-orange-500 animate-pulse shadow-lg shadow-orange-600/30'
-                : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
-            }`}
+            className={`relative flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${pendingApprovalsCount > 0
+              ? 'bg-orange-600 text-white border-orange-500 animate-pulse shadow-lg shadow-orange-600/30'
+              : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
+              }`}
           >
             <ShieldCheck className="w-4 h-4 text-orange-400" />
             <span>Approvals</span>
