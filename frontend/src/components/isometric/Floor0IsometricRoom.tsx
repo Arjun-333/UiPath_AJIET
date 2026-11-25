@@ -153,9 +153,9 @@ export const Floor0IsometricRoom: React.FC<Props> = ({
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Canvas Fixed Camera Center
+      // Canvas Fixed Camera Center (Centering 499px room within 740px canvas)
       const originX = canvas.width / 2;
-      const originY = 180;
+      const originY = 270;
       const roomSize = 10; // 10x10 Grid Units cutaway room
 
       // 1. Draw Architectural Cutaway Enclosure (Slab + Walls + Window + Blinds + Clock)
@@ -269,7 +269,7 @@ export const Floor0IsometricRoom: React.FC<Props> = ({
     const cy = (e.clientY - rect.top) / zoom;
 
     const originX = canvas.width / 2;
-    const originY = 180;
+    const originY = 270;
 
     let found: AgentSimState | null = null;
     simAgentsRef.current.forEach(sim => {
