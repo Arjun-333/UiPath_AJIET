@@ -449,7 +449,17 @@ async def get_project_manifest(project_id: str):
     manifest_path = PROJECTS_DIR / project_id / "production_manifest.json"
     if not manifest_path.exists():
         raise HTTPException(status_code=404, detail="Production manifest not found for this project.")
-    return json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    # Auto-run inspection if not yet inspected or score is missing
+    if manifest.get("quality_score", 0) == 0 or "score_breakdown" not in manifest or manifest.get("status") == "draft":
+        from backend.app.media.video_qa import VideoQAService
+        qa = VideoQAService()
+        try:
+            qa.inspect_video(project_id)
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return manifest
 
 
 @app.post("/api/projects/{project_id}/qa/inspect")

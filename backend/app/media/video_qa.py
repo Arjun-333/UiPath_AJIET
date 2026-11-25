@@ -553,6 +553,7 @@ class VideoQAService:
             "inspected_at": datetime.utcnow().isoformat(),
             "passed": passed,
             "status": new_status,
+            "quality_score": round(weighted_score, 1),
             "overall_score": round(weighted_score, 1),
             "score_breakdown": {
                 "visual_quality": round(vis_score, 1),

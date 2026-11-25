@@ -10,14 +10,36 @@ import { VideoQualityInspector } from './components/VideoQualityInspector';
 import { WorkforceManagementView } from './components/workforce/WorkforceManagementView';
 import { Building2, Terminal, Film, ShieldCheck, Activity, Users, Sparkles, MessageSquare, ShieldAlert } from 'lucide-react';
 
+const getInitialTab = (): 'hq' | 'command' | 'vault' | 'qa' | 'workforce' => {
+  if (typeof window !== 'undefined') {
+    const hash = window.location.hash.replace('#', '');
+    if (['hq', 'command', 'vault', 'qa', 'workforce'].includes(hash)) {
+      return hash as any;
+    }
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab && ['hq', 'command', 'vault', 'qa', 'workforce'].includes(tab)) {
+      return tab as any;
+    }
+  }
+  return 'hq';
+};
+
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'hq' | 'command' | 'vault' | 'qa' | 'workforce'>('hq');
+  const [activeTab, setActiveTabState] = useState<'hq' | 'command' | 'vault' | 'qa' | 'workforce'>(getInitialTab);
+
+  const setActiveTab = (tab: 'hq' | 'command' | 'vault' | 'qa' | 'workforce') => {
+    setActiveTabState(tab);
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', '#' + tab);
+    }
+  };
   const [activeFloor, setActiveFloor] = useState<number>(0);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [messages, setMessages] = useState<AgentMessage[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('test_proj_01');
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('proj_02bbb199');
   const [summary, setSummary] = useState<RosterSummary>({
     total_agents: 14,
     active_agents: 0,
@@ -44,7 +66,16 @@ export const App: React.FC = () => {
 
       if (agentsRes.agents) setAgents(agentsRes.agents);
       if (agentsRes.summary) setSummary(agentsRes.summary);
-      if (projRes) setProjects(projRes);
+      if (projRes && Array.isArray(projRes)) {
+        setProjects(projRes);
+        setSelectedProjectId(prev => {
+          if (prev && (prev === 'proj_02bbb199' || projRes.some((p: any) => p.id === prev))) {
+            return prev;
+          }
+          const ready = projRes.find((p: any) => p.id === 'proj_02bbb199') || projRes.find((p: any) => p.status === 'completed') || projRes[0];
+          return ready ? ready.id : 'proj_02bbb199';
+        });
+      }
       if (apprRes) setApprovals(apprRes);
       if (Array.isArray(msgRes)) setMessages(msgRes);
     } catch (err) {
@@ -315,7 +346,9 @@ export const App: React.FC = () => {
 
         {activeTab === 'qa' && (
           <VideoQualityInspector
-            projectId={projects.length > 0 ? projects[0].id : selectedProjectId}
+            projectId={selectedProjectId || (projects.length > 0 ? projects[0].id : 'proj_02bbb199')}
+            projects={projects}
+            onSelectProject={(id) => setSelectedProjectId(id)}
           />
         )}
 
