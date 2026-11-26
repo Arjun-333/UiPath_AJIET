@@ -34,16 +34,11 @@ def normalize_google_sheet_csv_url(sheet_url: str) -> str:
     return f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}"
 
 
-def parse_csv_roster(csv_text: str) -> List[Dict[str, str]]:
-    """
-    Parses a CSV string into normalized student records (`name`, `email`, `department`).
-    Matches common header variations (e.g. 'Full Name', 'Student Name', 'Name', 'Email', 'USN').
-    """
-    reader = csv.DictReader(io.StringIO(csv_text.strip()))
-    if not reader.fieldnames:
+def _normalize_roster_rows(fieldnames: List[str], rows: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+    """Normalizes tabular rows into student records (`name`, `email`, `department`)."""
+    headers = {str(h).strip().lower(): str(h) for h in fieldnames if h is not None and str(h).strip()}
+    if not headers:
         return []
-
-    headers = {h.strip().lower(): h for h in reader.fieldnames if h}
 
     def pick_key(candidates: List[str]) -> Optional[str]:
         for c in candidates:
@@ -57,23 +52,55 @@ def parse_csv_roster(csv_text: str) -> List[Dict[str, str]]:
     dept_col = pick_key(["department", "branch", "usn", "college", "section"])
 
     students: List[Dict[str, str]] = []
-    for row in reader:
+    for row in rows:
         if name_col:
-            raw_name = (row.get(name_col) or "").strip()
+            raw_name = str(row.get(name_col) or "").strip()
         else:
             raw_name = ""
             for v in row.values():
-                if v and v.strip():
-                    raw_name = v.strip()
+                if v is not None and str(v).strip():
+                    raw_name = str(v).strip()
                     break
         if not raw_name:
             continue
         students.append({
-            "name": raw_name.strip(),
-            "email": ((row.get(email_col) or "").strip() if email_col else ""),
-            "department": ((row.get(dept_col) or "").strip() if dept_col else "")
+            "name": raw_name,
+            "email": (str(row.get(email_col) or "").strip() if email_col else ""),
+            "department": (str(row.get(dept_col) or "").strip() if dept_col else "")
         })
     return students
+
+
+def parse_csv_roster(csv_text: str) -> List[Dict[str, str]]:
+    """
+    Parses a CSV string into normalized student records (`name`, `email`, `department`).
+    Matches common header variations (e.g. 'Full Name', 'Student Name', 'Name', 'Email', 'USN').
+    """
+    reader = csv.DictReader(io.StringIO(csv_text.strip()))
+    if not reader.fieldnames:
+        return []
+    return _normalize_roster_rows(list(reader.fieldnames), list(reader))
+
+
+def parse_excel_roster(raw_bytes: bytes) -> List[Dict[str, str]]:
+    """Parses an Excel (.xlsx/.xlsm) workbook into normalized student records."""
+    import openpyxl
+
+    wb = openpyxl.load_workbook(io.BytesIO(raw_bytes), read_only=True, data_only=True)
+    try:
+        ws = wb.active
+        all_rows = list(ws.iter_rows(values_only=True))
+    finally:
+        wb.close()
+
+    if not all_rows:
+        return []
+    fieldnames = [str(c).strip() if c is not None else f"col_{i}" for i, c in enumerate(all_rows[0])]
+    dict_rows = [
+        {fieldnames[i]: (row[i] if i < len(row) else None) for i in range(len(fieldnames))}
+        for row in all_rows[1:]
+    ]
+    return _normalize_roster_rows(fieldnames, dict_rows)
 
 
 def fetch_google_sheet_students(sheet_url: str) -> List[Dict[str, str]]:

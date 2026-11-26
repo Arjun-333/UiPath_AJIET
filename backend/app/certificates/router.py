@@ -14,6 +14,7 @@ from backend.app.certificates.service import (
     fetch_google_sheet_students,
     generate_certificates_batch,
     parse_csv_roster,
+    parse_excel_roster,
 )
 
 router = APIRouter(prefix="/api/certificates", tags=["certificates"])
@@ -47,11 +48,15 @@ async def import_google_sheet(payload: ImportSheetRequest):
 async def import_csv_file(file: UploadFile = File(...)):
     try:
         raw = await file.read()
-        text = raw.decode("utf-8-sig", errors="replace")
-        students = parse_csv_roster(text)
+        ext = Path(file.filename or "").suffix.lower()
+        if ext in (".xlsx", ".xlsm"):
+            students = parse_excel_roster(raw)
+        else:
+            text = raw.decode("utf-8-sig", errors="replace")
+            students = parse_csv_roster(text)
         return {"students": students, "count": len(students)}
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"CSV parse error: {exc}")
+        raise HTTPException(status_code=400, detail=f"Spreadsheet parse error: {exc}")
 
 
 @router.post("/upload-template")

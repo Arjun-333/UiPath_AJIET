@@ -7,6 +7,7 @@ import pytest
 from backend.app.certificates.service import (
     normalize_google_sheet_csv_url,
     parse_csv_roster,
+    parse_excel_roster,
     generate_certificates_batch,
 )
 from backend.app.media.subtitle_generator import SubtitleGenerator
@@ -35,6 +36,23 @@ def test_parse_csv_roster_normalizes_columns():
     assert students[0]["email"] == "aarav@ajiet.edu.in"
     assert students[0]["department"] == "CSE - A"
     assert students[1]["name"] == "Diya Nair"
+
+
+def test_parse_excel_roster_normalizes_columns():
+    import io
+    import openpyxl
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(["Student Name", "Email", "Department"])
+    ws.append(["Rohan Hegde", "rohan@ajiet.edu.in", "AIML"])
+    ws.append([None, None, None])
+    buf = io.BytesIO()
+    wb.save(buf)
+
+    students = parse_excel_roster(buf.getvalue())
+    assert len(students) == 1
+    assert students[0] == {"name": "Rohan Hegde", "email": "rohan@ajiet.edu.in", "department": "AIML"}
 
 
 def test_generate_certificates_batch_creates_pdfs_and_zip(tmp_path, monkeypatch):

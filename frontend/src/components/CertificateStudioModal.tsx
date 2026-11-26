@@ -174,8 +174,8 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
                 </span>
                 <label className="cursor-pointer px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-mono border border-slate-700 flex items-center gap-1.5">
                   <Upload className="w-3 h-3" />
-                  <span>Upload CSV</span>
-                  <input type="file" accept=".csv" onChange={handleImportCsv} className="hidden" />
+                  <span>Upload Excel / CSV</span>
+                  <input type="file" accept=".csv,.xlsx,.xlsm" onChange={handleImportCsv} className="hidden" />
                 </label>
               </div>
               <div className="flex space-x-2">
@@ -220,17 +220,34 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
                 </button>
               </div>
 
-              {/* Student List Preview */}
-              <div className="max-h-36 overflow-y-auto space-y-1 pt-1">
+              {/* Student List Preview (Inline Editable) */}
+              <div className="max-h-40 overflow-y-auto space-y-1.5 pt-1">
                 {students.map((st, idx) => (
-                  <div key={idx} className="flex items-center justify-between px-2.5 py-1.5 bg-slate-900 rounded-lg text-xs border border-slate-800/80">
-                    <div>
-                      <span className="font-semibold text-slate-200">{st.name}</span>
-                      {st.department && <span className="text-slate-500 ml-2 font-mono text-[10px]">({st.department})</span>}
-                    </div>
+                  <div key={idx} className="flex items-center gap-1.5 px-2 py-1 bg-slate-900 rounded-lg text-xs border border-slate-800/80">
+                    <input
+                      type="text"
+                      value={st.name}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setStudents(prev => prev.map((item, i) => (i === idx ? { ...item, name: val } : item)));
+                      }}
+                      placeholder="Student name"
+                      className="flex-1 min-w-0 px-2 py-1 bg-slate-950/70 border border-slate-800 rounded text-slate-200 font-semibold focus:outline-none focus:border-orange-500"
+                    />
+                    <input
+                      type="text"
+                      value={st.department || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setStudents(prev => prev.map((item, i) => (i === idx ? { ...item, department: val } : item)));
+                      }}
+                      placeholder="Dept / USN"
+                      className="w-28 px-2 py-1 bg-slate-950/70 border border-slate-800 rounded text-slate-400 font-mono text-[10px] focus:outline-none focus:border-orange-500"
+                    />
                     <button
                       onClick={() => setStudents(prev => prev.filter((_, i) => i !== idx))}
-                      className="text-slate-500 hover:text-red-400 p-1"
+                      className="text-slate-500 hover:text-red-400 p-1 shrink-0"
+                      title="Remove student"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
