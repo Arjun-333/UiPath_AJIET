@@ -1,5 +1,5 @@
 import React, { useEffect, useState, Suspense, lazy } from 'react';
-import { Film, Download, Award, Copy, Check, FileText, FolderOpen } from 'lucide-react';
+import { Film, Download, Award, Copy, Check, FileText } from 'lucide-react';
 
 const CertificateStudioModal = lazy(() => import('./CertificateStudioModal').then(m => ({ default: m.CertificateStudioModal })));
 
@@ -73,23 +73,6 @@ export const MediaVault: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {/* Dynamic Project Selector */}
-          <div className="flex items-center space-x-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5">
-            <FolderOpen className="w-4 h-4 text-slate-400 shrink-0" />
-            <select
-              value={selectedId}
-              onChange={(e) => setSelectedId(e.target.value)}
-              className="bg-transparent text-xs font-mono text-slate-200 focus:outline-none max-w-[240px]"
-              aria-label="Select rendered project"
-            >
-              {projects.map(p => (
-                <option key={p.id} value={p.id} className="bg-slate-900 text-slate-200">
-                  {p.title.slice(0, 42)} ({p.id})
-                </option>
-              ))}
-            </select>
-          </div>
-
           <button
             onClick={() => setShowCertStudio(true)}
             className="flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-orange-600/25 transition-all"
