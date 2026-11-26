@@ -50,7 +50,7 @@ function buildDefaultCertHtml(item, meta, logos) {
     font-family: 'Ubuntu', 'Inter', system-ui, -apple-system, sans-serif;
     position: relative;
     overflow: hidden;
-    padding: 44px 58px 40px;
+    padding: 40px 44px 40px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -91,33 +91,33 @@ function buildDefaultCertHtml(item, meta, logos) {
     border-bottom: 1.5px solid #e2edf3;
   }
   .logo-uipath-community {
-    height: 36px;
+    height: 42px;
     width: auto;
     object-fit: contain;
   }
   .logo-ieee-mangalore {
-    height: 46px;
+    height: 54px;
     width: auto;
     object-fit: contain;
   }
   .logo-ajiet {
-    height: 72px;
+    height: 84px;
     width: auto;
     object-fit: contain;
   }
   .logo-enigma {
-    height: 72px;
+    height: 84px;
     width: auto;
     object-fit: contain;
   }
   .logo-community-white {
-    height: 72px;
-    width: 72px;
+    height: 84px;
+    width: 84px;
     object-fit: contain;
     border-radius: 50%;
   }
   .logo-student-dev {
-    height: 72px;
+    height: 82px;
     width: auto;
     object-fit: contain;
   }
