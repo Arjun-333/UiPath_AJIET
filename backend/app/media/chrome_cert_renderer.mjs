@@ -305,7 +305,7 @@ function buildDefaultCertHtml(item, meta, logos) {
         <div class="sig-img-slot">
           ${logos.kanmaniSignature ? `<img class="sig-img-advisor" src="${logos.kanmaniSignature}" alt="Kanmani Signature" />` : ''}
         </div>
-        <div class="sig-line">Kanmani</div>
+        <div class="sig-line">Mrs. Kanmani</div>
         <div class="sig-sub">Faculty Advisor, IEEE Computer Society<br />Student Branch Chapter</div>
       </div>
       <div class="sig-block-hod">
