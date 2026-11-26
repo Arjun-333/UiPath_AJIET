@@ -232,6 +232,12 @@ function buildDefaultCertHtml(item, meta, logos) {
     object-fit: contain;
     margin-bottom: 2px;
   }
+  .sig-img-hod {
+    height: 48px;
+    width: auto;
+    object-fit: contain;
+    margin-bottom: 2px;
+  }
   .sig-line {
     border-top: 2px solid #0b0f19;
     padding-top: 7px;
@@ -303,7 +309,9 @@ function buildDefaultCertHtml(item, meta, logos) {
         <div class="sig-sub">Faculty Advisor, IEEE Computer Society<br />Student Branch Chapter</div>
       </div>
       <div class="sig-block-hod">
-        <div class="sig-img-slot"></div>
+        <div class="sig-img-slot">
+          ${logos.antonySignature ? `<img class="sig-img-hod" src="${logos.antonySignature}" alt="Dr. Antony P J Signature" />` : ''}
+        </div>
         <div class="sig-line">Dr. Antony P J</div>
         <div class="sig-sub">Vice Principal &amp; HOD</div>
       </div>
@@ -391,7 +399,8 @@ async function main() {
     uipathCommunity: loadDataUrl(path.join(brandingDir, 'uipath_community_lockup.png')),
     studentDev: loadDataUrl(path.join(brandingDir, 'uipath_student_developer.png')),
     signature: loadDataUrl(path.join(brandingDir, 'arjun_signature.png')),
-    kanmaniSignature: loadDataUrl(path.join(brandingDir, 'kanmani_signature.png'))
+    kanmaniSignature: loadDataUrl(path.join(brandingDir, 'kanmani_signature.png')),
+    antonySignature: loadDataUrl(path.join(brandingDir, 'antony_signature.png'))
   };
 
   let templateDataUrl = loadDataUrl(templatePath);
