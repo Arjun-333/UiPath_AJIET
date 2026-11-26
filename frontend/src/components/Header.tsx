@@ -186,9 +186,9 @@ export const Header: React.FC<Props> = ({
           {/* 3. Approvals (Highest Priority: Solid Amber/Gold Fill with Dark Text) */}
           <button
             onClick={onOpenApprovals}
-            className={`relative flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${
+            className={`pixel-btn relative flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${
               isApprovalsOpen ? 'ring-2 ring-amber-300 ring-offset-2 ring-offset-slate-950 ' : ''
-            } bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-amber-500/20 active:scale-95`}
+            }${pendingApprovalsCount > 0 ? 'animate-pixel-pulse ' : ''}bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-amber-500/20`}
             title="CEO Level 3 Approvals Gate"
             aria-label={`Approvals Gate, ${pendingApprovalsCount} pending approvals`}
           >

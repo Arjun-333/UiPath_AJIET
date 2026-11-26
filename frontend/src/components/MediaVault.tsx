@@ -75,7 +75,7 @@ export const MediaVault: React.FC = () => {
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => setShowCertStudio(true)}
-            className="flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-orange-600/25 transition-all"
+            className="pixel-btn flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-orange-600/25"
           >
             <Award className="w-4 h-4" />
             <span>E-Certificate PDF Studio</span>
@@ -86,7 +86,7 @@ export const MediaVault: React.FC = () => {
       {/* Rendered Project Showcase */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 16:9 Master Video */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
+        <div className="pixel-card animate-pixel-enter stagger-1 bg-slate-900/90 border border-slate-800 rounded-xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono text-orange-400 font-bold">16:9 YOUTUBE MASTER</span>
             <div className="flex items-center space-x-2">
@@ -130,7 +130,7 @@ export const MediaVault: React.FC = () => {
         </div>
 
         {/* 9:16 Vertical Reel */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
+        <div className="pixel-card animate-pixel-enter stagger-2 bg-slate-900/90 border border-slate-800 rounded-xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono text-pink-400 font-bold">9:16 INSTAGRAM REEL / SHORTS</span>
             <div className="flex items-center space-x-2">

@@ -21,6 +21,108 @@ body {
   font-family: 'JetBrains Mono', monospace;
 }
 
+/* Pixel-Inspired Fluid Backdrop & Motion System */
+.pixel-grid-bg {
+  background-color: #0b0f17;
+  background-image:
+    radial-gradient(circle at 12% 0%, rgba(250, 70, 22, 0.08) 0%, transparent 42%),
+    radial-gradient(circle at 88% 0%, rgba(6, 182, 212, 0.07) 0%, transparent 42%),
+    linear-gradient(to right, rgba(148, 163, 184, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.045) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+}
+
+@keyframes pixelEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.992);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes modalPop {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.965);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pixelFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes pixelPulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(250, 70, 22, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(250, 70, 22, 0);
+  }
+}
+
+.animate-pixel-enter {
+  animation: pixelEnter 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-modal-pop {
+  animation: modalPop 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-pixel-float {
+  animation: pixelFloat 3.2s ease-in-out infinite;
+}
+
+.animate-pixel-pulse {
+  animation: pixelPulseGlow 2.4s ease-out infinite;
+}
+
+.stagger-1 { animation-delay: 40ms; }
+.stagger-2 { animation-delay: 90ms; }
+.stagger-3 { animation-delay: 140ms; }
+.stagger-4 { animation-delay: 190ms; }
+
+.pixel-card {
+  transition:
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+  will-change: transform;
+}
+
+.pixel-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(250, 70, 22, 0.38);
+  box-shadow: 0 10px 28px -10px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(250, 70, 22, 0.14);
+}
+
+.pixel-btn {
+  transition:
+    transform 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.pixel-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.pixel-btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+}
+
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;

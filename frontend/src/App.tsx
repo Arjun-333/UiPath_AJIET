@@ -267,7 +267,7 @@ export const App: React.FC = () => {
   const pendingApprovalsCount = approvals.filter(a => a.status === 'pending').length;
 
   return (
-    <div className="flex flex-col h-screen bg-[#0b0f17] text-slate-100 overflow-hidden font-sans">
+    <div className="flex flex-col h-screen pixel-grid-bg text-slate-100 overflow-hidden font-sans">
       {/* Top Header Navigation */}
       <Header
         activeTab={activeTab}
@@ -287,42 +287,44 @@ export const App: React.FC = () => {
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-h-0 overflow-hidden px-2 md:px-6 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-6">
         <Suspense fallback={<div className="flex-1 flex items-center justify-center text-xs font-mono text-slate-400">Loading module...</div>}>
-          {activeTab === 'hq' && (
-            <VirtualHeadquarters
-              agents={agents}
-              onSelectAgent={setSelectedAgent}
-              activeFloor={activeFloor}
-              setActiveFloor={setActiveFloor}
-              orbiState={orbiState}
-              onOpenComms={() => setShowCommsModal(true)}
-              recentMessages={messages}
-              pendingTransit={pendingTransit}
-              viewModePreference={viewMode}
-            />
-          )}
+          <div key={activeTab} className="flex-1 flex flex-col min-h-0 animate-pixel-enter">
+            {activeTab === 'hq' && (
+              <VirtualHeadquarters
+                agents={agents}
+                onSelectAgent={setSelectedAgent}
+                activeFloor={activeFloor}
+                setActiveFloor={setActiveFloor}
+                orbiState={orbiState}
+                onOpenComms={() => setShowCommsModal(true)}
+                recentMessages={messages}
+                pendingTransit={pendingTransit}
+                viewModePreference={viewMode}
+              />
+            )}
 
-          {activeTab === 'command' && (
-            <CeoCommandCenter
-              summary={summary}
-              projects={projects}
-              approvals={approvals}
-              onSendCommand={handleSendCommand}
-              onOpenApprovals={() => setShowApprovalsModal(true)}
-              orbiState={orbiState}
-            />
-          )}
+            {activeTab === 'command' && (
+              <CeoCommandCenter
+                summary={summary}
+                projects={projects}
+                approvals={approvals}
+                onSendCommand={handleSendCommand}
+                onOpenApprovals={() => setShowApprovalsModal(true)}
+                orbiState={orbiState}
+              />
+            )}
 
-          {activeTab === 'vault' && <MediaVault />}
+            {activeTab === 'vault' && <MediaVault />}
 
-          {activeTab === 'qa' && (
-            <VideoQualityInspector
-              projectId={selectedProjectId || (projects.length > 0 ? projects[0].id : 'proj_02bbb199')}
-              projects={projects}
-              onSelectProject={(id) => setSelectedProjectId(id)}
-            />
-          )}
+            {activeTab === 'qa' && (
+              <VideoQualityInspector
+                projectId={selectedProjectId || (projects.length > 0 ? projects[0].id : 'proj_02bbb199')}
+                projects={projects}
+                onSelectProject={(id) => setSelectedProjectId(id)}
+              />
+            )}
 
-          {activeTab === 'workforce' && <WorkforceManagementView />}
+            {activeTab === 'workforce' && <WorkforceManagementView />}
+          </div>
         </Suspense>
       </main>
 
