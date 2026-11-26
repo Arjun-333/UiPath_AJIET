@@ -29,7 +29,7 @@ function buildDefaultCertHtml(item, meta, logos) {
   const leadWords = escapeHtml(words.join(' '));
   const issueDate = escapeHtml(meta.issueDate || '');
   const issuerName = escapeHtml(meta.issuerName || 'Arjun R');
-  const issuerRole = escapeHtml(meta.issuerRole || 'UiPath Student Developer Champion (SDC)');
+  const issuerRole = escapeHtml(meta.issuerRole || 'UiPath Student Developer Champion (SDC) AJIET');
 
   return `<!DOCTYPE html>
 <html>
@@ -178,7 +178,7 @@ function buildDefaultCertHtml(item, meta, logos) {
     color: #0b0f19;
   }
   .sig-block {
-    width: 280px;
+    width: 330px;
     text-align: center;
     padding-bottom: 4px;
   }

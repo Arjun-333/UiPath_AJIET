@@ -95,7 +95,7 @@ def generate_certificates_batch(
     subtitle: str = "Certificate of Participation",
     issue_date: Optional[str] = None,
     issuer_name: str = "Arjun R",
-    issuer_role: str = "UiPath Student Developer Champion (SDC)",
+    issuer_role: str = "UiPath Student Developer Champion (SDC) AJIET",
     template_id: Optional[str] = None,
     layout: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:

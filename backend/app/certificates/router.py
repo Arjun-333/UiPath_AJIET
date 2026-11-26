@@ -28,7 +28,7 @@ class GenerateCertificatesRequest(BaseModel):
     subtitle: str = "Certificate of Participation"
     issue_date: Optional[str] = None
     issuer_name: str = "Arjun R"
-    issuer_role: str = "UiPath Student Developer Champion (SDC)"
+    issuer_role: str = "UiPath Student Developer Champion (SDC) AJIET"
     students: List[Dict[str, str]]
     template_id: Optional[str] = None
     layout: Optional[Dict[str, Any]] = None
