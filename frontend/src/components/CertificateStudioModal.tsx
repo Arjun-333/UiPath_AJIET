@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Award, FileSpreadsheet, Upload, Download, CheckCircle2, AlertCircle, Plus, Trash2, Eye, X, Mail } from 'lucide-react';
+import { Award, FileSpreadsheet, Upload, Download, CheckCircle2, AlertCircle, Plus, Trash2, Eye, X, Mail, ExternalLink } from 'lucide-react';
 
 interface StudentRow {
   name: string;
@@ -162,6 +162,7 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
     setIsGenerating(true);
     setErrorMsg(null);
     setEmailStatus(null);
+    setSelectedPreviewIdx(0);
     try {
       const res = await fetch('/api/certificates/generate', {
         method: 'POST',
@@ -187,6 +188,8 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
 
   const [isSendingEmails, setIsSendingEmails] = useState(false);
   const [emailStatus, setEmailStatus] = useState<{ sent_count: number; failed_count: number; skipped_count: number } | null>(null);
+  const [selectedPreviewIdx, setSelectedPreviewIdx] = useState(0);
+  const validEmailCount = students.filter((s) => (s.email || '').includes('@')).length;
 
   const handleSendEmails = async () => {
     if (!result) return;
@@ -213,34 +216,49 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 md:p-5">
+      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-6xl h-[92vh] flex flex-col shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-950 border-b border-slate-800">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3.5 bg-slate-950 border-b border-slate-800">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded-lg">
               <Award className="w-5 h-5" />
             </div>
             <div>
               <h2 className="text-base font-bold text-white">E-Certificate PDF Studio</h2>
-              <p className="text-xs text-slate-400">Import registered students from Google Sheets or CSV and batch-generate printable PDFs</p>
+              <p className="text-xs text-slate-400">Import Excel / CSV / Google Sheets, preview A4-Landscape PDFs, and email participants</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition-colors">
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-2 text-[11px] font-mono">
+              <span className={`px-2 py-0.5 rounded-full border ${students.length > 0 ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' : 'bg-slate-900 text-slate-400 border-slate-700'}`}>
+                1. Roster ({students.length})
+              </span>
+              <span className="text-slate-600">&rarr;</span>
+              <span className={`px-2 py-0.5 rounded-full border ${result ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' : 'bg-slate-900 text-slate-400 border-slate-700'}`}>
+                2. Render PDFs
+              </span>
+              <span className="text-slate-600">&rarr;</span>
+              <span className={`px-2 py-0.5 rounded-full border ${emailStatus ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30' : 'bg-slate-900 text-slate-400 border-slate-700'}`}>
+                3. Email / ZIP
+              </span>
+            </div>
+            <button onClick={onClose} className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {errorMsg && (
-          <div className="mx-6 mt-4 p-3 bg-red-950/60 border border-red-500/40 rounded-xl flex items-center space-x-2 text-xs text-red-300">
+          <div className="mx-6 mt-3 p-2.5 bg-red-950/60 border border-red-500/40 rounded-xl flex items-center space-x-2 text-xs text-red-300">
             <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="flex-1 min-h-0 p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 overflow-y-auto lg:overflow-hidden">
           {/* Left Column: Roster Import & Settings */}
-          <div className="space-y-5">
+          <div className="lg:col-span-5 flex flex-col gap-4 lg:overflow-y-auto lg:pr-1">
             {/* 1. Google Sheet / CSV Import */}
             <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-3">
               <div className="flex items-center justify-between">
@@ -376,7 +394,7 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
               </div>
 
               {/* Student List Preview (Inline Editable) */}
-              <div className="max-h-40 overflow-y-auto space-y-1.5 pt-1">
+              <div className="max-h-44 overflow-y-auto space-y-1.5 pt-1">
                 {students.map((st, idx) => (
                   <div key={idx} className="flex items-center gap-1.5 px-2 py-1 bg-slate-900 rounded-lg text-xs border border-slate-800/80">
                     <input
@@ -396,8 +414,18 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
                         const val = e.target.value;
                         setStudents(prev => prev.map((item, i) => (i === idx ? { ...item, department: val } : item)));
                       }}
-                      placeholder="Dept / USN"
-                      className="w-28 px-2 py-1 bg-slate-950/70 border border-slate-800 rounded text-slate-400 font-mono text-[10px] focus:outline-none focus:border-orange-500"
+                      placeholder="Branch"
+                      className="w-20 px-2 py-1 bg-slate-950/70 border border-slate-800 rounded text-slate-300 font-mono text-[10px] focus:outline-none focus:border-orange-500"
+                    />
+                    <input
+                      type="text"
+                      value={st.email || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setStudents(prev => prev.map((item, i) => (i === idx ? { ...item, email: val } : item)));
+                      }}
+                      placeholder="Email"
+                      className="w-32 px-2 py-1 bg-slate-950/70 border border-slate-800 rounded text-slate-400 font-mono text-[10px] focus:outline-none focus:border-orange-500"
                     />
                     <button
                       onClick={() => setStudents(prev => prev.filter((_, i) => i !== idx))}
@@ -409,8 +437,18 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
                   </div>
                 ))}
               </div>
-              <div className="text-[11px] font-mono text-slate-400">
-                Total recipients: <strong className="text-white">{students.length}</strong>
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                <span>
+                  Recipients: <strong className="text-white">{students.length}</strong> &bull; With email: <strong className="text-cyan-300">{validEmailCount}</strong>
+                </span>
+                {students.length > 0 && (
+                  <button
+                    onClick={() => setStudents([])}
+                    className="text-slate-500 hover:text-red-400 transition-colors"
+                  >
+                    Clear All
+                  </button>
+                )}
               </div>
             </div>
 
@@ -502,21 +540,21 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
             </div>
           </div>
 
-          {/* Right Column: Live PDF Preview & ZIP Download */}
-          <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl flex flex-col space-y-3">
-            <div className="flex items-center justify-between">
+          {/* Right Column: Live PDF Preview & Delivery Studio */}
+          <div className="lg:col-span-7 p-4 bg-slate-950 border border-slate-800 rounded-xl flex flex-col space-y-3 min-h-0">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs font-mono font-bold text-emerald-400 flex items-center gap-1.5">
-                <Eye className="w-4 h-4" /> PDF PREVIEW &amp; DOWNLOAD
+                <Eye className="w-4 h-4" /> LIVE CERTIFICATE PREVIEW
               </span>
               {result && (
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleSendEmails}
-                    disabled={isSendingEmails}
+                    disabled={isSendingEmails || validEmailCount === 0}
                     className="flex items-center space-x-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-bold shadow-md shadow-cyan-600/25 disabled:opacity-50"
                   >
                     <Mail className="w-3.5 h-3.5" />
-                    <span>{isSendingEmails ? 'Sending...' : 'Email All'}</span>
+                    <span>{isSendingEmails ? 'Sending...' : `Email All (${validEmailCount})`}</span>
                   </button>
                   <a
                     href={result.zip_url}
@@ -531,10 +569,36 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
             </div>
 
             {result ? (
-              <div className="flex-1 flex flex-col space-y-3 min-h-[380px]">
-                <div className="flex items-center space-x-2 text-xs text-emerald-300 bg-emerald-950/40 border border-emerald-500/30 px-3 py-2 rounded-lg">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>Generated {result.count} printable A4-Landscape PDF certificates.</span>
+              <div className="flex-1 flex flex-col space-y-2.5 min-h-0">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-emerald-300 bg-emerald-950/40 border border-emerald-500/30 px-3 py-2 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    <span>Generated {result.count} printable A4-Landscape PDFs.</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {result.files.length > 1 && (
+                      <select
+                        value={selectedPreviewIdx}
+                        onChange={(e) => setSelectedPreviewIdx(Number(e.target.value))}
+                        className="px-2 py-1 bg-slate-950 border border-slate-700 rounded text-[11px] text-slate-200 focus:outline-none focus:border-emerald-500"
+                      >
+                        {result.files.map((f, i) => (
+                          <option key={f.filename} value={i}>
+                            {i + 1}. {f.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <a
+                      href={(result.files[selectedPreviewIdx] || result.files[0])?.preview_url || result.preview_pdf_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1 text-[11px] font-mono text-slate-300 hover:text-white px-2 py-1 rounded bg-slate-900 border border-slate-700"
+                    >
+                      <span>Open</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
                 </div>
                 {emailStatus && (
                   <div className="flex items-center space-x-2 text-xs text-cyan-200 bg-cyan-950/40 border border-cyan-500/30 px-3 py-2 rounded-lg">
@@ -546,18 +610,21 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
                     </span>
                   </div>
                 )}
-                <iframe
-                  src={result.preview_pdf_url}
-                  title="Certificate PDF Preview"
-                  className="w-full flex-1 min-h-[340px] rounded-lg border border-slate-800 bg-white"
-                />
+                <div className="flex-1 min-h-0 flex items-center justify-center bg-slate-900/50 rounded-xl border border-slate-800 p-2 overflow-hidden">
+                  <iframe
+                    key={(result.files[selectedPreviewIdx] || result.files[0])?.preview_url || result.preview_pdf_url}
+                    src={`${(result.files[selectedPreviewIdx] || result.files[0])?.preview_url || result.preview_pdf_url}#view=Fit`}
+                    title="Certificate PDF Preview"
+                    className="w-full h-full aspect-[1123/794] max-h-full rounded-lg bg-white"
+                  />
+                </div>
               </div>
             ) : (
               <div className="flex-1 min-h-[380px] flex flex-col items-center justify-center text-center text-slate-500 space-y-2 border border-dashed border-slate-800 rounded-xl p-6">
                 <Award className="w-10 h-10 text-slate-700" />
                 <p className="text-sm font-semibold text-slate-300">No PDF Batch Generated Yet</p>
-                <p className="text-xs max-w-xs">
-                  Import your student list from Google Sheets or CSV and click Generate to preview the printable PDF here.
+                <p className="text-xs max-w-sm">
+                  Upload your Excel / CSV sheet on the left, confirm the Name &amp; Branch columns, and click Generate to preview each certificate here.
                 </p>
               </div>
             )}
