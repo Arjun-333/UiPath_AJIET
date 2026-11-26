@@ -178,17 +178,17 @@ function buildDefaultCertHtml(item, meta, logos) {
   }
   .footer-row {
     display: flex;
-    align-items: flex-end;
+    align-items: flex-start;
     justify-content: space-between;
-    padding: 14px 16px 0;
+    padding: 10px 12px 0;
     border-top: 1.5px solid #cbd5e1;
   }
   .meta-block {
-    width: 220px;
+    width: 150px;
     font-size: 14px;
     color: #1e293b;
     text-align: left;
-    padding-bottom: 6px;
+    padding-top: 52px;
   }
   .meta-label {
     font-size: 11px;
@@ -198,33 +198,39 @@ function buildDefaultCertHtml(item, meta, logos) {
     margin-bottom: 2px;
   }
   .meta-value {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
     color: #0b0f19;
   }
   .sig-block {
-    width: 280px;
+    width: 265px;
     text-align: center;
-    padding-bottom: 4px;
+  }
+  .sig-block-advisor {
+    width: 255px;
+    text-align: center;
   }
   .sig-block-hod {
-    width: 240px;
+    width: 200px;
     text-align: center;
-    padding-bottom: 4px;
+  }
+  .sig-img-slot {
+    height: 66px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
   }
   .sig-img {
-    height: 68px;
+    height: 66px;
     width: auto;
     object-fit: contain;
-    display: block;
-    margin: 0 auto -4px;
+    margin-bottom: -4px;
   }
-  .sig-img-hod {
-    height: 46px;
+  .sig-img-advisor {
+    height: 54px;
     width: auto;
     object-fit: contain;
-    display: block;
-    margin: 0 auto 6px;
+    margin-bottom: 2px;
   }
   .sig-line {
     border-top: 2px solid #0b0f19;
@@ -283,11 +289,21 @@ function buildDefaultCertHtml(item, meta, logos) {
         <div class="meta-value">${issueDate}</div>
       </div>
       <div class="sig-block">
-        ${logos.signature ? `<img class="sig-img" src="${logos.signature}" alt="Signature" />` : ''}
+        <div class="sig-img-slot">
+          ${logos.signature ? `<img class="sig-img" src="${logos.signature}" alt="Signature" />` : ''}
+        </div>
         <div class="sig-line">${issuerName}</div>
         <div class="sig-sub">${issuerRole}</div>
       </div>
+      <div class="sig-block-advisor">
+        <div class="sig-img-slot">
+          ${logos.kanmaniSignature ? `<img class="sig-img-advisor" src="${logos.kanmaniSignature}" alt="Kanmani Signature" />` : ''}
+        </div>
+        <div class="sig-line">Kanmani</div>
+        <div class="sig-sub">Faculty Advisor, IEEE Computer Society<br />Student Branch Chapter</div>
+      </div>
       <div class="sig-block-hod">
+        <div class="sig-img-slot"></div>
         <div class="sig-line">Dr. Antony P J</div>
         <div class="sig-sub">Vice Principal &amp; HOD</div>
       </div>
@@ -374,7 +390,8 @@ async function main() {
     communityWhite: loadDataUrl(path.join(brandingDir, 'uipath_community_ajiet_white.png')),
     uipathCommunity: loadDataUrl(path.join(brandingDir, 'uipath_community_lockup.png')),
     studentDev: loadDataUrl(path.join(brandingDir, 'uipath_student_developer.png')),
-    signature: loadDataUrl(path.join(brandingDir, 'arjun_signature.png'))
+    signature: loadDataUrl(path.join(brandingDir, 'arjun_signature.png')),
+    kanmaniSignature: loadDataUrl(path.join(brandingDir, 'kanmani_signature.png'))
   };
 
   let templateDataUrl = loadDataUrl(templatePath);
