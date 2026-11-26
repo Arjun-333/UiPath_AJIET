@@ -444,13 +444,15 @@ export const Floor2IsometricRoom: React.FC<Props> = ({
     }
 
     if (hoveredAgent) {
-      const realAgent = agents.find(a => a.id === hoveredAgent.id) || {
+      const realAgent = agents.find(a => a.agent_id === hoveredAgent.id || (a as any).id === hoveredAgent.id) || {
         id: hoveredAgent.id,
+        agent_id: hoveredAgent.id,
         name: hoveredAgent.name,
         role: hoveredAgent.role,
         department: 'Marketing & Campaign Management',
         floor: 2,
         status: 'active',
+        avatar_file: `${hoveredAgent.id}.png`,
         skills: ['Campaign Funnels', 'Shorts Retention', 'Audience Analytics', 'Distribution'],
         tools: ['YouTube Studio Analytics', 'Reels Scheduling Pipeline', 'Outreach CRM']
       };

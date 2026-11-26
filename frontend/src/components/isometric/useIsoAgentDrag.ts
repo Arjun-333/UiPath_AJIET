@@ -23,6 +23,7 @@ export function useIsoAgentDrag<T extends DraggableSimAgent>(
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (e.button !== 0 || !hoveredAgent) return;
+    e.stopPropagation();
     dragRef.current = { agent: hoveredAgent, startX: e.clientX, startY: e.clientY, moved: false };
     justDraggedRef.current = false;
   };
@@ -30,6 +31,7 @@ export function useIsoAgentDrag<T extends DraggableSimAgent>(
   const handleDragMove = (e: React.MouseEvent<HTMLCanvasElement>): boolean => {
     const drag = dragRef.current;
     if (!drag) return false;
+    e.stopPropagation();
     if (!drag.moved && Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) > 6) {
       drag.moved = true;
       setIsDragging(true);
