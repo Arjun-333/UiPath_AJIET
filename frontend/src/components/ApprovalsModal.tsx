@@ -81,7 +81,7 @@ export const ApprovalsModal: React.FC<Props> = ({ approvals, onResolve, onResolv
   const getApproveButtonLabel = (actionType: string) => {
     if (actionType === 'workforce_deploy') return 'Authorize Hire & Deploy';
     if (actionType.startsWith('advisor_')) return 'Authorize Recommendation';
-    if (actionType === 'publish_content') return 'Approve & Publish';
+    if (actionType === 'publish_content') return 'Approve for Upload';
     return 'Approve & Authorize';
   };
 

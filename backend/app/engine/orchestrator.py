@@ -108,7 +108,7 @@ class WorkflowOrchestrator:
             },
             {
                 "id": f"{project_id}_t7_ceo_approval",
-                "title": "Publish Video to YouTube & Instagram",
+                "title": "Release Gate: Ready for Manual Upload",
                 "department": "Media & Creative",
                 "assigned_agent_id": "darshan_director",
                 "permission_level": 3,  # Level 3 Execution Gate: MUST await CEO Arjun's approval
@@ -475,7 +475,7 @@ class WorkflowOrchestrator:
                     recipient_name="All Company",
                     recipient_floor=0,
                     message_type="general_chat",
-                    content=f"🚀 PUBLISHED: {approval.description}. Cleared for release to YouTube / Instagram channels!"
+                    content=f"APPROVED FOR UPLOAD: {approval.description}. Local assets ready in Media Vault for manual YouTube / Instagram upload."
                 )
                 session.add(pub_msg)
 
