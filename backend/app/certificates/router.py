@@ -15,6 +15,7 @@ from backend.app.certificates.service import (
     generate_certificates_batch,
     parse_csv_with_columns,
     parse_excel_with_columns,
+    send_certificates_email_batch,
 )
 
 router = APIRouter(prefix="/api/certificates", tags=["certificates"])
@@ -85,6 +86,24 @@ async def generate_certificates(payload: GenerateCertificatesRequest):
             layout=payload.layout,
         )
         return result
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+class SendCertificatesEmailRequest(BaseModel):
+    batch_id: str
+    event_title: str = "Discovering UiPath & RPA"
+    recipients: Optional[List[Dict[str, str]]] = None
+
+
+@router.post("/send-emails")
+async def send_certificate_emails(payload: SendCertificatesEmailRequest):
+    try:
+        return send_certificates_email_batch(
+            batch_id=payload.batch_id,
+            event_title=payload.event_title,
+            recipients=payload.recipients,
+        )
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 

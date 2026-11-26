@@ -10,6 +10,7 @@ from backend.app.certificates.service import (
     parse_excel_roster,
     parse_excel_with_columns,
     generate_certificates_batch,
+    send_certificates_email_batch,
 )
 from backend.app.media.subtitle_generator import SubtitleGenerator
 from backend.app.media.audio_bed import generate_ambient_bed
@@ -128,6 +129,56 @@ def test_generate_certificates_batch_creates_pdfs_and_zip(tmp_path, monkeypatch)
         for fname in names:
             assert fname.endswith(".pdf")
             assert zf.read(fname)[:4] == b"%PDF"
+
+
+def test_send_certificates_email_batch_attaches_pdfs(tmp_path, monkeypatch):
+    import backend.app.certificates.service as cert_svc
+    import smtplib
+
+    monkeypatch.setattr(cert_svc, "CERTIFICATES_DIR", tmp_path)
+    monkeypatch.setattr(cert_svc, "TEMPLATES_DIR", tmp_path / "templates")
+
+    batch = generate_certificates_batch(
+        students=[
+            {"name": "Ananya Rao", "email": "ananya@ajiet.edu.in", "department": "CSE"},
+            {"name": "No Email Student", "email": "", "department": "ISE"},
+        ],
+        event_title="Discovering UiPath & RPA",
+    )
+
+    sent_messages = []
+
+    class FakeSMTP:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def starttls(self, *args, **kwargs):
+            pass
+
+        def login(self, *args, **kwargs):
+            pass
+
+        def send_message(self, msg):
+            sent_messages.append(msg)
+
+    monkeypatch.setattr(smtplib, "SMTP", FakeSMTP)
+    monkeypatch.setenv("GMAIL_ADDRESS", "sender@ajiet.edu.in")
+    monkeypatch.setenv("GMAIL_APP_PASSWORD", "test-app-pass")
+
+    res = send_certificates_email_batch(batch_id=batch["batch_id"], event_title="Discovering UiPath & RPA")
+    assert res["sent_count"] == 1
+    assert res["skipped_count"] == 1
+    assert res["failed_count"] == 0
+    assert sent_messages[0]["To"] == "ananya@ajiet.edu.in"
+    attachments = list(sent_messages[0].iter_attachments())
+    assert len(attachments) == 1
+    assert attachments[0].get_filename() == "Ananya_Rao.pdf"
 
 
 def test_subtitle_generator_ass_karaoke_output(tmp_path):

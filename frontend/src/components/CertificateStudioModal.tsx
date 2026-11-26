@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Award, FileSpreadsheet, Upload, Download, CheckCircle2, AlertCircle, Plus, Trash2, Eye, X } from 'lucide-react';
+import { Award, FileSpreadsheet, Upload, Download, CheckCircle2, AlertCircle, Plus, Trash2, Eye, X, Mail } from 'lucide-react';
 
 interface StudentRow {
   name: string;
@@ -12,7 +12,7 @@ interface GeneratedResult {
   count: number;
   preview_pdf_url: string;
   zip_url: string;
-  files: { name: string; cert_id: string; filename: string; preview_url: string }[];
+  files: { name: string; email?: string; filename: string; preview_url: string }[];
 }
 
 interface Props {
@@ -161,6 +161,7 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
     }
     setIsGenerating(true);
     setErrorMsg(null);
+    setEmailStatus(null);
     try {
       const res = await fetch('/api/certificates/generate', {
         method: 'POST',
@@ -181,6 +182,33 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
       setErrorMsg(err.message || 'Generation failed.');
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const [isSendingEmails, setIsSendingEmails] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<{ sent_count: number; failed_count: number; skipped_count: number } | null>(null);
+
+  const handleSendEmails = async () => {
+    if (!result) return;
+    setIsSendingEmails(true);
+    setErrorMsg(null);
+    setEmailStatus(null);
+    try {
+      const res = await fetch('/api/certificates/send-emails', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          batch_id: result.batch_id,
+          event_title: eventTitle
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Failed to send certificate emails.');
+      setEmailStatus(data);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Email delivery failed.');
+    } finally {
+      setIsSendingEmails(false);
     }
   };
 
@@ -481,14 +509,24 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
                 <Eye className="w-4 h-4" /> PDF PREVIEW &amp; DOWNLOAD
               </span>
               {result && (
-                <a
-                  href={result.zip_url}
-                  download
-                  className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold shadow-md shadow-emerald-600/25"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download All ({result.count} PDFs .ZIP)</span>
-                </a>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleSendEmails}
+                    disabled={isSendingEmails}
+                    className="flex items-center space-x-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-bold shadow-md shadow-cyan-600/25 disabled:opacity-50"
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>{isSendingEmails ? 'Sending...' : 'Email All'}</span>
+                  </button>
+                  <a
+                    href={result.zip_url}
+                    download
+                    className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold shadow-md shadow-emerald-600/25"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download .ZIP ({result.count})</span>
+                  </a>
+                </div>
               )}
             </div>
 
@@ -498,6 +536,16 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
                   <span>Generated {result.count} printable A4-Landscape PDF certificates.</span>
                 </div>
+                {emailStatus && (
+                  <div className="flex items-center space-x-2 text-xs text-cyan-200 bg-cyan-950/40 border border-cyan-500/30 px-3 py-2 rounded-lg">
+                    <Mail className="w-4 h-4 shrink-0 text-cyan-400" />
+                    <span>
+                      Sent <strong>{emailStatus.sent_count}</strong> certificate email{emailStatus.sent_count === 1 ? '' : 's'}
+                      {emailStatus.skipped_count > 0 ? ` • ${emailStatus.skipped_count} skipped (missing email)` : ''}
+                      {emailStatus.failed_count > 0 ? ` • ${emailStatus.failed_count} failed` : ''}.
+                    </span>
+                  </div>
+                )}
                 <iframe
                   src={result.preview_pdf_url}
                   title="Certificate PDF Preview"

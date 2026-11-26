@@ -226,6 +226,7 @@ def generate_certificates_batch(
         })
         generated_files.append({
             "name": name,
+            "email": (st.get("email") or "").strip(),
             "filename": pdf_filename,
             "preview_url": f"/api/certificates/file/{batch_id}/{pdf_filename}"
         })
@@ -275,4 +276,139 @@ def generate_certificates_batch(
         "preview_pdf_url": generated_files[0]["preview_url"],
         "zip_url": f"/api/certificates/file/{batch_id}/{zip_filename}",
         "files": generated_files
+    }
+
+
+def _build_certificate_email_message(
+    recipient_email: str,
+    participant_name: str,
+    event_title: str,
+    sender_email: str,
+    pdf_path: Path,
+) -> Any:
+    from email.message import EmailMessage
+    from email.utils import formatdate
+    import html as html_lib
+
+    msg = EmailMessage()
+    msg["Subject"] = f"Certificate of Participation — {event_title} | UiPath Community AJIET"
+    msg["From"] = sender_email
+    msg["To"] = recipient_email
+    msg["Date"] = formatdate(localtime=True)
+
+    safe_name = html_lib.escape(participant_name)
+    safe_event = html_lib.escape(event_title)
+    msg.set_content(
+        f"Hi {participant_name},\n\n"
+        f"Thank you for participating in {event_title}, organized by UiPath Community AJIET.\n"
+        f"Please find your Certificate of Participation attached to this email.\n\n"
+        f"Warm regards,\n"
+        f"Arjun R\n"
+        f"UiPath Student Developer Champion (SDC) AJIET\n"
+    )
+    msg.add_alternative(
+        f"""<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif; color: #0f172a; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 24px;">
+  <h2 style="color: #fa4616; margin-bottom: 8px;">Congratulations, {safe_name}!</h2>
+  <p>Thank you for actively participating in <strong>{safe_event}</strong>, organized by <strong>UiPath Community AJIET</strong>.</p>
+  <p>Your official <strong>Certificate of Participation</strong> is attached as a PDF to this email.</p>
+  <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+  <p style="font-size: 13px; color: #475569;">
+    Best regards,<br />
+    <strong>Arjun R</strong><br />
+    UiPath Student Developer Champion (SDC) AJIET
+  </p>
+</body>
+</html>""",
+        subtype="html",
+    )
+    msg.add_attachment(
+        pdf_path.read_bytes(),
+        maintype="application",
+        subtype="pdf",
+        filename=pdf_path.name,
+    )
+    return msg
+
+
+def send_certificates_email_batch(
+    batch_id: str,
+    event_title: str = "Discovering UiPath & RPA",
+    recipients: Optional[List[Dict[str, str]]] = None,
+) -> Dict[str, Any]:
+    """Emails each generated PDF certificate to its corresponding participant via Gmail SMTP."""
+    import smtplib
+    import ssl
+    from uipath_email_sender.config import SMTP_PORT, SMTP_SERVER
+    from uipath_email_sender.smtp_sender import get_smtp_credentials
+
+    if ".." in batch_id or "/" in batch_id:
+        raise ValueError("Invalid batch_id.")
+    batch_dir = CERTIFICATES_DIR / batch_id
+    pdfs_dir = batch_dir / "pdfs"
+    cfg_path = batch_dir / "render_job.json"
+    if not batch_dir.exists() or not cfg_path.exists():
+        raise FileNotFoundError(f"Certificate batch '{batch_id}' not found.")
+
+    if recipients is None:
+        cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+        items = [
+            {
+                "name": it.get("name", ""),
+                "email": it.get("email", ""),
+                "filename": Path(it.get("outputPath", "")).name,
+            }
+            for it in cfg.get("items", [])
+        ]
+    else:
+        items = recipients
+
+    email_re = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    to_send: List[Dict[str, Any]] = []
+    skipped: List[Dict[str, str]] = []
+    for item in items:
+        name = (item.get("name") or "").strip() or "Participant"
+        email = (item.get("email") or "").strip()
+        filename = (item.get("filename") or "").strip()
+        pdf_path = pdfs_dir / filename if filename else None
+        if not email or not email_re.match(email):
+            skipped.append({"name": name, "reason": "Missing or invalid email"})
+            continue
+        if not pdf_path or not pdf_path.exists():
+            skipped.append({"name": name, "reason": f"PDF file '{filename}' not found"})
+            continue
+        to_send.append({"name": name, "email": email, "pdf_path": pdf_path})
+
+    if not to_send:
+        raise ValueError("No recipients with valid email addresses and generated PDFs found.")
+
+    sender_email, app_password = get_smtp_credentials()
+    sent_count = 0
+    failed: List[Dict[str, str]] = []
+
+    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=30) as server:
+        server.starttls(context=ssl.create_default_context())
+        server.login(sender_email, app_password)
+        for entry in to_send:
+            try:
+                msg = _build_certificate_email_message(
+                    recipient_email=entry["email"],
+                    participant_name=entry["name"],
+                    event_title=event_title,
+                    sender_email=sender_email,
+                    pdf_path=entry["pdf_path"],
+                )
+                server.send_message(msg)
+                sent_count += 1
+            except Exception as exc:
+                failed.append({"name": entry["name"], "email": entry["email"], "error": str(exc)})
+
+    return {
+        "batch_id": batch_id,
+        "sent_count": sent_count,
+        "failed_count": len(failed),
+        "skipped_count": len(skipped),
+        "failed": failed,
+        "skipped": skipped,
     }
