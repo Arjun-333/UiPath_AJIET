@@ -119,4 +119,10 @@ async def get_certificate_file(batch_id: str, filename: str):
     if not candidate.exists():
         raise HTTPException(status_code=404, detail="Certificate file not found.")
     media_type = "application/zip" if filename.endswith(".zip") else "application/pdf"
-    return FileResponse(path=str(candidate), media_type=media_type, filename=filename)
+    disp_type = "attachment" if filename.endswith(".zip") else "inline"
+    return FileResponse(
+        path=str(candidate),
+        media_type=media_type,
+        filename=filename,
+        content_disposition_type=disp_type,
+    )
