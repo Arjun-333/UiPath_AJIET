@@ -159,10 +159,11 @@ function buildDefaultCertHtml(item, meta, logos) {
     min-width: 500px;
   }
   .dept {
-    font-size: 15px;
-    font-weight: 500;
-    color: #334155;
-    margin-top: 6px;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: #1e293b;
+    margin-top: 8px;
   }
   .body-copy {
     font-size: 19px;
