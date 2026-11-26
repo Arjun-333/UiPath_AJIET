@@ -294,16 +294,9 @@ function buildDefaultCertHtml(item, meta, logos) {
         <div class="meta-label">Date Issued</div>
         <div class="meta-value">${issueDate}</div>
       </div>
-      <div class="sig-block">
-        <div class="sig-img-slot">
-          ${logos.signature ? `<img class="sig-img" src="${logos.signature}" alt="Signature" />` : ''}
-        </div>
-        <div class="sig-line">${issuerName}</div>
-        <div class="sig-sub">${issuerRole}</div>
-      </div>
       <div class="sig-block-advisor">
         <div class="sig-img-slot">
-          ${logos.kanmaniSignature ? `<img class="sig-img-advisor" src="${logos.kanmaniSignature}" alt="Kanmani Signature" />` : ''}
+          ${logos.kanmaniSignature ? `<img class="sig-img-advisor" src="${logos.kanmaniSignature}" alt="Mrs. Kanmani Signature" />` : ''}
         </div>
         <div class="sig-line">Mrs. Kanmani</div>
         <div class="sig-sub">Faculty Advisor, IEEE Computer Society<br />Student Branch Chapter</div>
@@ -398,7 +391,6 @@ async function main() {
     communityWhite: loadDataUrl(path.join(brandingDir, 'uipath_community_ajiet_white.png')),
     uipathCommunity: loadDataUrl(path.join(brandingDir, 'uipath_community_lockup.png')),
     studentDev: loadDataUrl(path.join(brandingDir, 'uipath_student_developer.png')),
-    signature: loadDataUrl(path.join(brandingDir, 'arjun_signature.png')),
     kanmaniSignature: loadDataUrl(path.join(brandingDir, 'kanmani_signature.png')),
     antonySignature: loadDataUrl(path.join(brandingDir, 'antony_signature.png'))
   };
