@@ -187,7 +187,14 @@ export const App: React.FC = () => {
             setOrbiState('waiting');
             fetchData();
           } else if (msg.event === 'agent_message') {
-            setMessages(prev => [...prev, msg.data]);
+            setMessages(prev => {
+              const incoming = msg.data;
+              const key = incoming?.id || `${incoming?.timestamp}-${incoming?.sender_id}-${incoming?.content}`;
+              if (prev.some(m => (m.id || `${m.timestamp}-${m.sender_id}-${m.content}`) === key)) {
+                return prev;
+              }
+              return [...prev, incoming];
+            });
           } else if (msg.event === 'agent_transit') {
             setPendingTransit(msg.data);
           } else if (msg.event === 'employee_lifecycle_changed' || msg.event === 'workforce_alert') {

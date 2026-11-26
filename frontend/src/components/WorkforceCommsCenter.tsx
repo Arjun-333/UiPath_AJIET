@@ -44,8 +44,12 @@ export const WorkforceCommsCenter: React.FC<Props> = ({
 
   if (!isOpen) return null;
 
-  // Filter messages for current channel or DM
+  // Deduplicate and filter messages for current channel or DM
+  const seenKeys = new Set<string>();
   const filteredMessages = messages.filter(m => {
+    const dedupKey = `${m.timestamp}-${m.sender_id}-${m.content}`;
+    if (seenKeys.has(dedupKey)) return false;
+    seenKeys.add(dedupKey);
     if (activeChannel.startsWith('#')) {
       if (activeChannel === '#general') return true;
       if (activeChannel === '#floor-0-executive') return m.sender_floor === 0 || m.recipient_floor === 0 || m.recipient_id === '#floor-0-executive';
@@ -103,10 +107,10 @@ export const WorkforceCommsCenter: React.FC<Props> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-      <div className="relative w-full max-w-5xl h-[85vh] bg-[#0c121e] border-2 border-slate-800 rounded-3xl shadow-2xl flex overflow-hidden">
+      <div className="relative w-full max-w-5xl h-[85vh] bg-slate-950 border-2 border-slate-800 rounded-3xl shadow-2xl flex overflow-hidden">
         
         {/* Left Sidebar: Channels & Agent Direct Messages */}
-        <div className="w-72 bg-[#090d15] border-r border-slate-800/80 flex flex-col justify-between">
+        <div className="w-72 bg-slate-900 border-r border-slate-800/80 flex flex-col justify-between">
           <div>
             {/* Header */}
             <div className="p-4 border-b border-slate-800 flex items-center justify-between">
@@ -189,9 +193,9 @@ export const WorkforceCommsCenter: React.FC<Props> = ({
         </div>
 
         {/* Right Main Chat & Transmission Feed */}
-        <div className="flex-1 flex flex-col bg-[#0d1424]">
+        <div className="flex-1 flex flex-col bg-slate-950">
           {/* Channel Header */}
-          <div className="px-6 py-4 bg-[#090e1a] border-b border-slate-800 flex items-center justify-between">
+          <div className="px-6 py-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
             <div>
               <div className="flex items-center space-x-2.5">
                 <span className="font-pixel text-xs text-orange-400">
