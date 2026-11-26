@@ -95,8 +95,8 @@ function buildDefaultCertHtml(item, meta, logos) {
     width: auto;
     object-fit: contain;
   }
-  .logo-ieee-mangalore {
-    height: 54px;
+  .logo-ieee-cs {
+    height: 68px;
     width: auto;
     object-fit: contain;
   }
@@ -254,7 +254,7 @@ function buildDefaultCertHtml(item, meta, logos) {
   <div class="content-layer">
     <div class="top-bar">
       ${logos.uipathCommunity ? `<img class="logo-uipath-community" src="${logos.uipathCommunity}" alt="UiPath Community" />` : ''}
-      ${logos.ieeeMangalore ? `<img class="logo-ieee-mangalore" src="${logos.ieeeMangalore}" alt="IEEE Mangalore Subsection" />` : ''}
+      ${logos.ieeeCs ? `<img class="logo-ieee-cs" src="${logos.ieeeCs}" alt="IEEE Computer Society" />` : ''}
       ${logos.ajiet ? `<img class="logo-ajiet" src="${logos.ajiet}" alt="AJIET" />` : ''}
       ${logos.enigmaBranch ? `<img class="logo-enigma" src="${logos.enigmaBranch}" alt="ENIGMA Branch" />` : ''}
       ${logos.communityWhite ? `<img class="logo-community-white" src="${logos.communityWhite}" alt="UiPath Community AJIET" />` : ''}
@@ -370,7 +370,7 @@ async function main() {
   const logos = {
     ajiet: loadDataUrl(path.join(brandingDir, 'ajiet_logo.png')),
     enigmaBranch: loadDataUrl(path.join(brandingDir, 'enigma_branch_logo.png')),
-    ieeeMangalore: loadDataUrl(path.join(brandingDir, 'ieee_mangalore_subsection.png')),
+    ieeeCs: loadDataUrl(path.join(brandingDir, 'ieee_computer_society.png')),
     communityWhite: loadDataUrl(path.join(brandingDir, 'uipath_community_ajiet_white.png')),
     uipathCommunity: loadDataUrl(path.join(brandingDir, 'uipath_community_lockup.png')),
     studentDev: loadDataUrl(path.join(brandingDir, 'uipath_student_developer.png')),
