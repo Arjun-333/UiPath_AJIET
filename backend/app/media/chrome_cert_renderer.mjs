@@ -198,17 +198,16 @@ function buildDefaultCertHtml(item, meta, logos) {
   .campus-badges {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 18px;
   }
   .logo-ajiet {
-    height: 62px;
-    width: 62px;
+    height: 96px;
+    width: 96px;
     object-fit: contain;
-    mix-blend-mode: multiply;
   }
   .logo-community-white {
-    height: 62px;
-    width: 62px;
+    height: 96px;
+    width: 96px;
     object-fit: contain;
     border-radius: 50%;
   }
