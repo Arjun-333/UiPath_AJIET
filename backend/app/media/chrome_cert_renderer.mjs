@@ -19,9 +19,28 @@ function loadDataUrl(filePath) {
   return `data:${mime};base64,${b64}`;
 }
 
+const BRANCH_FULL_NAMES = {
+  CSE: 'Computer Science & Engineering',
+  ISE: 'Information Science & Engineering',
+  AIML: 'Artificial Intelligence & Machine Learning',
+  AIDS: 'Artificial Intelligence & Data Science',
+  ICB: 'IoT, Cyber Security & Blockchain Technology',
+  ECE: 'Electronics & Communication Engineering',
+  ME: 'Mechanical Engineering',
+  MECH: 'Mechanical Engineering',
+  CIVIL: 'Civil Engineering',
+};
+
+function expandDepartmentName(raw) {
+  const trimmed = String(raw || '').trim();
+  if (!trimmed) return '';
+  const key = trimmed.toUpperCase().replace(/[^A-Z]/g, '');
+  return BRANCH_FULL_NAMES[key] || trimmed;
+}
+
 function buildDefaultCertHtml(item, meta, logos) {
   const name = escapeHtml(item.name);
-  const dept = escapeHtml(item.department || '');
+  const dept = escapeHtml(expandDepartmentName(item.department || ''));
   const eventTitle = escapeHtml(meta.eventTitle || 'Discovering UiPath & RPA');
   const rawSubtitle = String(meta.subtitle || 'Certificate of Participation').trim();
   const words = rawSubtitle.split(/\s+/);
