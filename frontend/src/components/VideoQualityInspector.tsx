@@ -68,6 +68,7 @@ export const VideoQualityInspector: React.FC<Props> = ({ projectId, projects, on
   const [manualRequest, setManualRequest] = useState<string>('');
   const [manualType, setManualType] = useState<string>('visual');
   const [showManualBox, setShowManualBox] = useState<boolean>(false);
+  const [showAllDefects, setShowAllDefects] = useState<boolean>(false);
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -484,8 +485,8 @@ export const VideoQualityInspector: React.FC<Props> = ({ projectId, projects, on
                 <span className="text-[11px] text-slate-500">All technical, visual, audio and subtitle checks passed.</span>
               </div>
             ) : (
-              <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
-                {defects.map(def => (
+              <div className="space-y-2">
+                {(showAllDefects ? defects : defects.slice(0, 3)).map(def => (
                   <div
                     key={def.defect_id}
                     onClick={() => jumpToTimestamp(def.timestamp_range[0])}
@@ -511,6 +512,15 @@ export const VideoQualityInspector: React.FC<Props> = ({ projectId, projects, on
                     </div>
                   </div>
                 ))}
+                {defects.length > 3 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllDefects((v) => !v)}
+                    className="w-full py-2 text-[11px] font-mono text-slate-400 hover:text-white bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl transition-colors cursor-pointer"
+                  >
+                    {showAllDefects ? 'Show fewer' : `Show all ${defects.length} defects`}
+                  </button>
+                )}
               </div>
             )}
           </div>
