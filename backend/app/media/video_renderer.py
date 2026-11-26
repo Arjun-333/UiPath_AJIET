@@ -1,24 +1,33 @@
 """
 Masterclass Video Renderer for Project Autonomia.
-Composes hands-on UiPath Studio IDE simulations, RPA workflow diagrams,
-data tables, live execution consoles, neural speech narration, and generates:
-1. 16:9 Landscape Full Master MP4 (1280x720) - 5+ Minutes Masterclass
-2. 9:16 Vertical Instagram Reel MP4 (720x1280)
+Composes 1080p HTML5/CSS/SVG UiPath Studio simulations via Headless Chrome,
+live Playwright browser demo captures, progressive step keyframes,
+procedural ambient synth pad with sidechain ducking, styled ASS subtitles,
+and produces:
+1. 1920x1080 (1080p) Landscape Master MP4 (-crf 20, -16 LUFS, faststart)
+2. 1080x1920 Vertical Instagram Reel MP4 with styled ASS captions
+3. SRT, ASS, and YouTube Chapters packaging
 """
 
 import subprocess
 import shutil
 import json
-import asyncio
+import re
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from PIL import Image, ImageDraw, ImageFont
 import imageio_ffmpeg
 
 from backend.app.config import FFMPEG_PATH
 from backend.app.media.tts_engine import TTSEngine
 from backend.app.media.subtitle_generator import SubtitleGenerator
+from backend.app.media.audio_bed import generate_ambient_bed
+
+UBUNTU_BOLD_FONT = "/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf"
+AURI_WORKING_GIF = Path("/home/arjun/Desktop/PROJECTS/UiPathAJIET/frontend/public/assets/sprites/auri/orbi_working.gif")
+CHROME_RENDERER_SCRIPT = Path(__file__).resolve().parent / "chrome_scene_renderer.mjs"
+
 
 class VideoRenderer:
     def __init__(self):
@@ -27,17 +36,16 @@ class VideoRenderer:
         self._load_fonts()
 
     def _load_fonts(self):
-        bold_path = "/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf"
-        med_path = "/usr/share/fonts/truetype/ubuntu/Ubuntu-M.ttf"
+        bold_path = UBUNTU_BOLD_FONT
         reg_path = "/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf"
         mono_path = "/usr/share/fonts/truetype/ubuntu/UbuntuMono-B.ttf"
         mono_reg = "/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf"
 
         try:
             self.font_header = ImageFont.truetype(bold_path, 20)
-            self.font_title = ImageFont.truetype(bold_path, 26)
-            self.font_subtitle = ImageFont.truetype(bold_path, 20)
-            self.font_body = ImageFont.truetype(reg_path, 18)
+            self.font_title = ImageFont.truetype(bold_path, 24)
+            self.font_subtitle = ImageFont.truetype(bold_path, 19)
+            self.font_body = ImageFont.truetype(reg_path, 17)
             self.font_caption = ImageFont.truetype(reg_path, 15)
             self.font_code = ImageFont.truetype(mono_path, 16)
             self.font_code_sm = ImageFont.truetype(mono_reg, 14)
@@ -52,300 +60,136 @@ class VideoRenderer:
             self.font_code_sm = ImageFont.load_default()
             self.font_footer = ImageFont.load_default()
 
-    def render_scene_frame(self, scene: Dict[str, Any], scene_idx: int = 0, total_scenes: int = 6, width: int = 1280, height: int = 720) -> Image.Image:
+    @staticmethod
+    def _truncate(text: str, max_len: int) -> str:
+        t = (text or "").strip()
+        return t if len(t) <= max_len else t[: max_len - 3].rstrip() + "..."
+
+    def _extract_topic_points(self, scene: Dict[str, Any], count: int = 4) -> List[str]:
+        """Extracts concise, topic-specific points from scene metadata or narration."""
+        explicit = scene.get("steps") or scene.get("key_points")
+        if isinstance(explicit, list) and explicit:
+            cleaned = [self._truncate(str(item), 62) for item in explicit if str(item).strip()]
+            if cleaned:
+                while len(cleaned) < count:
+                    cleaned.append(cleaned[-1])
+                return cleaned[:count]
+
+        narration = (scene.get("narration") or "").strip()
+        sentences = [s.strip() for s in re.split(r"[.!?]+", narration) if len(s.strip()) > 12]
+        points = [self._truncate(s, 62) for s in sentences[:count]]
+        topic = scene.get("topic") or scene.get("title") or "UiPath Automation"
+        defaults = [
+            f"Configure {self._truncate(topic, 36)} workflow",
+            "Validate selectors, variables, and data schema",
+            "Execute automated pipeline with error handling",
+            "Publish verified package to Orchestrator"
+        ]
+        while len(points) < count:
+            points.append(defaults[len(points) % len(defaults)])
+        return points[:count]
+
+    def _render_frames_with_chrome(self, jobs: List[Dict[str, Any]], config_path: Path) -> bool:
+        """Renders crisp 1080p HTML5/CSS/SVG frames via Headless Chrome. Returns True on success."""
+        if not CHROME_RENDERER_SCRIPT.exists():
+            return False
+        try:
+            config_path.write_text(json.dumps({"mode": "frames", "jobs": jobs}), encoding="utf-8")
+            res = subprocess.run(
+                ["node", str(CHROME_RENDERER_SCRIPT), str(config_path)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=60
+            )
+            return res.returncode == 0 and all(Path(j["outputPath"]).exists() for j in jobs)
+        except Exception:
+            return False
+
+    def _record_live_demo_with_chrome(self, output_dir: Path, topic: str) -> Optional[Path]:
+        """Records a real interactive Playwright browser automation demo clip (.webm)."""
+        if not CHROME_RENDERER_SCRIPT.exists():
+            return None
+        try:
+            cfg = output_dir / "demo_job.json"
+            cfg.write_text(json.dumps({
+                "mode": "demo",
+                "outputDir": str(output_dir),
+                "topic": topic,
+                "width": 1280,
+                "height": 720
+            }), encoding="utf-8")
+            res = subprocess.run(
+                ["node", str(CHROME_RENDERER_SCRIPT), str(cfg)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=45
+            )
+            if res.returncode == 0:
+                for line in reversed(res.stdout.strip().splitlines()):
+                    if line.startswith("{"):
+                        data = json.loads(line)
+                        p = Path(data.get("demoVideoPath", ""))
+                        if p.exists():
+                            return p
+        except Exception:
+            pass
+        return None
+
+    def render_scene_frame(
+        self,
+        scene: Dict[str, Any],
+        scene_idx: int = 0,
+        total_scenes: int = 6,
+        width: int = 1920,
+        height: int = 1080,
+        active_step: int = 0
+    ) -> Image.Image:
         """
-        Renders rich, hands-on visual frames simulating the UiPath Studio IDE,
-        connected automation sequence workflows, selector inspectors, variables tables,
-        and real-time execution terminals.
+        Pillow fallback frame renderer when Headless Chrome is unavailable.
+        Renders at 1280x720 and upscales cleanly if needed.
         """
-        img = Image.new("RGB", (width, height), (13, 17, 23))  # Deep Slate Dark
+        bw, bh = 1280, 720
+        img = Image.new("RGB", (bw, bh), (13, 17, 23))
         draw = ImageDraw.Draw(img)
 
-        # 1. Top Ribbon Navigation Bar
-        draw.rectangle([0, 0, width, 52], fill=(255, 102, 0))  # UiPath Brand Orange
-        draw.text((36, 15), "UiPath Community AJIET | Autonomia Production Studio", font=self.font_header, fill=(255, 255, 255))
-        
-        chapter_str = scene.get("chapter", f"Chapter {scene_idx + 1}")
-        draw.rectangle([width - 340, 10, width - 36, 42], fill=(234, 88, 12), outline=(255, 255, 255), width=1)
-        draw.text((width - 325, 16), chapter_str, font=self.font_footer, fill=(255, 255, 255))
-
-        # 2. Main Title Banner
+        topic = scene.get("topic") or scene.get("title") or "UiPath Studio Automation"
         title = scene.get("title", "UiPath Studio Automation")
-        draw.rectangle([36, 64, width - 36, 108], fill=(22, 27, 34), outline=(48, 54, 61), width=1)
-        draw.text((50, 72), f"TOPIC: {title.upper()}", font=self.font_title, fill=(0, 229, 255))
+        points = self._extract_topic_points(scene, count=4)
 
-        visual_type = scene.get("visual_type", "studio_ide_walkthrough")
+        draw.rectangle([0, 0, bw, 52], fill=(255, 102, 0))
+        draw.text((36, 15), "UiPath Community AJIET | Autonomia Production Studio", font=self.font_header, fill=(255, 255, 255))
+        chapter_str = self._truncate(scene.get("chapter", f"Chapter {scene_idx + 1}"), 36)
+        draw.rectangle([bw - 360, 10, bw - 36, 42], fill=(234, 88, 12), outline=(255, 255, 255), width=1)
+        draw.text((bw - 345, 16), chapter_str, font=self.font_footer, fill=(255, 255, 255))
 
-        # 3. Hands-On Visual Content Area (116px to 540px)
-        if visual_type == "challenge_comparison":
-            # Dual-column comparison
-            # Left Column: Legacy Manual (Red)
-            draw.rounded_rectangle([40, 120, 610, 520], radius=12, fill=(28, 15, 19), outline=(225, 29, 72), width=2)
-            draw.rectangle([40, 120, 610, 160], fill=(225, 29, 72))
-            draw.text((60, 130), "❌ MANUAL ENTERPRISE PROCESS (LEGACY)", font=self.font_subtitle, fill=(255, 255, 255))
+        draw.rectangle([36, 64, bw - 36, 108], fill=(22, 27, 34), outline=(48, 54, 61), width=1)
+        draw.text((50, 72), f"TOPIC: {self._truncate(title.upper(), 68)}", font=self.font_title, fill=(0, 229, 255))
 
-            draw.text((60, 185), "• 15 to 20 minutes required per invoice document", font=self.font_body, fill=(254, 205, 211))
-            draw.text((60, 235), "• 12% human error rate in manual typing and SAP entry", font=self.font_body, fill=(254, 205, 211))
-            draw.text((60, 285), "• Severe employee fatigue and backlog accumulation", font=self.font_body, fill=(254, 205, 211))
-            draw.text((60, 335), "• Zero auditability & vulnerability to compliance breach", font=self.font_body, fill=(254, 205, 211))
-            draw.text((60, 385), "• Annual cost per 10,000 documents: $45,000+", font=self.font_body, fill=(254, 205, 211))
+        draw.rounded_rectangle([40, 124, bw - 40, 520], radius=12, fill=(15, 23, 42), outline=(56, 189, 248), width=2)
+        draw.text((64, 144), self._truncate(f"WORKFLOW OVERVIEW: {topic}", 70), font=self.font_subtitle, fill=(56, 189, 248))
+        for i, pt in enumerate(points):
+            hi = (i == active_step)
+            draw.rounded_rectangle([64, 195 + i * 74, bw - 64, 252 + i * 74], radius=8, fill=(30, 41, 59), outline=(16, 185, 129) if hi else (51, 65, 85), width=2 if hi else 1)
+            draw.text((84, 212 + i * 74), f"{i + 1}. {pt}", font=self.font_body, fill=(255, 255, 255) if hi else (203, 213, 225))
 
-            # Right Column: UiPath Modern Automation (Emerald)
-            draw.rounded_rectangle([670, 120, width - 40, 520], radius=12, fill=(10, 30, 22), outline=(16, 185, 129), width=2)
-            draw.rectangle([670, 120, width - 40, 160], fill=(16, 185, 129))
-            draw.text((690, 130), "⚡ UIPATH COMMUNITY AJIET AUTOMATION", font=self.font_subtitle, fill=(255, 255, 255))
+        draw.rounded_rectangle([36, 535, bw - 36, 675], radius=12, fill=(10, 15, 25), outline=(51, 65, 85), width=2)
+        draw.text((54, 548), f"SCENE {scene_idx + 1}/{total_scenes}  •  LIVE NARRATION CAPTIONS", font=self.font_caption, fill=(100, 116, 139))
 
-            draw.text((690, 185), "• 2.4 seconds end-to-end execution per document", font=self.font_body, fill=(167, 243, 208))
-            draw.text((690, 235), "• 99.8% extraction accuracy with ML taxonomy", font=self.font_body, fill=(167, 243, 208))
-            draw.text((690, 285), "• 24/7 unattended software robot execution", font=self.font_body, fill=(167, 243, 208))
-            draw.text((690, 335), "• Automated validation via Action Center & Queues", font=self.font_body, fill=(167, 243, 208))
-            draw.text((690, 385), "• 85% operational cost reduction in month one", font=self.font_body, fill=(167, 243, 208))
+        draw.rectangle([0, bh - 38, bw, bh], fill=(11, 15, 23))
+        draw.rectangle([36, bh - 20, bw - 36, bh - 12], fill=(30, 41, 59))
+        progress_ratio = (scene_idx + 1) / max(1, total_scenes)
+        draw.rectangle([36, bh - 20, int(36 + (bw - 72) * progress_ratio), bh - 12], fill=(255, 102, 0))
 
-            # Bottom architecture pipeline bar
-            draw.rounded_rectangle([60, 450, width - 60, 505], radius=8, fill=(15, 23, 42), outline=(56, 189, 248), width=1)
-            draw.text((80, 468), "PIPELINE: [Input PDF] ➔ [OCR Digitizer] ➔ [Document Taxonomy] ➔ [ML Extractor] ➔ [Excel / SAP ERP]", font=self.font_code, fill=(56, 189, 248))
-
-        elif visual_type == "studio_ide_walkthrough":
-            # Realistic UiPath Studio Desktop Interface
-            # Top Ribbon Menu
-            draw.rectangle([40, 120, width - 40, 160], fill=(30, 41, 59))
-            draw.text((60, 132), "UiPath Studio v2024.10  |  File    Design    Debug    Manage Packages    Data Manager    UI Explorer", font=self.font_code, fill=(241, 245, 249))
-
-            # Left Sidebar: Activities Pane
-            draw.rectangle([40, 160, 330, 520], fill=(15, 23, 42), outline=(51, 65, 85))
-            draw.rectangle([40, 160, 330, 195], fill=(2, 132, 199))
-            draw.text((55, 170), "ACTIVITIES PALETTE", font=self.font_subtitle, fill=(255, 255, 255))
-            draw.text((55, 215), "▼ Modern UI Automation", font=self.font_code, fill=(56, 189, 248))
-            draw.text((70, 245), "  [+] Use App/Browser", font=self.font_code_sm, fill=(226, 232, 240))
-            draw.text((70, 275), "  [+] Click Activity", font=self.font_code_sm, fill=(226, 232, 240))
-            draw.text((70, 305), "  [+] Type Into Activity", font=self.font_code_sm, fill=(226, 232, 240))
-            draw.text((70, 335), "  [+] Table Extraction", font=self.font_code_sm, fill=(226, 232, 240))
-            draw.text((55, 375), "▼ System & Data", font=self.font_code, fill=(56, 189, 248))
-            draw.text((70, 405), "  [+] Excel Process Scope", font=self.font_code_sm, fill=(226, 232, 240))
-            draw.text((70, 435), "  [+] For Each Row in Table", font=self.font_code_sm, fill=(226, 232, 240))
-            draw.text((70, 465), "  [+] Add Queue Item", font=self.font_code_sm, fill=(226, 232, 240))
-
-            # Center: Designer Canvas
-            draw.rectangle([340, 160, 930, 520], fill=(22, 27, 34), outline=(51, 65, 85))
-            draw.rectangle([340, 160, 930, 195], fill=(30, 41, 59))
-            draw.text((360, 170), "DESIGNER CANVAS: Main.xaml*", font=self.font_subtitle, fill=(241, 245, 249))
-
-            # Sequence Container
-            draw.rounded_rectangle([365, 215, 905, 500], radius=10, fill=(15, 23, 42), outline=(255, 102, 0), width=2)
-            draw.rectangle([365, 215, 905, 245], fill=(255, 102, 0))
-            draw.text((385, 222), "Sequence - Automated Invoice Intake Pipeline", font=self.font_body, fill=(255, 255, 255))
-
-            # Nested Activity inside designer
-            draw.rounded_rectangle([390, 260, 880, 330], radius=8, fill=(30, 41, 59), outline=(56, 189, 248), width=1)
-            draw.text((410, 275), "🌐 Use Application/Browser: 'SAP NetWeaver / Invoices'", font=self.font_body, fill=(56, 189, 248))
-            draw.text((410, 302), "Target Selector: <html app='chrome.exe' title='Enterprise Portal' />", font=self.font_code_sm, fill=(148, 163, 184))
-
-            draw.rounded_rectangle([390, 345, 880, 415], radius=8, fill=(30, 41, 59), outline=(16, 185, 129), width=1)
-            draw.text((410, 360), "⌨️ Type Into: 'txt_InvoiceNumber'", font=self.font_body, fill=(16, 185, 129))
-            draw.text((410, 387), "Value: in_TransactionItem.SpecificContent(\"InvoiceID\").ToString", font=self.font_code_sm, fill=(148, 163, 184))
-
-            draw.rounded_rectangle([390, 430, 880, 485], radius=8, fill=(30, 41, 59), outline=(234, 88, 12), width=1)
-            draw.text((410, 445), "🖱️ Click: 'btn_ProcessAndValidate'", font=self.font_body, fill=(234, 88, 12))
-
-            # Right Sidebar: Properties Panel
-            draw.rectangle([940, 160, width - 40, 520], fill=(15, 23, 42), outline=(51, 65, 85))
-            draw.rectangle([940, 160, width - 40, 195], fill=(71, 85, 105))
-            draw.text((955, 170), "PROPERTIES", font=self.font_subtitle, fill=(255, 255, 255))
-            draw.text((955, 220), "• InputMode: Modern", font=self.font_code_sm, fill=(226, 232, 240))
-            draw.text((955, 255), "• SimulateType: True", font=self.font_code_sm, fill=(226, 232, 240))
-            draw.text((955, 290), "• Timeout: 30,000ms", font=self.font_code_sm, fill=(226, 232, 240))
-            draw.text((955, 325), "• VerifyExecution: True", font=self.font_code_sm, fill=(226, 232, 240))
-            draw.text((955, 360), "• Target: Unified Selector", font=self.font_code_sm, fill=(226, 232, 240))
-            draw.text((955, 395), "• FuzzyAccuracy: 0.75", font=self.font_code_sm, fill=(226, 232, 240))
-            draw.text((955, 430), "• StrictSelector: Active", font=self.font_code_sm, fill=(16, 185, 129))
-
-        elif visual_type == "workflow_sequence_builder":
-            # Connected Activity Sequence with Glowing Arrows
-            draw.rounded_rectangle([40, 120, 680, 520], radius=12, fill=(15, 23, 42), outline=(255, 102, 0), width=2)
-            draw.text((60, 135), "WORKFLOW SEQUENCE DESIGNER (CONNECTED NODES)", font=self.font_subtitle, fill=(255, 102, 0))
-
-            steps = [
-                ("1. Excel Process Scope", "Load /data/invoices_batch.xlsx into memory", (56, 189, 248)),
-                ("2. Use Application / Browser", "Attach to Chrome target window (PID 14208)", (16, 185, 129)),
-                ("3. Type Into: InvoiceID", "Modern targeting: Fuzzy selector + Computer Vision", (245, 158, 11)),
-                ("4. Click: Submit Transaction", "Verify execution and check completion status", (168, 85, 247))
-            ]
-
-            y_pos = 175
-            for title_text, desc_text, color in steps:
-                draw.rounded_rectangle([70, y_pos, 650, y_pos + 65], radius=8, fill=(30, 41, 59), outline=color, width=2)
-                draw.text((90, y_pos + 12), title_text, font=self.font_body, fill=color)
-                draw.text((90, y_pos + 38), desc_text, font=self.font_caption, fill=(203, 213, 225))
-                # Connector arrow
-                if y_pos < 380:
-                    draw.polygon([(360, y_pos + 67), (355, y_pos + 78), (365, y_pos + 78)], fill=(255, 255, 255))
-                    draw.rectangle([359, y_pos + 65, 361, y_pos + 78], fill=(255, 255, 255))
-                y_pos += 85
-
-            # Right Panel: UI Explorer Selector Tuning
-            draw.rounded_rectangle([700, 120, width - 40, 520], radius=12, fill=(22, 27, 34), outline=(56, 189, 248), width=2)
-            draw.rectangle([700, 120, width - 40, 160], fill=(2, 132, 199))
-            draw.text((720, 132), "UI EXPLORER: SELECTOR TUNING & VALIDATION", font=self.font_subtitle, fill=(255, 255, 255))
-
-            draw.text((720, 185), "XML Selector Definition:", font=self.font_body, fill=(226, 232, 240))
-            draw.rectangle([720, 215, width - 60, 310], fill=(13, 17, 23), outline=(48, 54, 61))
-            draw.text((735, 228), "<html app='chrome.exe' title='Invoice Portal' />", font=self.font_code, fill=(244, 63, 94))
-            draw.text((735, 255), "<webctrl tag='INPUT' id='txt_invoice_id' />", font=self.font_code, fill=(56, 189, 248))
-            draw.text((735, 282), "<fuzzySelector confidence='0.85' />", font=self.font_code, fill=(16, 185, 129))
-
-            draw.text((720, 335), "Targeting Methods Enabled:", font=self.font_body, fill=(226, 232, 240))
-            draw.text((740, 365), "✓ Strict Native Windows Selector", font=self.font_caption, fill=(16, 185, 129))
-            draw.text((740, 395), "✓ Fuzzy Element Match (Levenshtein Distance)", font=self.font_caption, fill=(16, 185, 129))
-            draw.text((740, 425), "✓ Computer Vision (Deep Learning Anchor)", font=self.font_caption, fill=(16, 185, 129))
-            draw.text((740, 455), "✓ Image Recognition Fallback", font=self.font_caption, fill=(16, 185, 129))
-
-        elif visual_type == "variables_data_manager":
-            # Variables & Data Table Inspection
-            draw.rounded_rectangle([40, 120, width - 40, 300], radius=12, fill=(15, 23, 42), outline=(56, 189, 248), width=2)
-            draw.rectangle([40, 120, width - 40, 160], fill=(30, 41, 59))
-            draw.text((60, 132), "STUDIO DATA MANAGER & VARIABLES INSPECTION", font=self.font_subtitle, fill=(56, 189, 248))
-
-            # Table Header
-            draw.rectangle([50, 170, width - 50, 205], fill=(51, 65, 85))
-            draw.text((65, 180), "VARIABLE NAME", font=self.font_code, fill=(255, 255, 255))
-            draw.text((360, 180), "VARIABLE TYPE", font=self.font_code, fill=(255, 255, 255))
-            draw.text((680, 180), "SCOPE", font=self.font_code, fill=(255, 255, 255))
-            draw.text((950, 180), "DEFAULT VALUE", font=self.font_code, fill=(255, 255, 255))
-
-            var_rows = [
-                ("dt_Transactions", "System.Data.DataTable", "Main Sequence", "New DataTable()"),
-                ("in_InvoiceNumber", "System.String", "Process Transaction", "\"INV-2026-901\""),
-                ("out_IsSuccess", "System.Boolean", "Process Transaction", "False"),
-                ("queue_Item", "UiPath.Core.QueueItem", "Global Scope", "Nothing")
-            ]
-            y_v = 215
-            for vname, vtype, vscope, vdef in var_rows:
-                draw.text((65, y_v), vname, font=self.font_code_sm, fill=(56, 189, 248))
-                draw.text((360, y_v), vtype, font=self.font_code_sm, fill=(245, 158, 11))
-                draw.text((680, y_v), vscope, font=self.font_code_sm, fill=(203, 213, 225))
-                draw.text((950, y_v), vdef, font=self.font_code_sm, fill=(148, 163, 184))
-                y_v += 22
-
-            # Data Table Preview Grid
-            draw.rounded_rectangle([40, 315, width - 40, 520], radius=12, fill=(22, 27, 34), outline=(16, 185, 129), width=2)
-            draw.text((60, 328), "EXTRACTED DATASET: dt_Transactions (In-Memory DataTable)", font=self.font_subtitle, fill=(16, 185, 129))
-
-            draw.rectangle([50, 360, width - 50, 395], fill=(30, 41, 59))
-            draw.text((65, 370), "INVOICE #", font=self.font_code, fill=(255, 255, 255))
-            draw.text((300, 370), "VENDOR NAME", font=self.font_code, fill=(255, 255, 255))
-            draw.text((620, 370), "AMOUNT ($)", font=self.font_code, fill=(255, 255, 255))
-            draw.text((880, 370), "CONFIDENCE", font=self.font_code, fill=(255, 255, 255))
-            draw.text((1070, 370), "STATUS", font=self.font_code, fill=(255, 255, 255))
-
-            data_rows = [
-                ("INV-9021", "Siemens Industry AG", "$14,250.00", "99.8%", "VALIDATED"),
-                ("INV-9022", "Microsoft Cloud Services", "$8,420.50", "99.9%", "VALIDATED"),
-                ("INV-9023", "UiPath Enterprise Platform", "$12,900.00", "100.0%", "PROCESSED"),
-                ("INV-9024", "Amazon Web Services Inc", "$5,110.20", "99.4%", "QUEUED")
-            ]
-            y_d = 405
-            for r_inv, r_vend, r_amt, r_conf, r_st in data_rows:
-                draw.text((65, y_d), r_inv, font=self.font_code_sm, fill=(226, 232, 240))
-                draw.text((300, y_d), r_vend, font=self.font_code_sm, fill=(226, 232, 240))
-                draw.text((620, y_d), r_amt, font=self.font_code_sm, fill=(245, 158, 11))
-                draw.text((880, y_d), r_conf, font=self.font_code_sm, fill=(16, 185, 129))
-                draw.text((1070, y_d), r_st, font=self.font_code_sm, fill=(56, 189, 248))
-                y_d += 26
-
-        elif visual_type == "live_execution_console":
-            # Live Terminal Output Console
-            draw.rounded_rectangle([40, 120, width - 40, 520], radius=12, fill=(10, 15, 23), outline=(16, 185, 129), width=2)
-            draw.rectangle([40, 120, width - 40, 160], fill=(22, 27, 34))
-            draw.text((60, 132), "UIPATH ROBOT EXECUTION CONSOLE // LIVE OUTPUT MONITOR", font=self.font_subtitle, fill=(16, 185, 129))
-
-            # Status pill
-            draw.rounded_rectangle([width - 240, 128, width - 60, 152], radius=6, fill=(6, 78, 59), outline=(16, 185, 129))
-            draw.text((width - 225, 134), "● ROBOT ACTIVE (0 ERRORS)", font=self.font_code_sm, fill=(167, 243, 208))
-
-            logs = [
-                ("[14:02:01.120 INF]", "Robot runtime initialized: UiPath Assistant v2024.10 (Modern Design)", (56, 189, 248)),
-                ("[14:02:02.430 INF]", "Connecting to target process: chrome.exe (PID 14208) via Unified API", (16, 185, 129)),
-                ("[14:02:03.110 INF]", "Reading Excel dataset: /data/enterprise_invoices_q4.xlsx (64 records loaded)", (245, 158, 11)),
-                ("[14:02:04.550 INF]", "Executing UI Selector: <webctrl id='invoiceId' /> (Confidence: 100%)", (56, 189, 248)),
-                ("[14:02:05.890 INF]", "Document Understanding ML Extractor: 64 of 64 invoices processed", (16, 185, 129)),
-                ("[14:02:06.210 INF]", "Dispatched transactional items to Orchestrator Queue 'AJIET_ProductionQueue'", (168, 85, 247)),
-                ("[14:02:07.450 INF]", "Workflow completed successfully in 4.38s. Memory: 142MB | CPU: 1.8%", (16, 185, 129)),
-                ("[14:02:07.490 INF]", "Quality verification sign-off issued. Zero unhandled exceptions.", (56, 189, 248))
-            ]
-
-            y_log = 180
-            for tag, log_msg, col in logs:
-                draw.text((65, y_log), tag, font=self.font_code, fill=col)
-                draw.text((260, y_log), log_msg, font=self.font_code, fill=(241, 245, 249))
-                y_log += 38
-
-        else:
-            # Deployment & Community Best Practices Outro
-            draw.rounded_rectangle([40, 120, width - 40, 520], radius=12, fill=(15, 23, 42), outline=(255, 102, 0), width=2)
-            draw.rectangle([40, 120, width - 40, 160], fill=(255, 102, 0))
-            draw.text((60, 132), "DEPLOYMENT & UIPATH COMMUNITY AJIET BEST PRACTICES", font=self.font_subtitle, fill=(255, 255, 255))
-
-            draw.rounded_rectangle([70, 180, 580, 330], radius=10, fill=(30, 41, 59), outline=(56, 189, 248), width=1)
-            draw.text((90, 195), "☁️ ORCHESTRATOR PACKAGE PUBLISHED", font=self.font_subtitle, fill=(56, 189, 248))
-            draw.text((90, 235), "Package: UiPathCommunityAJIET.InvoiceMasterclass.1.0.0", font=self.font_code_sm, fill=(226, 232, 240))
-            draw.text((90, 265), "Runtime: Unattended Robot Fleet (Cloud-Hosted)", font=self.font_code_sm, fill=(226, 232, 240))
-            draw.text((90, 295), "Trigger: Automated Daily Schedule @ 09:00 AM IST", font=self.font_code_sm, fill=(16, 185, 129))
-
-            draw.rounded_rectangle([620, 180, width - 70, 330], radius=10, fill=(30, 41, 59), outline=(245, 158, 11), width=1)
-            draw.text((640, 195), "🌟 3 GOLDEN RULES OF AUTOMATION", font=self.font_subtitle, fill=(245, 158, 11))
-            draw.text((640, 235), "1. Always adopt the Modern Experience targeting framework", font=self.font_caption, fill=(226, 232, 240))
-            draw.text((640, 265), "2. Implement Global Exception Handlers & Retry Mechanisms", font=self.font_caption, fill=(226, 232, 240))
-            draw.text((640, 295), "3. Parameterize all environmental variables & queue names", font=self.font_caption, fill=(226, 232, 240))
-
-            draw.rounded_rectangle([70, 350, width - 70, 490], radius=10, fill=(24, 24, 27), outline=(225, 29, 72), width=2)
-            draw.text((90, 370), "🔔 JOIN UIPATH COMMUNITY AJIET // SUBSCRIBE FOR WEEKLY MASTERCLASSES", font=self.font_subtitle, fill=(244, 63, 94))
-            draw.text((90, 410), "• Download the complete project .xaml files from the description link below", font=self.font_body, fill=(226, 232, 240))
-            draw.text((90, 445), "• Share your questions in the comments – our engineering mentors reply to every query!", font=self.font_body, fill=(226, 232, 240))
-
-        # 4. Spoken Subtitle Caption Overlay Bar (540px to 670px)
-        draw.rounded_rectangle([36, 535, width - 36, 675], radius=12, fill=(10, 15, 25), outline=(51, 65, 85), width=2)
-        narration = scene.get("narration", "")
-        words = narration.split()
-        wrapped_lines = []
-        cur_line = []
-        for word in words:
-            if len(" ".join(cur_line + [word])) > 58:
-                wrapped_lines.append(" ".join(cur_line))
-                cur_line = [word]
-            else:
-                cur_line.append(word)
-        if cur_line:
-            wrapped_lines.append(" ".join(cur_line))
-
-        y_sub = 548
-        for line in wrapped_lines[:3]:
-            draw.text((55, y_sub), line, font=self.font_body, fill=(255, 255, 255))
-            y_sub += 36
-
-        # 5. Bottom Timeline Scrubber & Chapter Notches
-        draw.rectangle([0, height - 38, width, height], fill=(11, 15, 23))
-        # Progress track
-        draw.rectangle([36, height - 20, width - 36, height - 12], fill=(30, 41, 59))
-        progress_ratio = (scene_idx + 1) / total_scenes
-        draw.rectangle([36, height - 20, int(36 + (width - 72) * progress_ratio), height - 12], fill=(255, 102, 0))
-
-        # Chapter notches
-        for ch in range(1, total_scenes):
-            notch_x = int(36 + (width - 72) * (ch / total_scenes))
-            draw.rectangle([notch_x - 1, height - 24, notch_x + 1, height - 8], fill=(255, 255, 255))
-
-        draw.text((36, height - 34), f"Masterclass Progress: Scene {scene_idx + 1}/{total_scenes}  |  5+ Min Full Technical Tutorial", font=self.font_footer, fill=(148, 163, 184))
-
-        # 6. Reserve bottom-right space for live animated Mascot AURI overlay & waveform
-        draw.rounded_rectangle([width - 360, height - 90, width - 140, height - 45], radius=6, fill=(15, 23, 42), outline=(51, 65, 85), width=1)
-        draw.text((width - 350, height - 85), "LIVE VOICE WAVEFORM", font=self.font_caption, fill=(100, 116, 139))
+        if width != bw or height != bh:
+            img = img.resize((width, height), Image.Resampling.LANCZOS)
         return img
 
     def get_audio_duration(self, audio_path: Path) -> float:
-        """Returns exact duration in seconds of an audio file using ffprobe."""
+        """Returns exact duration in seconds of an audio file using ffmpeg."""
         cmd = [self.ffmpeg_exe, "-i", str(audio_path)]
         res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        import re
         m = re.search(r"Duration:\s*(\d+):(\d+):(\d+\.\d+)", res.stderr)
         if m:
             h, m_m, s = float(m.group(1)), float(m.group(2)), float(m.group(3))
@@ -354,9 +198,9 @@ class VideoRenderer:
 
     async def render_single_scene(self, project_dir: str | Path, scene: Dict[str, Any], total_scenes: int = 6) -> Path:
         """
-        Renders an individual scene segment into an isolated MP4 file.
-        Used for autonomous repair to regenerate defective scenes without
-        rebuilding approved unaffected scenes.
+        Renders an isolated 1080p scene segment (1920x1080, 30fps, -crf 20)
+        using Headless Chrome HTML5/CSS/SVG keyframes, optional live browser demo PiP,
+        fade transitions, live voice waveform, and AURI mascot overlay.
         """
         p_dir = Path(project_dir)
         scenes_dir = p_dir / "scenes"
@@ -366,6 +210,7 @@ class VideoRenderer:
 
         scene_id = scene.get("scene_id", f"scene_{scene.get('scene_number', 1):02d}")
         idx = scene.get("scene_number", 1) - 1
+        topic = scene.get("topic") or scene.get("title") or "UiPath Studio Automation"
 
         # 1. Synthesize audio if missing
         audio_path = p_dir / "audio" / f"{scene_id}.wav"
@@ -375,127 +220,124 @@ class VideoRenderer:
             self.tts.synthesize_speech(narration_text, audio_path)
 
         duration = self.get_audio_duration(audio_path)
-        scene["duration"] = max(duration, 4.0)
-
-        # 2. Render Visual Frame
-        frame_img = self.render_scene_frame(scene, scene_idx=idx, total_scenes=total_scenes, width=1280, height=720)
-        frame_path = temp_dir / f"{scene_id}_frame.png"
-        frame_img.save(frame_path)
-
-        # 3. Render Scene Video Segment with Cinematic Motion & Dynamic Overlays
-        scene_mp4 = scenes_dir / f"{scene_id}.mp4"
+        scene["duration"] = max(duration, 4.0) + 0.45
         dur = float(scene["duration"])
-        auri_gif = Path("/home/arjun/Desktop/PROJECTS/UiPathAJIET/frontend/public/assets/sprites/orbi/orbi_working.gif")
 
-        # Dynamic camera Ken Burns motion variation per scene
-        if idx % 3 == 0:
-            zoom_filter = "zoompan=z='min(zoom+0.0006,1.10)':d=125:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1280x720:fps=30"
-        elif idx % 3 == 1:
-            zoom_filter = "zoompan=z=1.07:d=125:x='if(lte(on,1),(iw-iw/zoom)/2,x+0.5)':y='ih/2-(ih/zoom/2)':s=1280x720:fps=30"
-        else:
-            zoom_filter = "zoompan=z='max(1.10-0.0005*on,1.0)':d=125:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1280x720:fps=30"
+        # 2. Render 3 Progressive 1080p Keyframe Stages via Headless Chrome (fallback to Pillow)
+        points = self._extract_topic_points(scene, count=4)
+        frame_paths: List[Path] = []
+        jobs: List[Dict[str, Any]] = []
+        for step_idx in range(3):
+            fp = temp_dir / f"{scene_id}_step_{step_idx}.png"
+            frame_paths.append(fp)
+            jobs.append({
+                "width": 1920,
+                "height": 1080,
+                "sceneIndex": idx,
+                "totalScenes": total_scenes,
+                "activeStep": step_idx,
+                "topic": topic,
+                "chapter": scene.get("chapter", f"Chapter {idx + 1}"),
+                "title": scene.get("title", topic),
+                "visualType": scene.get("visual_type", "studio_ide_walkthrough"),
+                "points": points,
+                "outputPath": str(fp)
+            })
 
-        # Generate synchronized dynamic chunked subtitles
-        narration_text = scene.get("narration", scene.get("title", ""))
-        words = narration_text.split()
-        sub_filters = []
-        if words:
-            chunk_size = 7
-            chunks = [" ".join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
-            t_per_chunk = max(0.5, dur / len(chunks))
-            for c_idx, chunk in enumerate(chunks):
-                t_s = round(c_idx * t_per_chunk, 2)
-                t_e = round(min(dur, (c_idx + 1) * t_per_chunk), 2)
-                safe_c = chunk.replace(":", "\\:").replace("'", "").replace('"', '').replace("%", "\\%")
-                sub_filters.append(
-                    f"drawtext=fontfile=/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf:text='{safe_c}':"
-                    f"x=(w-text_w)/2:y=h-80:fontsize=22:fontcolor=white:box=1:boxcolor=black@0.75:boxborderw=8:"
-                    f"enable='between(t,{t_s},{t_e})'"
+        chrome_ok = self._render_frames_with_chrome(jobs, temp_dir / f"{scene_id}_jobs.json")
+        if not chrome_ok:
+            for step_idx, fp in enumerate(frame_paths):
+                img = self.render_scene_frame(
+                    scene, scene_idx=idx, total_scenes=total_scenes, width=1920, height=1080, active_step=step_idx
                 )
+                img.save(fp)
+
+        # Optional Live Browser Demo Recording for execution scenes
+        demo_clip: Optional[Path] = None
+        if scene.get("visual_type") == "live_execution_console" or scene.get("include_live_demo"):
+            demo_clip = self._record_live_demo_with_chrome(temp_dir / f"{scene_id}_demo", topic)
+
+        seg_dur = dur / 3.0
+        frames_concat = temp_dir / f"{scene_id}_frames.txt"
+        with open(frames_concat, "w") as f:
+            for fp in frame_paths:
+                f.write(f"file '{fp.resolve()}'\n")
+                f.write(f"duration {seg_dur:.3f}\n")
+            f.write(f"file '{frame_paths[-1].resolve()}'\n")
+
+        # 3. Render 1080p Scene Segment
+        scene_mp4 = scenes_dir / f"{scene_id}.mp4"
+        fade_out_st = max(0.0, dur - 0.35)
+        fade_filter = f"fade=t=in:st=0:d=0.35,fade=t=out:st={fade_out_st:.2f}:d=0.35"
 
         try:
-            if auri_gif.exists():
-                filter_complex = (
-                    f"[0:v]{zoom_filter}[bg];"
-                    f"[1:a]showwaves=s=200x40:mode=line:colors=0x38bdf8@0.9:scale=sqrt[wave];"
-                    f"[2:v]scale=100:100[mascot];"
-                    f"[bg][mascot]overlay=W-130:H-160:shortest=1[v1];"
-                    f"[v1][wave]overlay=W-340:H-85[v2];"
-                    f"[v2]drawbox=x=36:y=702:w='(t/{dur:.2f})*(1280-72)':h=8:color=0xff6600:t=fill[v3]"
-                )
-                if sub_filters:
-                    filter_complex += f";[v3]{','.join(sub_filters)}[vout]"
-                    out_map = "[vout]"
-                else:
-                    out_map = "[v3]"
+            inputs = ["-f", "concat", "-safe", "0", "-i", str(frames_concat), "-i", str(audio_path)]
+            fc_parts = [f"[0:v]fps=30,scale=1920:1080,{fade_filter}[bg]"]
+            audio_filter = "[1:a]apad=pad_dur=0.45[aout]"
+            fc_parts.append(audio_filter)
+            cur_v = "[bg]"
+            next_idx = 2
 
-                cmd = [
-                    self.ffmpeg_exe, "-y",
-                    "-loop", "1", "-i", str(frame_path),
-                    "-i", str(audio_path),
-                    "-ignore_loop", "0", "-i", str(auri_gif),
-                    "-filter_complex", filter_complex,
-                    "-map", out_map,
-                    "-map", "1:a",
-                    "-c:v", "libx264",
-                    "-preset", "veryfast",
-                    "-t", f"{dur:.2f}",
-                    "-pix_fmt", "yuv420p",
-                    "-c:a", "aac",
-                    "-b:a", "192k",
-                    str(scene_mp4)
-                ]
-            else:
-                # Fallback without GIF
-                filter_complex = f"[0:v]{zoom_filter}[bg];[bg]drawbox=x=36:y=702:w='(t/{dur:.2f})*(1280-72)':h=8:color=0xff6600:t=fill[vout]"
-                cmd = [
-                    self.ffmpeg_exe, "-y",
-                    "-loop", "1", "-i", str(frame_path),
-                    "-i", str(audio_path),
-                    "-filter_complex", filter_complex,
-                    "-map", "[vout]",
-                    "-map", "1:a",
-                    "-c:v", "libx264",
-                    "-preset", "veryfast",
-                    "-t", f"{dur:.2f}",
-                    "-pix_fmt", "yuv420p",
-                    "-c:a", "aac",
-                    "-b:a", "192k",
-                    str(scene_mp4)
-                ]
-            subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except Exception as exc:
-            # Safe basic fallback in case complex filter fails on edge-case audio
-            cmd_fallback = [
+            if demo_clip and demo_clip.exists():
+                inputs.extend(["-stream_loop", "-1", "-i", str(demo_clip)])
+                fc_parts.append(f"[{next_idx}:v]scale=760:428[demo]")
+                fc_parts.append(f"{cur_v}[demo]overlay=W-830:220:shortest=1[vdemo]")
+                cur_v = "[vdemo]"
+                next_idx += 1
+
+            fc_parts.append("[1:a]showwaves=s=280x54:mode=line:colors=0x38bdf8@0.9:scale=sqrt[wave]")
+            if AURI_WORKING_GIF.exists():
+                inputs.extend(["-ignore_loop", "0", "-i", str(AURI_WORKING_GIF)])
+                fc_parts.append(f"[{next_idx}:v]scale=128:128[mascot]")
+                fc_parts.append(f"{cur_v}[mascot]overlay=W-190:H-220:shortest=1[vmascot]")
+                cur_v = "[vmascot]"
+
+            fc_parts.append(f"{cur_v}[wave]overlay=W-500:H-148[vwave]")
+            fc_parts.append(f"[vwave]drawbox=x=48:y=1068:w='(t/{dur:.2f})*(1920-96)':h=6:color=0xff6600:t=fill[vout]")
+
+            cmd = [
                 self.ffmpeg_exe, "-y",
-                "-loop", "1",
-                "-i", str(frame_path),
-                "-i", str(audio_path),
+                *inputs,
+                "-filter_complex", ";".join(fc_parts),
+                "-map", "[vout]",
+                "-map", "[aout]",
                 "-c:v", "libx264",
-                "-preset", "veryfast",
+                "-preset", "fast",
+                "-crf", "20",
                 "-t", f"{dur:.2f}",
                 "-pix_fmt", "yuv420p",
                 "-r", "30",
                 "-c:a", "aac",
                 "-b:a", "192k",
-                "-shortest",
+                str(scene_mp4)
+            ]
+            subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except Exception:
+            cmd_fallback = [
+                self.ffmpeg_exe, "-y",
+                "-loop", "1", "-i", str(frame_paths[0]),
+                "-i", str(audio_path),
+                "-c:v", "libx264", "-preset", "fast", "-crf", "20",
+                "-t", f"{dur:.2f}", "-pix_fmt", "yuv420p", "-r", "30",
+                "-c:a", "aac", "-b:a", "192k", "-shortest",
                 str(scene_mp4)
             ]
             subprocess.run(cmd_fallback, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        # Cleanup temp frame
-        try:
-            frame_path.unlink(missing_ok=True)
-        except Exception:
-            pass
+        for fp in frame_paths + [frames_concat]:
+            try:
+                fp.unlink(missing_ok=True)
+            except Exception:
+                pass
 
         return scene_mp4
 
     async def assemble_video_from_scenes(self, project_dir: str | Path, scenes: List[Dict[str, Any]]) -> Path:
         """
-        Assembles all individual scene MP4 segments into a cohesive 16:9 Master Video
-        and 9:16 Vertical Reel with audio and subtitles.
-        Preserves approved unaffected scenes during autonomous repair!
+        Assembles all 1080p scene segments into:
+        - master_16x9.mp4 (1920x1080, ducked ambient music + -16 LUFS narration, styled ASS captions)
+        - reel_9x16.mp4 (1080x1920 vertical reel with styled ASS captions & progress bar)
+        - subtitles.srt, subtitles.ass, chapters.txt
         """
         p_dir = Path(project_dir)
         scenes_dir = p_dir / "scenes"
@@ -503,127 +345,181 @@ class VideoRenderer:
         temp_dir.mkdir(parents=True, exist_ok=True)
 
         # 1. Verify or generate all scene segments
-        scene_files = []
-        audio_files = []
+        scene_files: List[Path] = []
         for idx, sc in enumerate(scenes):
             sc_id = sc.get("scene_id", f"scene_{idx+1:02d}")
             sc_file = scenes_dir / f"{sc_id}.mp4"
-            aud_file = p_dir / "audio" / f"{sc_id}.wav"
-
             if not sc_file.exists():
                 await self.render_single_scene(p_dir, sc, total_scenes=len(scenes))
-
             scene_files.append(sc_file)
-            if aud_file.exists():
-                audio_files.append(aud_file)
 
-        # 2. Create Master Concat Script
+        # 2. Generate SRT, Styled ASS Subtitles & YouTube Chapters
+        sub_gen = SubtitleGenerator()
+        sub_srt = p_dir / "subtitles.srt"
+        sub_ass = p_dir / "subtitles.ass"
+        reel_ass = temp_dir / "reel_subtitles.ass"
+        sub_gen.generate_srt(scenes, sub_srt)
+        sub_gen.generate_ass(scenes, sub_ass, width=1920, height=1080, chunk_words=4, margin_v=72, font_size=42)
+        sub_gen.generate_ass(scenes, reel_ass, width=1080, height=1920, chunk_words=3, margin_v=580, font_size=54)
+
+        chapters_lines = []
+        t_cursor = 0.0
+        for idx, sc in enumerate(scenes):
+            mins = int(t_cursor // 60)
+            secs = int(t_cursor % 60)
+            ch_label = sc.get("chapter") or sc.get("title") or f"Scene {idx + 1}"
+            chapters_lines.append(f"{mins:02d}:{secs:02d} {ch_label}")
+            t_cursor += float(sc.get("duration", 5.0))
+        (p_dir / "chapters.txt").write_text("\n".join(chapters_lines) + "\n", encoding="utf-8")
+
+        # 3. Concatenate Raw Scene Video+Audio
         concat_txt = temp_dir / "master_concat.txt"
         with open(concat_txt, "w") as f:
             for sf in scene_files:
                 f.write(f"file '{sf.resolve()}'\n")
 
-        master_mp4 = p_dir / "master_16x9.mp4"
-        cmd_concat = [
-            self.ffmpeg_exe, "-y",
-            "-f", "concat",
-            "-safe", "0",
-            "-i", str(concat_txt),
-            "-c", "copy",
-            str(master_mp4)
-        ]
-        subprocess.run(cmd_concat, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        raw_master = temp_dir / "raw_master.mp4"
+        subprocess.run([
+            self.ffmpeg_exe, "-y", "-f", "concat", "-safe", "0", "-i", str(concat_txt),
+            "-c", "copy", str(raw_master)
+        ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        # 3. Concatenate Full Audio Track
+        # Extract full narration audio
         full_audio_wav = p_dir / "full_narration.wav"
-        if audio_files:
-            aud_concat_txt = temp_dir / "audio_concat.txt"
-            with open(aud_concat_txt, "w") as f:
-                for af in audio_files:
-                    f.write(f"file '{af.resolve()}'\n")
+        subprocess.run([
+            self.ffmpeg_exe, "-y", "-i", str(raw_master), "-vn",
+            "-ar", "24000", "-ac", "1", str(full_audio_wav)
+        ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-            cmd_aud = [
+        # 4. Mix Procedural Ambient Synth Pad with Sidechain Ducking + Burn Styled ASS Subtitles (1080p)
+        total_dur = max(self.get_audio_duration(raw_master), 4.0)
+        ambient_wav = temp_dir / "ambient_bed.wav"
+        generate_ambient_bed(total_dur, ambient_wav)
+
+        master_mp4 = p_dir / "master_16x9.mp4"
+        ass_escaped = str(sub_ass.resolve()).replace("\\", "\\\\").replace(":", "\\:")
+        try:
+            filter_master = (
+                f"[0:v]ass='{ass_escaped}'[vout];"
+                f"[0:a]asplit=2[voice][sc];"
+                f"[1:a][sc]sidechaincompress=threshold=0.02:ratio=6:attack=40:release=350[ducked];"
+                f"[voice][ducked]amix=inputs=2:duration=first:weights=1 0.35,"
+                f"loudnorm=I=-16:TP=-1.5:LRA=11[aout]"
+            )
+            subprocess.run([
                 self.ffmpeg_exe, "-y",
-                "-f", "concat",
-                "-safe", "0",
-                "-i", str(aud_concat_txt),
-                "-c", "copy",
-                str(full_audio_wav)
-            ]
-            subprocess.run(cmd_aud, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                "-i", str(raw_master),
+                "-i", str(ambient_wav),
+                "-filter_complex", filter_master,
+                "-map", "[vout]", "-map", "[aout]",
+                "-c:v", "libx264", "-preset", "fast", "-crf", "20",
+                "-pix_fmt", "yuv420p",
+                "-c:a", "aac", "-b:a", "192k",
+                "-movflags", "+faststart",
+                str(master_mp4)
+            ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except Exception:
+            shutil.copy2(raw_master, master_mp4)
 
-        # 4. Generate Subtitles
-        sub_gen = SubtitleGenerator()
-        sub_srt = p_dir / "subtitles.srt"
-        sub_gen.generate_srt(scenes, sub_srt)
-
-        # 5. Render 9:16 Vertical Instagram Reel
+        # 5. Render 1080x1920 Vertical Instagram Reel with Styled ASS Captions
         total_scenes = len(scenes)
-        reel_concat_txt = temp_dir / "reel_concat.txt"
+        reel_segments: List[Path] = []
         for idx, scene in enumerate(scenes):
-            frame_vertical = Image.new("RGB", (720, 1280), (13, 17, 23))
+            sc_id = scene.get("scene_id", f"scene_{idx+1:02d}")
+            aud_file = p_dir / "audio" / f"{sc_id}.wav"
+            sc_dur = max(float(scene.get("duration", 5.0)), 4.0)
+
+            frame_vertical = Image.new("RGB", (1080, 1920), (10, 14, 24))
             d_v = ImageDraw.Draw(frame_vertical)
+            d_v.rectangle([0, 0, 1080, 130], fill=(249, 115, 22))
+            d_v.text((54, 46), "UiPath Community AJIET | Reels", font=self.font_title, fill=(255, 255, 255))
 
-            # Top branding
-            d_v.rectangle([0, 0, 720, 90], fill=(255, 102, 0))
-            d_v.text((40, 32), "UiPath Community AJIET | Reels", font=self.font_header, fill=(255, 255, 255))
+            # Use 1080p Chrome frame if available
+            horiz_tmp = temp_dir / f"reel_horiz_{idx:02d}.png"
+            ok_h = self._render_frames_with_chrome([{
+                "width": 1920, "height": 1080,
+                "sceneIndex": idx, "totalScenes": total_scenes,
+                "activeStep": idx % 3,
+                "topic": scene.get("topic") or scene.get("title") or "UiPath",
+                "chapter": scene.get("chapter", f"Chapter {idx + 1}"),
+                "title": scene.get("title", ""),
+                "visualType": scene.get("visual_type", "studio_ide_walkthrough"),
+                "points": self._extract_topic_points(scene, count=4),
+                "outputPath": str(horiz_tmp)
+            }], temp_dir / f"reel_job_{idx:02d}.json")
 
-            # Scaled 16:9 frame preview
-            horiz = self.render_scene_frame(scene, scene_idx=idx, total_scenes=total_scenes, width=1280, height=720)
-            horiz_resized = horiz.resize((680, 382), Image.Resampling.BILINEAR)
-            frame_vertical.paste(horiz_resized, (20, 120))
+            if ok_h and horiz_tmp.exists():
+                horiz = Image.open(horiz_tmp).convert("RGB")
+            else:
+                horiz = self.render_scene_frame(scene, scene_idx=idx, total_scenes=total_scenes, width=1920, height=1080, active_step=idx % 3)
 
-            # Middle Callout Card
-            d_v.rounded_rectangle([30, 520, 690, 860], radius=16, fill=(22, 27, 34), outline=(56, 189, 248), width=2)
-            d_v.text((50, 540), scene.get("title", "").upper(), font=self.font_subtitle, fill=(0, 229, 255))
+            horiz_resized = horiz.resize((1000, 562), Image.Resampling.LANCZOS)
+            frame_vertical.paste(horiz_resized, (40, 170))
 
-            # Subtitle lines
-            words = scene.get("narration", "").split()
-            lines, cur = [], []
-            for w in words:
-                if len(" ".join(cur + [w])) > 34:
-                    lines.append(" ".join(cur))
-                    cur = [w]
-                else:
-                    cur.append(w)
-            if cur:
-                lines.append(" ".join(cur))
+            d_v.rounded_rectangle([44, 770, 1036, 1390], radius=24, fill=(15, 23, 42), outline=(56, 189, 248), width=3)
+            d_v.text((76, 804), self._truncate(scene.get("title", "").upper(), 36), font=self.font_title, fill=(56, 189, 248))
 
-            y_rl = 590
-            for l in lines[:6]:
-                d_v.text((50, y_rl), l, font=self.font_body, fill=(241, 245, 249))
-                y_rl += 42
+            d_v.rounded_rectangle([44, 1430, 1036, 1780], radius=24, fill=(15, 23, 42), outline=(249, 115, 22), width=3)
+            d_v.text((76, 1466), "AUTOMATION QUICK TIP", font=self.font_title, fill=(249, 115, 22))
+            d_v.text((76, 1524), "Follow @uipath_ajiet for weekly RPA & AI builds", font=self.font_subtitle, fill=(255, 255, 255))
 
-            # Bottom CTA
-            d_v.rounded_rectangle([30, 890, 690, 1150], radius=16, fill=(15, 23, 42), outline=(255, 102, 0), width=2)
-            d_v.text((50, 915), "🚀 AUTOMATION QUICK TIP", font=self.font_subtitle, fill=(255, 102, 0))
-            d_v.text((50, 960), "Follow @uipath_ajiet on Instagram", font=self.font_body, fill=(255, 255, 255))
-            d_v.text((50, 1000), "Save this Reel for your next RPA lab!", font=self.font_body, fill=(148, 163, 184))
+            v_png = temp_dir / f"reel_frame_{idx:02d}.png"
+            frame_vertical.save(v_png)
 
-            frame_vertical.save(temp_dir / f"reel_frame_{idx:02d}.png")
+            v_seg_mp4 = temp_dir / f"reel_seg_{idx:02d}.mp4"
+            fade_out_st = max(0.0, sc_dur - 0.3)
+            vf_parts = [
+                f"fade=t=in:st=0:d=0.3,fade=t=out:st={fade_out_st:.2f}:d=0.3",
+                f"drawbox=x=44:y=1860:w='(t/{sc_dur:.2f})*992':h=10:color=0xff6600:t=fill"
+            ]
+            cmd_vseg = [
+                self.ffmpeg_exe, "-y",
+                "-loop", "1", "-i", str(v_png),
+                *(["-i", str(aud_file)] if aud_file.exists() else []),
+                "-vf", ",".join(vf_parts),
+                "-c:v", "libx264", "-preset", "fast", "-crf", "20",
+                "-t", f"{sc_dur:.2f}",
+                "-pix_fmt", "yuv420p", "-r", "30",
+                *(["-c:a", "aac", "-b:a", "192k"] if aud_file.exists() else []),
+                str(v_seg_mp4)
+            ]
+            subprocess.run(cmd_vseg, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            reel_segments.append(v_seg_mp4)
 
+        reel_concat_txt = temp_dir / "reel_concat.txt"
         with open(reel_concat_txt, "w") as f:
-            for idx, scene in enumerate(scenes):
-                f.write(f"file 'reel_frame_{idx:02d}.png'\n")
-                f.write(f"duration {scene['duration']:.2f}\n")
-            f.write(f"file 'reel_frame_{len(scenes)-1:02d}.png'\n")
+            for rseg in reel_segments:
+                f.write(f"file '{rseg.resolve()}'\n")
+
+        raw_reel = temp_dir / "raw_reel.mp4"
+        subprocess.run([
+            self.ffmpeg_exe, "-y", "-f", "concat", "-safe", "0", "-i", str(reel_concat_txt),
+            "-c", "copy", str(raw_reel)
+        ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         reel_mp4 = p_dir / "reel_9x16.mp4"
-        cmd_reel = [
-            self.ffmpeg_exe, "-y",
-            "-f", "concat",
-            "-safe", "0",
-            "-i", str(reel_concat_txt),
-            "-i", str(full_audio_wav),
-            "-c:v", "libx264",
-            "-pix_fmt", "yuv420p",
-            "-r", "30",
-            "-c:a", "aac",
-            "-b:a", "192k",
-            "-shortest",
-            str(reel_mp4)
-        ]
-        subprocess.run(cmd_reel, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        reel_ass_escaped = str(reel_ass.resolve()).replace("\\", "\\\\").replace(":", "\\:")
+        try:
+            subprocess.run([
+                self.ffmpeg_exe, "-y",
+                "-i", str(raw_reel),
+                "-i", str(ambient_wav),
+                "-filter_complex", (
+                    f"[0:v]ass='{reel_ass_escaped}'[vout];"
+                    f"[0:a]asplit=2[voice][sc];"
+                    f"[1:a][sc]sidechaincompress=threshold=0.02:ratio=6:attack=40:release=350[ducked];"
+                    f"[voice][ducked]amix=inputs=2:duration=first:weights=1 0.35,"
+                    f"loudnorm=I=-16:TP=-1.5:LRA=11[aout]"
+                ),
+                "-map", "[vout]", "-map", "[aout]",
+                "-c:v", "libx264", "-preset", "fast", "-crf", "20",
+                "-pix_fmt", "yuv420p",
+                "-c:a", "aac", "-b:a", "192k",
+                "-movflags", "+faststart",
+                str(reel_mp4)
+            ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except Exception:
+            shutil.copy2(raw_reel, reel_mp4)
 
         shutil.rmtree(temp_dir, ignore_errors=True)
         return master_mp4
@@ -632,9 +528,9 @@ class VideoRenderer:
         """
         Master Pipeline Method:
         1. Synthesizes neural audio per scene.
-        2. Renders isolated scene segments.
-        3. Creates structured Production Manifest (manifest.json).
-        4. Assembles 16:9 Master Video and 9:16 Vertical Reel.
+        2. Renders isolated 1080p scene segments via Headless Chrome + live demo PiP.
+        3. Creates structured Production Manifest (production_manifest.json).
+        4. Assembles 1080p Master Video & 1080x1920 Vertical Reel with ducked ambient audio & ASS captions.
         """
         out_dir = Path(output_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -643,11 +539,12 @@ class VideoRenderer:
         audio_dir.mkdir(parents=True, exist_ok=True)
         scenes_dir.mkdir(parents=True, exist_ok=True)
 
+        project_title = script_data.get("title", "UiPath Studio Masterclass")
         scenes = script_data.get("scenes", [])
         if not scenes:
             from backend.app.engine.llm_provider import HeuristicLLMProvider
             provider = HeuristicLLMProvider()
-            raw = await provider.generate("UiPath Studio Automation", role="scriptwriter")
+            raw = await provider.generate(project_title, role="scriptwriter")
             parsed = json.loads(raw)
             scenes = parsed.get("scenes", [])
 
@@ -658,11 +555,12 @@ class VideoRenderer:
             scene_id = f"scene_{idx+1:02d}"
             scene["scene_id"] = scene_id
             scene["scene_number"] = idx + 1
+            scene.setdefault("topic", project_title)
 
             audio_file = audio_dir / f"{scene_id}.wav"
             narration_text = scene.get("narration", scene.get("title", ""))
             self.tts.synthesize_speech(narration_text, audio_file)
-            dur = max(self.get_audio_duration(audio_file), 4.0)
+            dur = max(self.get_audio_duration(audio_file), 4.0) + 0.45
 
             scene["start_timestamp"] = round(total_time, 2)
             scene["end_timestamp"] = round(total_time + dur, 2)
@@ -687,7 +585,7 @@ class VideoRenderer:
         # 4. Generate & Save Video Production Manifest
         manifest = {
             "project_id": project_id,
-            "title": script_data.get("title", "UiPath Studio Masterclass"),
+            "title": project_title,
             "target_platform": "youtube_and_instagram",
             "created_at": datetime.utcnow().isoformat(),
             "updated_at": datetime.utcnow().isoformat(),
@@ -708,6 +606,8 @@ class VideoRenderer:
             "master_16x9": f"/media/{project_id}/master_16x9.mp4",
             "reel_9x16": f"/media/{project_id}/reel_9x16.mp4",
             "subtitles": f"/media/{project_id}/subtitles.srt",
+            "subtitles_ass": f"/media/{project_id}/subtitles.ass",
+            "chapters": f"/media/{project_id}/chapters.txt",
             "narration_audio": f"/media/{project_id}/full_narration.wav",
             "manifest": f"/media/{project_id}/production_manifest.json"
         }

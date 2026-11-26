@@ -2,10 +2,10 @@
 // Complies with 2:1 pixel-art palette restrictions (Screenshot 2 style)
 
 export const ISO_PALETTE = {
-  // Background & Backdrops (Soft, light, muted - no dark void)
-  bg_canvas: '#E6E9F5',
-  bg_canvas_soft: '#DFE3F0',
-  bg_card: '#F4F6FC',
+  // Background & Backdrops (Dark Navy Environment per Spec 5.A)
+  bg_canvas: '#080c14',
+  bg_canvas_soft: '#0d1320',
+  bg_card: '#0b101d',
 
   // Floor Tiles (Pale cream / warm light grey with soft grid lines)
   floor_light: '#F8FAFC',

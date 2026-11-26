@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Agent } from '../../types';
+import { useIsoAgentDrag } from './useIsoAgentDrag';
 import { ISO_PALETTE } from '../../theme/isoPalette';
 import {
   toScreen,
@@ -21,11 +22,18 @@ import {
   IsoCharacterRenderData
 } from './isoEngine';
 
+import { AgentPositionInfo } from './Floor0IsometricRoom';
+
 interface Props {
   agents: Agent[];
   onSelectAgent: (agent: Agent) => void;
   orbiState: string;
   onNavigateFloor?: (floor: number) => void;
+  zoom?: number;
+  pan?: { x: number; y: number };
+  pacingMode?: 'calm' | 'break' | 'active';
+  skipBakedLabels?: boolean;
+  onAgentPositionsUpdate?: (positions: AgentPositionInfo[]) => void;
 }
 
 interface AgentSimState {
@@ -50,14 +58,23 @@ export const Floor1IsometricRoom: React.FC<Props> = ({
   agents,
   onSelectAgent,
   orbiState,
-  onNavigateFloor
+  onNavigateFloor,
+  zoom = 1.0,
+  pan = { x: 0, y: 0 },
+  pacingMode = 'calm',
+  skipBakedLabels = true,
+  onAgentPositionsUpdate
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [dimensions, setDimensions] = useState({ width: 1360, height: 680 });
-  const [pacingMode, setPacingMode] = useState<'calm' | 'break' | 'active'>('calm');
-  const [zoom, setZoom] = useState<number>(1.0);
   const [hoveredAgent, setHoveredAgent] = useState<AgentSimState | null>(null);
+  const { isDragging, handleMouseDown, handleDragMove, handleMouseUp, consumeJustDragged } = useIsoAgentDrag(
+    canvasRef,
+    pan,
+    zoom,
+    hoveredAgent
+  );
   const [hoveredStairsDown, setHoveredStairsDown] = useState<boolean>(false);
   const [hoveredStairsUp, setHoveredStairsUp] = useState<boolean>(false);
 
@@ -66,9 +83,7 @@ export const Floor1IsometricRoom: React.FC<Props> = ({
     if (!el) return;
     const updateSize = () => {
       if (el.clientWidth && el.clientHeight) {
-        const w = Math.min(1400, Math.max(900, el.clientWidth - 16));
-        const h = Math.min(800, Math.max(500, el.clientHeight - 16));
-        setDimensions({ width: Math.round(w), height: Math.round(h) });
+        setDimensions({ width: el.clientWidth, height: el.clientHeight });
       }
     };
     updateSize();
@@ -180,27 +195,34 @@ export const Floor1IsometricRoom: React.FC<Props> = ({
       tick++;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      ctx.fillStyle = ISO_PALETTE.bg_canvas;
+      // Dark Navy Environment per Spec 5.A
+      ctx.fillStyle = '#080c14';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Symmetrically Centered Studio Diorama (Mathematically exact 70px top/bottom & 226px left/right margins)
+      // Symmetrically Centered Studio Diorama
       const roomSize = 14;
       const wallHeight = 110;
       const slabThickness = 22;
       const totalDioramaHeight = wallHeight + (roomSize * 32) + slabThickness;
-      const originX = Math.round(canvas.width / 2) + 6;
-      const originY = Math.round((canvas.height - totalDioramaHeight) / 2 + wallHeight) + 13;
+      const originX = Math.round(canvas.width / 2);
+      const originY = Math.round((canvas.height - totalDioramaHeight) / 2 + wallHeight);
 
-      // Subtle Vignette / Studio Gradient Centered on the Office Floor
+      // Subtle Vignette / Studio Gradient Centered on the Office Floor per Spec 5.A
       const floorCenterY = originY + (roomSize * 16);
       const grad = ctx.createRadialGradient(
-        originX, floorCenterY, 60,
-        originX, floorCenterY, canvas.width * 0.65
+        canvas.width / 2 + pan.x, floorCenterY + pan.y, 60 * zoom,
+        canvas.width / 2 + pan.x, floorCenterY + pan.y, Math.max(canvas.width, canvas.height) * 0.75 * zoom
       );
-      grad.addColorStop(0, 'rgba(255, 255, 255, 0.45)');
-      grad.addColorStop(1, 'rgba(215, 222, 240, 0.6)');
+      grad.addColorStop(0, 'rgba(28, 38, 62, 0.5)');
+      grad.addColorStop(1, 'rgba(8, 12, 20, 0.85)');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Apply Centered Zoom and Pan Transformation
+      ctx.save();
+      ctx.translate(canvas.width / 2 + pan.x, canvas.height / 2 + pan.y);
+      ctx.scale(zoom, zoom);
+      ctx.translate(-canvas.width / 2, -canvas.height / 2);
 
       // 1. Draw Architectural Room Structure
       drawEnclosedRoomStructure(ctx, originX, originY, roomSize, wallHeight, slabThickness);
@@ -256,6 +278,7 @@ export const Floor1IsometricRoom: React.FC<Props> = ({
       queue.push(createPottedTree(13.2, 13.2));
 
       // 3. Update Agents Simulation Motion
+      const screenPositions: AgentPositionInfo[] = [];
       simAgentsRef.current.forEach(sim => {
         let target = sim.deskPos;
         if (pacingMode === 'break') {
@@ -280,6 +303,20 @@ export const Floor1IsometricRoom: React.FC<Props> = ({
           sim.isSeated = (pacingMode !== 'break') || (target === sim.loungePos);
         }
 
+        const pos = toScreen(sim.gx, sim.gy, sim.isSeated ? 14 : 0, originX, originY);
+        const sx = (pos.x - canvas.width / 2) * zoom + (canvas.width / 2 + pan.x);
+        const sy = (pos.y - canvas.height / 2) * zoom + (canvas.height / 2 + pan.y);
+        screenPositions.push({
+          id: sim.id,
+          name: sim.name,
+          role: sim.role,
+          screenX: sx,
+          screenY: sy,
+          statusText: sim.isWalking ? 'Moving across studio...' : (pacingMode === 'break' ? 'Coffee Break in Studio Lounge' : sim.statusText),
+          status: sim.isWalking ? 'in_transit' : (pacingMode === 'break' ? 'break' : 'active'),
+          isAuri: false
+        });
+
         const avatarImg = getImage(`/assets/sprites/employees/${sim.avatarFile}`);
 
         const charData: IsoCharacterRenderData = {
@@ -294,11 +331,16 @@ export const Floor1IsometricRoom: React.FC<Props> = ({
           avatarFile: sim.avatarFile,
           isAuri: false,
           statusText: sim.isWalking ? 'Moving across studio...' : (pacingMode === 'break' ? 'Coffee Break in Studio Lounge' : sim.statusText),
-          avatarImg
+          avatarImg,
+          skipBakedLabels: skipBakedLabels
         };
 
         queue.push(createCharacterRenderItem(charData));
       });
+
+      if (onAgentPositionsUpdate && tick % 2 === 0) {
+        onAgentPositionsUpdate(screenPositions);
+      }
 
       // 4. Sort Render Queue by Isometric Depth
       queue.sort((a, b) => a.depth - b.depth);
@@ -361,27 +403,32 @@ export const Floor1IsometricRoom: React.FC<Props> = ({
         ctx.restore();
       }
 
+      // Restore zoom & pan transform
+      ctx.restore();
+
       animId = requestAnimationFrame(render);
     };
 
     render();
     return () => cancelAnimationFrame(animId);
-  }, [pacingMode, orbiState, hoveredStairsDown, hoveredStairsUp, dimensions]);
+  }, [pacingMode, orbiState, hoveredStairsDown, hoveredStairsUp, dimensions, zoom, pan.x, pan.y, skipBakedLabels]);
 
   // Handle Mouse Hover on Personnel and Staircases
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const cx = (e.clientX - rect.left) / zoom;
-    const cy = (e.clientY - rect.top) / zoom;
+    const rawX = e.clientX - rect.left;
+    const rawY = e.clientY - rect.top;
+    const cx = (rawX - (canvas.width / 2 + pan.x)) / zoom + (canvas.width / 2);
+    const cy = (rawY - (canvas.height / 2 + pan.y)) / zoom + (canvas.height / 2);
 
     const roomSize = 14;
     const wallHeight = 110;
     const slabThickness = 22;
     const totalDioramaHeight = wallHeight + (roomSize * 32) + slabThickness;
-    const originX = Math.round(canvas.width / 2) + 6;
-    const originY = Math.round((canvas.height - totalDioramaHeight) / 2 + wallHeight) + 13;
+    const originX = Math.round(canvas.width / 2);
+    const originY = Math.round((canvas.height - totalDioramaHeight) / 2 + wallHeight);
 
     // A. Detect Hover over Personnel
     let found: AgentSimState | null = null;
@@ -422,6 +469,23 @@ export const Floor1IsometricRoom: React.FC<Props> = ({
   };
 
   const handleClick = () => {
+    if (hoveredAgent) {
+      const realAgent = agents.find(a => a.agent_id === hoveredAgent.id || (a as any).id === hoveredAgent.id) || {
+        id: hoveredAgent.id,
+        agent_id: hoveredAgent.id,
+        name: hoveredAgent.name,
+        role: hoveredAgent.role,
+        department: 'Creative & Video Production',
+        floor: 1,
+        status: 'active',
+        avatar_file: `${hoveredAgent.id}.png`,
+        skills: ['Video Composition', 'Narration Hook', 'Graphic Design', 'Motion Graphics'],
+        tools: ['FFmpeg Suite', 'Canvas Artboard', 'Script Hook Engine']
+      };
+      onSelectAgent(realAgent as Agent);
+      return;
+    }
+
     if (hoveredStairsDown && onNavigateFloor) {
       onNavigateFloor(0);
       return;
@@ -429,36 +493,24 @@ export const Floor1IsometricRoom: React.FC<Props> = ({
 
     if (hoveredStairsUp && onNavigateFloor) {
       onNavigateFloor(2);
-      return;
-    }
-
-    if (hoveredAgent) {
-      const realAgent = agents.find(a => a.id === hoveredAgent.id) || {
-        id: hoveredAgent.id,
-        name: hoveredAgent.name,
-        role: hoveredAgent.role,
-        department: 'Creative & Video Production',
-        floor: 1,
-        status: 'active',
-        skills: ['Video Composition', 'Narration Hook', 'Graphic Design', 'Motion Graphics'],
-        tools: ['FFmpeg Suite', 'Canvas Artboard', 'Script Hook Engine']
-      };
-      onSelectAgent(realAgent as Agent);
     }
   };
 
   return (
-    <div ref={containerRef} className="relative w-full h-full select-none overflow-hidden font-mono bg-[#E6E9F5]">
+    <div ref={containerRef} className="relative w-full h-full select-none overflow-hidden font-mono bg-[#080c14]">
       <canvas
         ref={canvasRef}
         width={dimensions.width}
         height={dimensions.height}
-        onMouseMove={handleMouseMove}
-        onClick={handleClick}
+        onMouseDown={handleMouseDown}
+        onMouseMove={(e) => { if (!handleDragMove(e)) handleMouseMove(e); }}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onClick={() => { if (!consumeJustDragged()) handleClick(); }}
         style={{
           imageRendering: 'pixelated',
           display: 'block',
-          cursor: (hoveredAgent || hoveredStairsDown || hoveredStairsUp) ? 'pointer' : 'default'
+          cursor: isDragging ? 'grabbing' : hoveredAgent ? 'grab' : (hoveredStairsDown || hoveredStairsUp) ? 'pointer' : 'default'
         }}
       />
     </div>

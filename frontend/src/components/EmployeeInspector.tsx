@@ -32,11 +32,18 @@ export const EmployeeInspector: React.FC<Props> = ({ agent, onClose, orbiState }
               <img
                 src={
                   isAuri
-                    ? `/assets/sprites/orbi/orbi_${orbiState || 'idle'}.gif`
-                    : `/assets/sprites/employees/${agent.avatar_file}`
+                    ? `/assets/sprites/auri/orbi_${orbiState || 'idle'}.gif`
+                    : agent.avatar_file?.startsWith('/')
+                    ? agent.avatar_file
+                    : agent.avatar_file?.startsWith('orbi_')
+                    ? `/assets/sprites/auri/${agent.avatar_file}`
+                    : `/assets/sprites/employees/${agent.avatar_file || `${agent.agent_id}.png`}`
                 }
                 alt={agent.name}
                 className="w-20 h-20 pixelated object-contain"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/assets/sprites/auri/orbi_idle_f0.png';
+                }}
               />
             </div>
             <div>

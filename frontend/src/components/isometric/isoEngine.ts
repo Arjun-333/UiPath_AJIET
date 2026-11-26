@@ -19,6 +19,15 @@ export function toScreen(gx: number, gy: number, gz: number, originX: number, or
   };
 }
 
+export function screenToGrid(cx: number, cy: number, originX: number, originY: number): { gx: number; gy: number } {
+  const dx = (cx - originX) / (TILE_W / 2);
+  const dy = (cy - originY) / (TILE_H / 2);
+  return {
+    gx: Math.max(0.8, Math.min(13.0, (dx + dy) / 2)),
+    gy: Math.max(0.8, Math.min(13.0, (dy - dx) / 2))
+  };
+}
+
 export interface BoxColors {
   top: string;
   left: string;
@@ -974,6 +983,7 @@ export interface IsoCharacterRenderData {
   isAuri?: boolean;
   statusText?: string;
   avatarImg?: HTMLImageElement | null;
+  skipBakedLabels?: boolean;
 }
 
 export function createCharacterRenderItem(
@@ -1024,37 +1034,39 @@ export function createCharacterRenderItem(
         ctx.fill();
       }
 
-      // Name Label & Activity Status Overlay
-      ctx.save();
-      ctx.font = 'bold 11px monospace';
-      ctx.textAlign = 'center';
+      // Name Label & Activity Status Overlay (Suppressed if rendered via Screen-Space HTML Layer)
+      if (!char.skipBakedLabels) {
+        ctx.save();
+        ctx.font = 'bold 11px monospace';
+        ctx.textAlign = 'center';
 
-      const tagY = pos.y - 74;
-      const text = char.name;
-      const metrics = ctx.measureText(text);
-      const bgW = metrics.width + 14;
+        const tagY = pos.y - 74;
+        const text = char.name;
+        const metrics = ctx.measureText(text);
+        const bgW = metrics.width + 14;
 
-      // Label background pill
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
-      ctx.fillRect(pos.x - bgW / 2, tagY - 12, bgW, 17);
-      ctx.strokeStyle = char.isAuri ? '#F97316' : '#64748B';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(pos.x - bgW / 2, tagY - 12, bgW, 17);
+        // Label background pill
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+        ctx.fillRect(pos.x - bgW / 2, tagY - 12, bgW, 17);
+        ctx.strokeStyle = char.isAuri ? '#F97316' : '#64748B';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(pos.x - bgW / 2, tagY - 12, bgW, 17);
 
-      // Label text
-      ctx.fillStyle = char.isAuri ? '#FB923C' : '#FFFFFF';
-      ctx.fillText(text, pos.x, tagY + 1);
+        // Label text
+        ctx.fillStyle = char.isAuri ? '#FB923C' : '#FFFFFF';
+        ctx.fillText(text, pos.x, tagY + 1);
 
-      // Status pill below name
-      if (char.statusText) {
-        ctx.font = '9px monospace';
-        const stW = ctx.measureText(char.statusText).width + 10;
-        ctx.fillStyle = 'rgba(30, 41, 59, 0.90)';
-        ctx.fillRect(pos.x - stW / 2, tagY + 8, stW, 14);
-        ctx.fillStyle = '#38BDF8';
-        ctx.fillText(char.statusText, pos.x, tagY + 19);
+        // Status pill below name
+        if (char.statusText) {
+          ctx.font = '9px monospace';
+          const stW = ctx.measureText(char.statusText).width + 10;
+          ctx.fillStyle = 'rgba(30, 41, 59, 0.90)';
+          ctx.fillRect(pos.x - stW / 2, tagY + 8, stW, 14);
+          ctx.fillStyle = '#38BDF8';
+          ctx.fillText(char.statusText, pos.x, tagY + 19);
+        }
+        ctx.restore();
       }
-      ctx.restore();
     }
   };
 }

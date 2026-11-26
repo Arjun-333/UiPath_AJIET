@@ -1,15 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy, Component, ReactNode } from 'react';
 import { Agent, Project, Approval, RosterSummary, AgentMessage, AgentTransitEvent } from './types';
 import { VirtualHeadquarters } from './components/VirtualHeadquarters';
-import { CeoCommandCenter } from './components/CeoCommandCenter';
-import { ApprovalsModal } from './components/ApprovalsModal';
 import { EmployeeInspector } from './components/EmployeeInspector';
-import { MediaVault } from './components/MediaVault';
-import { WorkforceCommsCenter } from './components/WorkforceCommsCenter';
-import { VideoQualityInspector } from './components/VideoQualityInspector';
-import { WorkforceManagementView } from './components/workforce/WorkforceManagementView';
 import { Header } from './components/Header';
-import { Building2, Terminal, Film, ShieldCheck, Activity, Users, Sparkles, MessageSquare, ShieldAlert } from 'lucide-react';
+import { CommandPalette } from './components/CommandPalette';
+
+class TabErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: Error) {
+    if (/dynamically imported module|Loading chunk|ChunkLoadError/i.test(error?.message || '')) {
+      window.location.reload();
+    }
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 text-xs font-mono text-slate-300">
+          <p>A new build was deployed or this view hit an error.</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-[#fa4616] text-white rounded-lg font-bold cursor-pointer"
+          >
+            Reload App
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const CeoCommandCenter = lazy(() => import('./components/CeoCommandCenter').then(m => ({ default: m.CeoCommandCenter })));
+const MediaVault = lazy(() => import('./components/MediaVault').then(m => ({ default: m.MediaVault })));
+const VideoQualityInspector = lazy(() => import('./components/VideoQualityInspector').then(m => ({ default: m.VideoQualityInspector })));
+const WorkforceManagementView = lazy(() => import('./components/workforce/WorkforceManagementView').then(m => ({ default: m.WorkforceManagementView })));
+const ApprovalsModal = lazy(() => import('./components/ApprovalsModal').then(m => ({ default: m.ApprovalsModal })));
+const WorkforceCommsCenter = lazy(() => import('./components/WorkforceCommsCenter').then(m => ({ default: m.WorkforceCommsCenter })));
 
 const getInitialTab = (): 'hq' | 'command' | 'vault' | 'qa' | 'workforce' => {
   if (typeof window !== 'undefined') {
@@ -40,7 +70,25 @@ export const App: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [messages, setMessages] = useState<AgentMessage[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('proj_02bbb199');
+  const [selectedProjectId, setSelectedProjectIdState] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('project') || 'proj_02bbb199';
+    }
+    return 'proj_02bbb199';
+  });
+
+  const setSelectedProjectId = (idOrUpdater: string | ((prev: string) => string)) => {
+    setSelectedProjectIdState((prev) => {
+      const next = typeof idOrUpdater === 'function' ? idOrUpdater(prev) : idOrUpdater;
+      if (typeof window !== 'undefined' && next) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('project', next);
+        window.history.replaceState(null, '', url.pathname + url.search + window.location.hash);
+      }
+      return next;
+    });
+  };
   const [summary, setSummary] = useState<RosterSummary>({
     total_agents: 14,
     active_agents: 0,
@@ -52,8 +100,28 @@ export const App: React.FC = () => {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [showApprovalsModal, setShowApprovalsModal] = useState<boolean>(false);
   const [showCommsModal, setShowCommsModal] = useState<boolean>(false);
+  const [showCommandPalette, setShowCommandPalette] = useState<boolean>(false);
   const [pendingTransit, setPendingTransit] = useState<AgentTransitEvent | null>(null);
-  const [wsConnected, setWsConnected] = useState<boolean>(false);
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'reconnecting' | 'disconnected'>('disconnected');
+
+  // Generic View Mode Setting (stored in localStorage)
+  const [viewMode, setViewMode] = useState<'isometric' | 'legacy'>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('view') === 'legacy') return 'legacy';
+      const saved = localStorage.getItem('autonomia_preferences_view_mode');
+      return saved === 'legacy' ? 'legacy' : 'isometric';
+    }
+    return 'isometric';
+  });
+
+  const handleViewModeChange = (mode: string) => {
+    const normalized: 'isometric' | 'legacy' = mode === 'legacy' ? 'legacy' : 'isometric';
+    setViewMode(normalized);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('autonomia_preferences_view_mode', normalized);
+    }
+  };
 
   // Load initial REST data
   const fetchData = async () => {
@@ -95,10 +163,13 @@ export const App: React.FC = () => {
       const wsUrl = `${protocol}//${window.location.host}/ws`;
       ws = new WebSocket(wsUrl);
 
-      ws.onopen = () => setWsConnected(true);
+      ws.onopen = () => setConnectionStatus('connected');
       ws.onclose = () => {
-        setWsConnected(false);
+        setConnectionStatus('reconnecting');
         setTimeout(connectWs, 3000);
+      };
+      ws.onerror = () => {
+        setConnectionStatus('disconnected');
       };
 
       ws.onmessage = (event) => {
@@ -118,7 +189,14 @@ export const App: React.FC = () => {
             setOrbiState('waiting');
             fetchData();
           } else if (msg.event === 'agent_message') {
-            setMessages(prev => [...prev, msg.data]);
+            setMessages(prev => {
+              const incoming = msg.data;
+              const key = incoming?.id || `${incoming?.created_at}-${incoming?.sender_id}-${incoming?.content}`;
+              if (prev.some(m => (m.id || `${m.created_at}-${m.sender_id}-${m.content}`) === key)) {
+                return prev;
+              }
+              return [...prev, incoming];
+            });
           } else if (msg.event === 'agent_transit') {
             setPendingTransit(msg.data);
           } else if (msg.event === 'employee_lifecycle_changed' || msg.event === 'workforce_alert') {
@@ -166,6 +244,26 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleResolveAllApprovals = async (action: 'approve' | 'reject', feedback: string) => {
+    const pending = approvals.filter(a => a.status === 'pending');
+    const errors: string[] = [];
+    for (const appr of pending) {
+      const res = await fetch(`/api/approvals/${appr.id}/resolve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, feedback })
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ detail: `Failed on ${appr.id}` }));
+        errors.push(errorData.detail || errorData.error || `Failed on ${appr.id}`);
+      }
+    }
+    await fetchData();
+    if (errors.length > 0) {
+      throw new Error(`${errors.length} of ${pending.length} approvals failed: ${errors[0]}`);
+    }
+  };
+
   const handleSendMessage = async (senderId: string, recipientId: string, content: string, messageType: string) => {
     const res = await fetch('/api/messages', {
       method: 'POST',
@@ -194,59 +292,110 @@ export const App: React.FC = () => {
     });
   };
 
+  // Global Keyboard Shortcuts (Cmd+K, 0-5 floor jumps)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      const isInput = activeEl && (
+        activeEl.tagName === 'INPUT' ||
+        activeEl.tagName === 'TEXTAREA' ||
+        (activeEl as HTMLElement).isContentEditable
+      );
+      if (isInput) return;
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setShowCommandPalette(prev => !prev);
+        return;
+      }
+
+      if (['0', '1', '2', '3', '4', '5'].includes(e.key)) {
+        e.preventDefault();
+        setActiveTab('hq');
+        setActiveFloor(parseInt(e.key, 10));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const pendingApprovalsCount = approvals.filter(a => a.status === 'pending').length;
 
   return (
-    <div className="flex flex-col h-screen bg-[#0b0f17] text-slate-100 overflow-hidden font-sans">
+    <div className="flex flex-col h-screen pixel-grid-bg text-slate-100 overflow-hidden font-sans">
       {/* Top Header Navigation */}
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        wsConnected={wsConnected}
+        connectionStatus={connectionStatus}
         messagesCount={messages.length}
         pendingApprovalsCount={pendingApprovalsCount}
+        isApprovalsOpen={showApprovalsModal}
         onOpenComms={() => setShowCommsModal(true)}
         onOpenApprovals={() => setShowApprovalsModal(true)}
+        onOpenSearch={() => setShowCommandPalette(true)}
+        viewMode={viewMode}
+        onChangeViewMode={handleViewModeChange}
+        user={{ name: 'Arjun R', role: 'UiPath Student Developer Champion (SDC)', organization: 'AJIET' }}
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-h-0 overflow-hidden px-6 pb-6">
-        {activeTab === 'hq' && (
-          <VirtualHeadquarters
-            agents={agents}
-            onSelectAgent={setSelectedAgent}
-            activeFloor={activeFloor}
-            setActiveFloor={setActiveFloor}
-            orbiState={orbiState}
-            onOpenComms={() => setShowCommsModal(true)}
-            recentMessages={messages}
-            pendingTransit={pendingTransit}
-          />
-        )}
+      <main className="flex-1 flex flex-col min-h-0 overflow-hidden px-2 md:px-6 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-6">
+        <TabErrorBoundary>
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center text-xs font-mono text-slate-400">Loading module...</div>}>
+          <div key={activeTab} className="flex-1 flex flex-col min-h-0 animate-pixel-enter">
+            {activeTab === 'hq' && (
+              <VirtualHeadquarters
+                agents={agents}
+                onSelectAgent={setSelectedAgent}
+                activeFloor={activeFloor}
+                setActiveFloor={setActiveFloor}
+                orbiState={orbiState}
+                onOpenComms={() => setShowCommsModal(true)}
+                recentMessages={messages}
+                pendingTransit={pendingTransit}
+                viewModePreference={viewMode}
+              />
+            )}
 
-        {activeTab === 'command' && (
-          <CeoCommandCenter
-            summary={summary}
-            projects={projects}
-            approvals={approvals}
-            onSendCommand={handleSendCommand}
-            onOpenApprovals={() => setShowApprovalsModal(true)}
-            orbiState={orbiState}
-          />
-        )}
+            {activeTab === 'command' && (
+              <CeoCommandCenter
+                summary={summary}
+                projects={projects}
+                approvals={approvals}
+                onSendCommand={handleSendCommand}
+                onOpenApprovals={() => setShowApprovalsModal(true)}
+                orbiState={orbiState}
+              />
+            )}
 
-        {activeTab === 'vault' && <MediaVault />}
+            {activeTab === 'vault' && <MediaVault projectId={selectedProjectId} />}
 
-        {activeTab === 'qa' && (
-          <VideoQualityInspector
-            projectId={selectedProjectId || (projects.length > 0 ? projects[0].id : 'proj_02bbb199')}
-            projects={projects}
-            onSelectProject={(id) => setSelectedProjectId(id)}
-          />
-        )}
+            {activeTab === 'qa' && (
+              <VideoQualityInspector
+                projectId={selectedProjectId || (projects.length > 0 ? projects[0].id : 'proj_02bbb199')}
+                projects={projects}
+                onSelectProject={(id) => setSelectedProjectId(id)}
+              />
+            )}
 
-        {activeTab === 'workforce' && <WorkforceManagementView />}
+            {activeTab === 'workforce' && <WorkforceManagementView />}
+          </div>
+        </Suspense>
+        </TabErrorBoundary>
       </main>
+
+      {/* Command Palette Modal */}
+      <CommandPalette
+        isOpen={showCommandPalette}
+        onClose={() => setShowCommandPalette(false)}
+        activeTab={activeTab}
+        onNavigateTab={(tab) => setActiveTab(tab)}
+        onSelectFloor={(floor) => setActiveFloor(floor)}
+        onSelectAgent={(agent) => setSelectedAgent(agent)}
+        agents={agents}
+      />
 
       {/* Modals */}
       {selectedAgent && (
@@ -257,24 +406,27 @@ export const App: React.FC = () => {
         />
       )}
 
-      {showApprovalsModal && (
-        <ApprovalsModal
-          approvals={approvals}
-          onResolve={handleResolveApproval}
-          onClose={() => setShowApprovalsModal(false)}
-        />
-      )}
+      <Suspense fallback={null}>
+        {showApprovalsModal && (
+          <ApprovalsModal
+            approvals={approvals}
+            onResolve={handleResolveApproval}
+            onResolveAll={handleResolveAllApprovals}
+            onClose={() => setShowApprovalsModal(false)}
+          />
+        )}
 
-      {showCommsModal && (
-        <WorkforceCommsCenter
-          agents={agents}
-          messages={messages}
-          onSendMessage={handleSendMessage}
-          onTriggerTransit={handleTriggerTransit}
-          isOpen={showCommsModal}
-          onClose={() => setShowCommsModal(false)}
-        />
-      )}
+        {showCommsModal && (
+          <WorkforceCommsCenter
+            agents={agents}
+            messages={messages}
+            onSendMessage={handleSendMessage}
+            onTriggerTransit={handleTriggerTransit}
+            isOpen={showCommsModal}
+            onClose={() => setShowCommsModal(false)}
+          />
+        )}
+      </Suspense>
     </div>
   );
 };
