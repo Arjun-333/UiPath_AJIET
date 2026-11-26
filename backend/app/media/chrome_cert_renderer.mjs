@@ -23,7 +23,10 @@ function buildDefaultCertHtml(item, meta, logos) {
   const name = escapeHtml(item.name);
   const dept = escapeHtml(item.department || '');
   const eventTitle = escapeHtml(meta.eventTitle || 'UiPath Community AJIET Automation Workshop');
-  const subtitle = escapeHtml(meta.subtitle || 'Certificate of Participation');
+  const rawSubtitle = String(meta.subtitle || 'Certificate of Participation').trim();
+  const words = rawSubtitle.split(/\s+/);
+  const lastWord = words.length > 1 ? escapeHtml(words.pop()) : '';
+  const leadWords = escapeHtml(words.join(' '));
   const issueDate = escapeHtml(meta.issueDate || '');
   const issuerName = escapeHtml(meta.issuerName || 'Arjun R');
   const issuerRole = escapeHtml(meta.issuerRole || 'UiPath Student Developer Champion (SDC)');
@@ -38,241 +41,227 @@ function buildDefaultCertHtml(item, meta, logos) {
   body {
     width: 1123px;
     height: 794px;
-    background: #fcfbf7;
-    color: #0f172a;
-    font-family: 'Ubuntu', Georgia, serif;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 32px;
-  }
-  .frame-outer {
-    width: 100%;
-    height: 100%;
-    border: 6px solid #0f172a;
-    padding: 12px;
+    background-color: #ffffff;
+    background-image:
+      linear-gradient(to right, #e6f0f5 1px, transparent 1px),
+      linear-gradient(to bottom, #e6f0f5 1px, transparent 1px);
+    background-size: 46px 46px;
+    color: #0b0f19;
+    font-family: 'Ubuntu', 'Inter', system-ui, -apple-system, sans-serif;
     position: relative;
-    background: radial-gradient(circle at 50% 35%, #ffffff 0%, #f8fafc 75%, #f1f5f9 100%);
-  }
-  .frame-inner {
-    width: 100%;
-    height: 100%;
-    border: 2px solid #ea580c;
-    padding: 30px 54px 36px;
+    overflow: hidden;
+    padding: 44px 58px 40px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    text-align: center;
-    position: relative;
   }
-  .corner {
+  /* Geometric L-shaped pixel block accents inspired by UiPath Community poster */
+  .px-block {
     position: absolute;
-    width: 28px;
-    height: 28px;
-    border-color: #ea580c;
-    border-style: solid;
+    pointer-events: none;
+    z-index: 0;
   }
-  .tl { top: 10px; left: 10px; border-width: 4px 0 0 4px; }
-  .tr { top: 10px; right: 10px; border-width: 4px 4px 0 0; }
-  .bl { bottom: 10px; left: 10px; border-width: 0 0 4px 4px; }
-  .br { bottom: 10px; right: 10px; border-width: 0 4px 4px 0; }
-  .logo-bar {
+  /* Top-right light sky L-block */
+  .px-tr-1 { top: 138px; right: 46px; width: 46px; height: 92px; background: #cbe8f3; }
+  .px-tr-2 { top: 184px; right: 92px; width: 46px; height: 46px; background: #cbe8f3; }
+  /* Mid-right teal L-block */
+  .px-mr-1 { top: 368px; right: 46px; width: 92px; height: 46px; background: #0098aa; }
+  .px-mr-2 { top: 414px; right: 46px; width: 46px; height: 46px; background: #0098aa; }
+  .px-mr-3 { top: 322px; right: 92px; width: 46px; height: 46px; background: #9bd6e8; }
+  .px-mr-4 { top: 414px; right: 92px; width: 46px; height: 46px; background: #d6eef6; }
+  /* Bottom-left deep navy-teal L-block (sits cleanly above footer) */
+  .px-bl-1 { bottom: 184px; left: 46px; width: 92px; height: 46px; background: #145e80; }
+  .px-bl-2 { bottom: 138px; left: 46px; width: 46px; height: 46px; background: #145e80; }
+
+  .content-layer {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
     display: flex;
-    align-items: center;
+    flex-direction: column;
     justify-content: space-between;
-    padding: 4px 8px 16px;
-    border-bottom: 1.5px solid #e2e8f0;
   }
-  .college-brand {
+  .top-bar {
     display: flex;
-    align-items: center;
-    gap: 14px;
-    text-align: left;
+    align-items: flex-start;
+    justify-content: space-between;
   }
-  .logo-ajiet {
-    height: 64px;
-    width: 64px;
+  .logo-uipath-community {
+    height: 28px;
+    width: auto;
     object-fit: contain;
-    flex-shrink: 0;
   }
-  .college-text {
-    font-family: 'Ubuntu', sans-serif;
-    line-height: 1.3;
-  }
-  .college-name {
-    font-size: 16px;
-    font-weight: 700;
-    color: #0f172a;
-    letter-spacing: 0.4px;
-  }
-  .college-sub {
-    font-size: 12px;
-    color: #334155;
-  }
-  .partner-logos {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  .logo-community {
-    width: 62px;
-    height: 62px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #ea580c;
-  }
-  .v-sep {
-    width: 1px;
-    height: 40px;
-    background: #cbd5e1;
-  }
-  .logo-uipath {
-    height: 34px;
+  .logo-student-dev {
+    height: 52px;
+    width: auto;
     object-fit: contain;
+  }
+  .center-stage {
+    text-align: center;
+    padding: 0 56px;
+    margin-top: -10px;
   }
   .heading {
-    font-size: 42px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    color: #0f172a;
-    margin-top: 18px;
+    font-size: 46px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    line-height: 1.08;
     text-transform: uppercase;
+    color: #0b0f19;
   }
-  .divider {
-    width: 160px;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, #ea580c, transparent);
-    margin: 12px auto 0;
+  .heading-accent {
+    color: #fa4616;
   }
-  .present-text {
-    font-family: 'Ubuntu', sans-serif;
-    font-size: 16px;
-    color: #475569;
-    letter-spacing: 1px;
+  .accent-pill {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 6px 20px;
+    background: #0b0f19;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
     text-transform: uppercase;
-    margin-top: 16px;
   }
   .recipient {
-    font-size: 50px;
-    font-weight: 700;
-    color: #0f172a;
-    margin: 10px auto 6px;
-    padding: 0 30px 8px;
-    border-bottom: 2px solid #cbd5e1;
+    font-size: 52px;
+    font-weight: 800;
+    color: #0b0f19;
+    margin: 22px auto 6px;
+    padding: 0 36px 8px;
+    border-bottom: 3px solid #fa4616;
     display: inline-block;
-    min-width: 480px;
+    min-width: 500px;
   }
   .dept {
-    font-family: 'Ubuntu', sans-serif;
     font-size: 15px;
-    color: #64748b;
-    margin-top: 4px;
+    font-weight: 500;
+    color: #334155;
+    margin-top: 6px;
   }
   .body-copy {
-    font-family: 'Ubuntu', sans-serif;
-    font-size: 18px;
+    font-size: 19px;
     line-height: 1.55;
-    color: #334155;
-    max-width: 780px;
-    margin: 14px auto 0;
+    color: #1e293b;
+    max-width: 760px;
+    margin: 18px auto 0;
   }
   .event-name {
     font-weight: 700;
-    color: #0f172a;
+    color: #0b0f19;
   }
   .footer-row {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    margin-top: 18px;
-    padding-top: 10px;
+    padding-top: 14px;
+    border-top: 1.5px solid #cbd5e1;
   }
-  .sig-block {
-    width: 270px;
-    text-align: center;
-    font-family: 'Ubuntu', sans-serif;
+  .meta-block {
+    width: 240px;
+    font-size: 14px;
+    color: #1e293b;
+    text-align: left;
+    padding-bottom: 6px;
   }
-  .sig-line {
-    border-top: 1.5px solid #334155;
-    padding-top: 8px;
+  .meta-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #64748b;
+    margin-bottom: 2px;
+  }
+  .meta-value {
     font-size: 15px;
     font-weight: 700;
-    color: #0f172a;
+    color: #0b0f19;
+  }
+  .sig-block {
+    width: 280px;
+    text-align: center;
+    padding-bottom: 4px;
+  }
+  .sig-line {
+    border-top: 2px solid #0b0f19;
+    padding-top: 7px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #0b0f19;
   }
   .sig-sub {
     font-size: 12px;
-    color: #64748b;
+    font-weight: 500;
+    color: #475569;
     margin-top: 2px;
   }
-  .meta-block {
-    width: 270px;
-    font-family: 'Ubuntu', sans-serif;
-    font-size: 14px;
-    color: #475569;
-    text-align: left;
-  }
-  .seal {
-    width: 78px;
-    height: 78px;
-    border-radius: 50%;
-    border: 3px double #ea580c;
+  .campus-badges {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-family: 'Ubuntu', sans-serif;
-    font-size: 10px;
-    font-weight: 700;
-    color: #ea580c;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    background: #fff7ed;
+    gap: 14px;
+  }
+  .logo-ajiet {
+    height: 62px;
+    width: 62px;
+    object-fit: contain;
+    mix-blend-mode: multiply;
+  }
+  .logo-community-white {
+    height: 62px;
+    width: 62px;
+    object-fit: contain;
+    border-radius: 50%;
   }
 </style>
 </head>
 <body>
-  <div class="frame-outer">
-    <div class="frame-inner">
-      <div class="corner tl"></div>
-      <div class="corner tr"></div>
-      <div class="corner bl"></div>
-      <div class="corner br"></div>
+  <div class="px-block px-tr-1"></div>
+  <div class="px-block px-tr-2"></div>
+  <div class="px-block px-mr-1"></div>
+  <div class="px-block px-mr-2"></div>
+  <div class="px-block px-mr-3"></div>
+  <div class="px-block px-mr-4"></div>
+  <div class="px-block px-bl-1"></div>
+  <div class="px-block px-bl-2"></div>
+
+  <div class="content-layer">
+    <div class="top-bar">
       <div>
-        <div class="logo-bar">
-          <div class="college-brand">
-            ${logos.ajiet ? `<img class="logo-ajiet" src="${logos.ajiet}" alt="AJIET" />` : ''}
-            <div class="college-text">
-              <div class="college-name">A J INSTITUTE OF ENGINEERING &amp; TECHNOLOGY</div>
-              <div class="college-sub">(A Unit of Laxmi Memorial Education Trust &reg;)</div>
-              <div class="college-sub">Kottara Chowki, Mangaluru</div>
-            </div>
-          </div>
-          <div class="partner-logos">
-            ${logos.community ? `<img class="logo-community" src="${logos.community}" alt="UiPath Community AJIET" />` : ''}
-            <div class="v-sep"></div>
-            ${logos.uipath ? `<img class="logo-uipath" src="${logos.uipath}" alt="UiPath" />` : ''}
-          </div>
-        </div>
-        <div class="heading">${subtitle}</div>
-        <div class="divider"></div>
+        ${logos.uipathCommunity ? `<img class="logo-uipath-community" src="${logos.uipathCommunity}" alt="UiPath Community" />` : ''}
       </div>
       <div>
-        <div class="present-text">This certificate is proudly presented to</div>
+        ${logos.studentDev ? `<img class="logo-student-dev" src="${logos.studentDev}" alt="UiPath Student Developer" />` : ''}
+      </div>
+    </div>
+
+    <div class="center-stage">
+      <div class="heading">
+        ${leadWords} ${lastWord ? `<span class="heading-accent">${lastWord}</span>` : ''}
+      </div>
+      <div class="accent-pill">Proudly Presented To</div>
+      <div>
         <div class="recipient">${name}</div>
-        ${dept ? `<div class="dept">${dept}</div>` : ''}
-        <div class="body-copy">
-          for active participation and successful completion of
-          <span class="event-name">${eventTitle}</span>,
-          organized by UiPath Community AJIET.
-        </div>
       </div>
-      <div class="footer-row">
-        <div class="meta-block">
-          <div>Date: <strong>${issueDate}</strong></div>
-        </div>
-        <div class="sig-block">
-          <div class="sig-line">${issuerName}</div>
-          <div class="sig-sub">${issuerRole}</div>
-        </div>
+      ${dept ? `<div class="dept">${dept}</div>` : ''}
+      <div class="body-copy">
+        for active participation and successful completion of
+        <span class="event-name">${eventTitle}</span>,
+        organized by UiPath Community AJIET.
+      </div>
+    </div>
+
+    <div class="footer-row">
+      <div class="meta-block">
+        <div class="meta-label">Date Issued</div>
+        <div class="meta-value">${issueDate}</div>
+      </div>
+      <div class="sig-block">
+        <div class="sig-line">${issuerName}</div>
+        <div class="sig-sub">${issuerRole}</div>
+      </div>
+      <div class="campus-badges">
+        ${logos.ajiet ? `<img class="logo-ajiet" src="${logos.ajiet}" alt="AJIET" />` : ''}
+        ${logos.communityWhite ? `<img class="logo-community-white" src="${logos.communityWhite}" alt="UiPath Community AJIET" />` : ''}
       </div>
     </div>
   </div>
@@ -352,8 +341,9 @@ async function main() {
   const brandingDir = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../../frontend/public/assets/branding');
   const logos = {
     ajiet: loadDataUrl(path.join(brandingDir, 'ajiet_logo.png')),
-    community: loadDataUrl(path.join(brandingDir, 'uipath_community_ajiet_logo.jpg')),
-    uipath: loadDataUrl(path.join(brandingDir, 'uipath_logo.png'))
+    communityWhite: loadDataUrl(path.join(brandingDir, 'uipath_community_ajiet_white.png')),
+    uipathCommunity: loadDataUrl(path.join(brandingDir, 'uipath_community_lockup.png')),
+    studentDev: loadDataUrl(path.join(brandingDir, 'uipath_student_developer.png'))
   };
 
   let templateDataUrl = loadDataUrl(templatePath);
