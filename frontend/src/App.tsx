@@ -1,9 +1,38 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy, Component, ReactNode } from 'react';
 import { Agent, Project, Approval, RosterSummary, AgentMessage, AgentTransitEvent } from './types';
 import { VirtualHeadquarters } from './components/VirtualHeadquarters';
 import { EmployeeInspector } from './components/EmployeeInspector';
 import { Header } from './components/Header';
 import { CommandPalette } from './components/CommandPalette';
+
+class TabErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: Error) {
+    if (/dynamically imported module|Loading chunk|ChunkLoadError/i.test(error?.message || '')) {
+      window.location.reload();
+    }
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 text-xs font-mono text-slate-300">
+          <p>A new build was deployed or this view hit an error.</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-[#fa4616] text-white rounded-lg font-bold cursor-pointer"
+          >
+            Reload App
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const CeoCommandCenter = lazy(() => import('./components/CeoCommandCenter').then(m => ({ default: m.CeoCommandCenter })));
 const MediaVault = lazy(() => import('./components/MediaVault').then(m => ({ default: m.MediaVault })));
@@ -304,6 +333,7 @@ export const App: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-h-0 overflow-hidden px-2 md:px-6 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-6">
+        <TabErrorBoundary>
         <Suspense fallback={<div className="flex-1 flex items-center justify-center text-xs font-mono text-slate-400">Loading module...</div>}>
           <div key={activeTab} className="flex-1 flex flex-col min-h-0 animate-pixel-enter">
             {activeTab === 'hq' && (
@@ -344,6 +374,7 @@ export const App: React.FC = () => {
             {activeTab === 'workforce' && <WorkforceManagementView />}
           </div>
         </Suspense>
+        </TabErrorBoundary>
       </main>
 
       {/* Command Palette Modal */}
