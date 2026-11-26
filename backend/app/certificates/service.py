@@ -111,7 +111,7 @@ def generate_certificates_batch(
     pdfs_dir = batch_dir / "pdfs"
     pdfs_dir.mkdir(parents=True, exist_ok=True)
 
-    date_str = issue_date or datetime.now().strftime("%B %d, %Y")
+    date_str = issue_date or "November 28, 2026"
     template_path: Optional[Path] = None
     if template_id:
         candidate = TEMPLATES_DIR / template_id

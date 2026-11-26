@@ -27,7 +27,7 @@ function buildDefaultCertHtml(item, meta, logos) {
   const words = rawSubtitle.split(/\s+/);
   const lastWord = words.length > 1 ? escapeHtml(words.pop()) : '';
   const leadWords = escapeHtml(words.join(' '));
-  const issueDate = escapeHtml(meta.issueDate || '');
+  const issueDate = escapeHtml(meta.issueDate || 'November 28, 2026');
   const issuerName = escapeHtml(meta.issuerName || 'Arjun R');
   const issuerRole = escapeHtml(meta.issuerRole || 'UiPath Student Developer Champion (SDC) AJIET');
 
@@ -279,7 +279,7 @@ function buildDefaultCertHtml(item, meta, logos) {
 function buildCustomImageCertHtml(item, meta, templateDataUrl) {
   const name = escapeHtml(item.name);
   const certId = escapeHtml(item.certId);
-  const issueDate = escapeHtml(meta.issueDate || '');
+  const issueDate = escapeHtml(meta.issueDate || 'November 28, 2026');
   const nameY = Number(meta.nameY ?? 48);
   const nameSize = Number(meta.nameSize ?? 46);
   const textColor = escapeHtml(meta.textColor || '#0f172a');

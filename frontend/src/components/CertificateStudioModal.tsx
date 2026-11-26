@@ -29,9 +29,7 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
 
   const [eventTitle, setEventTitle] = useState('Automate Campus Quest: UiPath RPA Workshop');
   const [subtitle, setSubtitle] = useState('Certificate of Participation');
-  const [issueDate, setIssueDate] = useState(() =>
-    new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-  );
+  const [issueDate, setIssueDate] = useState('November 28, 2026');
 
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [templateFilename, setTemplateFilename] = useState<string | null>(null);
