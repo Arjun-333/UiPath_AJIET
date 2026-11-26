@@ -88,12 +88,12 @@ function buildDefaultCertHtml(item, meta, logos) {
     justify-content: space-between;
   }
   .logo-uipath-community {
-    height: 28px;
+    height: 40px;
     width: auto;
     object-fit: contain;
   }
   .logo-student-dev {
-    height: 52px;
+    height: 76px;
     width: auto;
     object-fit: contain;
   }
