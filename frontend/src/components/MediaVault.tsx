@@ -10,15 +10,25 @@ interface VaultProject {
   created_at?: string;
 }
 
-export const MediaVault: React.FC = () => {
+interface MediaVaultProps {
+  projectId?: string;
+}
+
+export const MediaVault: React.FC<MediaVaultProps> = ({ projectId }) => {
   const [showCertStudio, setShowCertStudio] = useState(false);
   const [projects, setProjects] = useState<VaultProject[]>([
     { id: 'test_proj_01', title: 'Mastering UiPath Document Understanding in 5 Minutes', status: 'completed' }
   ]);
-  const [selectedId, setSelectedId] = useState<string>('test_proj_01');
+  const [selectedId, setSelectedId] = useState<string>(projectId || 'test_proj_01');
   const [chaptersText, setChaptersText] = useState<string>('');
   const [copiedChapters, setCopiedChapters] = useState(false);
   const [thumbAvailable, setThumbAvailable] = useState(true);
+
+  useEffect(() => {
+    if (projectId) {
+      setSelectedId(projectId);
+    }
+  }, [projectId]);
 
   useEffect(() => {
     fetch('/api/projects')
@@ -35,7 +45,7 @@ export const MediaVault: React.FC = () => {
             list.push({ id: 'test_proj_01', title: 'Mastering UiPath Document Understanding in 5 Minutes', status: 'completed' });
           }
           setProjects(list);
-          setSelectedId(list[0].id);
+          setSelectedId(prev => (projectId && list.some(p => p.id === projectId) ? projectId : prev || list[0].id));
         }
       })
       .catch(() => {});
@@ -63,7 +73,7 @@ export const MediaVault: React.FC = () => {
     <div className="space-y-6 overflow-y-auto h-full pr-2">
       <div className="flex flex-wrap items-center justify-between gap-4 p-6 bg-slate-900 border border-slate-800 rounded-2xl">
         <div className="flex items-center space-x-3">
-          <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-xl text-cyan-400">
+          <div className="p-3 bg-[#fa4616]/15 border border-[#fa4616]/40 rounded-xl text-[#fa4616]">
             <Film className="w-6 h-6" />
           </div>
           <div>

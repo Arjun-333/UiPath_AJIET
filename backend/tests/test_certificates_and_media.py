@@ -195,6 +195,22 @@ def test_subtitle_generator_ass_karaoke_output(tmp_path):
     assert r"\kf" in content
 
 
+def test_subtitle_generator_srt_wraps_safe_margins(tmp_path):
+    srt_path = tmp_path / "subtitles.srt"
+    long_narration = (
+        "Welcome developers to UiPath Community AJIET! In enterprise software engineering, "
+        "manual data entry and repetitive document parsing drain hundreds of productive hours every week."
+    )
+    out = SubtitleGenerator.generate_srt([{"duration": 12.0, "narration": long_narration}], srt_path)
+    content = out.read_text(encoding="utf-8")
+    text_lines = [
+        line for line in content.splitlines()
+        if line.strip() and not line.strip().isdigit() and "-->" not in line
+    ]
+    assert len(text_lines) >= 3
+    assert all(len(line) <= 48 for line in text_lines)
+
+
 def test_generate_ambient_bed_creates_valid_wav(tmp_path):
     wav_path = tmp_path / "ambient.wav"
     out = generate_ambient_bed(3.0, wav_path, sample_rate=24000)

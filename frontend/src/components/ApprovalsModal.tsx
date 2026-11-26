@@ -15,9 +15,24 @@ export const ApprovalsModal: React.FC<Props> = ({ approvals, onResolve, onResolv
   const [confirmBulkAction, setConfirmBulkAction] = useState<'approve' | 'reject' | null>(null);
   const [bulkFeedback, setBulkFeedback] = useState<string>('');
   const [isBulkSubmitting, setIsBulkSubmitting] = useState<boolean>(false);
+  const [filterCategory, setFilterCategory] = useState<'all' | 'publish' | 'workforce' | 'advisor'>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const pendingList = approvals.filter(a => a.status === 'pending');
+  const filteredList = pendingList.filter((a) => {
+    const matchesCat =
+      filterCategory === 'all'
+        ? true
+        : filterCategory === 'publish'
+        ? a.action_type === 'publish_content'
+        : filterCategory === 'workforce'
+        ? a.action_type.startsWith('workforce_')
+        : a.action_type.startsWith('advisor_');
+    const q = searchQuery.trim().toLowerCase();
+    const matchesSearch = !q || a.description.toLowerCase().includes(q) || a.action_type.toLowerCase().includes(q) || a.id.toLowerCase().includes(q);
+    return matchesCat && matchesSearch;
+  });
 
   const handleAction = async (approvalId: string, action: 'approve' | 'reject') => {
     setSubmittingId(approvalId);
@@ -32,14 +47,15 @@ export const ApprovalsModal: React.FC<Props> = ({ approvals, onResolve, onResolv
   };
 
   const handleBulkAction = async (action: 'approve' | 'reject') => {
-    if (pendingList.length === 0) return;
+    if (filteredList.length === 0) return;
     setIsBulkSubmitting(true);
     setErrorMessage(null);
     try {
-      if (onResolveAll) {
+      const isUnfiltered = filteredList.length === pendingList.length;
+      if (isUnfiltered && onResolveAll) {
         await onResolveAll(action, bulkFeedback);
       } else {
-        for (const appr of pendingList) {
+        for (const appr of filteredList) {
           await onResolve(appr.id, action, bulkFeedback || feedbackMap[appr.id] || '');
         }
       }
@@ -95,12 +111,42 @@ export const ApprovalsModal: React.FC<Props> = ({ approvals, onResolve, onResolv
           </button>
         </div>
 
-        {/* Bulk Actions Bar when multiple approvals are pending */}
-        {pendingList.length > 1 && (
+        {/* Filter & Bulk Actions Bar */}
+        {pendingList.length > 0 && (
           <div className="px-6 py-3 bg-slate-900/95 border-b border-slate-800 flex flex-col gap-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-1.5">
+                {(['all', 'publish', 'workforce', 'advisor'] as const).map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => {
+                      setFilterCategory(cat);
+                      setConfirmBulkAction(null);
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold uppercase transition-colors cursor-pointer ${
+                      filterCategory === cat
+                        ? 'bg-[#fa4616] text-white'
+                        : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Filter by title or ID..."
+                className="px-3 py-1 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#fa4616] w-full sm:w-56"
+              />
+            </div>
+
+            {filteredList.length > 1 && (
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span className="text-xs font-mono text-slate-300">
-                <strong className="text-amber-400">{pendingList.length}</strong> pending requests awaiting CEO signature
+                <strong className="text-[#fa4616]">{filteredList.length}</strong>{filteredList.length !== pendingList.length ? ` of ${pendingList.length}` : ''} pending requests
               </span>
               {confirmBulkAction === null ? (
                 <div className="flex items-center space-x-2.5">
@@ -110,7 +156,7 @@ export const ApprovalsModal: React.FC<Props> = ({ approvals, onResolve, onResolv
                     className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-red-950/50 hover:text-red-300 text-slate-300 rounded-lg text-xs font-bold transition-all border border-slate-700 disabled:opacity-50"
                   >
                     <XCircle className="w-3.5 h-3.5" />
-                    <span>Reject All ({pendingList.length})</span>
+                    <span>Reject {filteredList.length !== pendingList.length ? 'Filtered' : 'All'} ({filteredList.length})</span>
                   </button>
                   <button
                     onClick={() => setConfirmBulkAction('approve')}
@@ -118,7 +164,7 @@ export const ApprovalsModal: React.FC<Props> = ({ approvals, onResolve, onResolv
                     className="flex items-center space-x-1.5 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-emerald-600/20 disabled:opacity-50"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Approve All ({pendingList.length})</span>
+                    <span>Approve {filteredList.length !== pendingList.length ? 'Filtered' : 'All'} ({filteredList.length})</span>
                   </button>
                 </div>
               ) : (
@@ -149,13 +195,14 @@ export const ApprovalsModal: React.FC<Props> = ({ approvals, onResolve, onResolv
                     )}
                     <span>
                       {isBulkSubmitting
-                        ? `Processing ${pendingList.length} items...`
-                        : `Confirm ${confirmBulkAction === 'approve' ? 'Approve' : 'Reject'} All (${pendingList.length})`}
+                        ? `Processing ${filteredList.length} items...`
+                        : `Confirm ${confirmBulkAction === 'approve' ? 'Approve' : 'Reject'} (${filteredList.length})`}
                     </span>
                   </button>
                 </div>
               )}
             </div>
+            )}
 
             {confirmBulkAction !== null && (
               <input
@@ -163,7 +210,7 @@ export const ApprovalsModal: React.FC<Props> = ({ approvals, onResolve, onResolv
                 value={bulkFeedback}
                 onChange={(e) => setBulkFeedback(e.target.value)}
                 disabled={isBulkSubmitting}
-                placeholder={`Optional CEO note applied to all ${pendingList.length} ${confirmBulkAction === 'approve' ? 'approved' : 'rejected'} requests...`}
+                placeholder={`Optional CEO note applied to ${filteredList.length} ${confirmBulkAction === 'approve' ? 'approved' : 'rejected'} requests...`}
                 className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-orange-500"
               />
             )}
@@ -179,14 +226,14 @@ export const ApprovalsModal: React.FC<Props> = ({ approvals, onResolve, onResolv
 
         {/* Modal Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {pendingList.length === 0 ? (
+          {filteredList.length === 0 ? (
             <div className="p-12 text-center text-slate-400 space-y-2">
               <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
-              <p className="text-base font-bold text-slate-200">No Pending Approvals</p>
-              <p className="text-xs text-slate-500">All agent actions are currently cleared and executing normally.</p>
+              <p className="text-base font-bold text-slate-200">{pendingList.length === 0 ? 'No Pending Approvals' : 'No Matching Approvals'}</p>
+              <p className="text-xs text-slate-500">{pendingList.length === 0 ? 'All agent actions are currently cleared and executing normally.' : 'Try clearing the category filter or search query.'}</p>
             </div>
           ) : (
-            pendingList.map((appr) => (
+            filteredList.map((appr) => (
               <div key={appr.id} className="p-5 bg-slate-950 border border-slate-800 rounded-xl space-y-4">
                 <div className="flex items-start justify-between">
                   <div>

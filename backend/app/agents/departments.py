@@ -31,7 +31,7 @@ class CEOInterfaceAgent(BaseAgent):
             floor=0,
             permission_level=3,
             manager_id="Arjun (CEO)",
-            avatar_file="orbi_idle.gif"
+            avatar_file="/assets/sprites/auri/orbi_idle.gif"
         )
         self.llm = LLMFactory.get_provider()
 

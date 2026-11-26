@@ -1842,7 +1842,13 @@ export const VirtualHeadquarters: React.FC<Props> = ({
                   >
                     <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-800 border border-slate-700">
                       <img
-                        src={agent.avatar_file?.startsWith('/') ? agent.avatar_file : `/assets/sprites/employees/${agent.avatar_file || `${agent.agent_id}.png`}`}
+                        src={
+                          agent.avatar_file?.startsWith('/')
+                            ? agent.avatar_file
+                            : agent.avatar_file?.startsWith('orbi_')
+                            ? `/assets/sprites/auri/${agent.avatar_file}`
+                            : `/assets/sprites/employees/${agent.avatar_file || `${agent.agent_id}.png`}`
+                        }
                         alt={agent.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {

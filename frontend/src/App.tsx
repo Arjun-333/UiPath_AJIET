@@ -41,7 +41,25 @@ export const App: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [messages, setMessages] = useState<AgentMessage[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('proj_02bbb199');
+  const [selectedProjectId, setSelectedProjectIdState] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('project') || 'proj_02bbb199';
+    }
+    return 'proj_02bbb199';
+  });
+
+  const setSelectedProjectId = (idOrUpdater: string | ((prev: string) => string)) => {
+    setSelectedProjectIdState((prev) => {
+      const next = typeof idOrUpdater === 'function' ? idOrUpdater(prev) : idOrUpdater;
+      if (typeof window !== 'undefined' && next) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('project', next);
+        window.history.replaceState(null, '', url.pathname + url.search + window.location.hash);
+      }
+      return next;
+    });
+  };
   const [summary, setSummary] = useState<RosterSummary>({
     total_agents: 14,
     active_agents: 0,
@@ -313,7 +331,7 @@ export const App: React.FC = () => {
               />
             )}
 
-            {activeTab === 'vault' && <MediaVault />}
+            {activeTab === 'vault' && <MediaVault projectId={selectedProjectId} />}
 
             {activeTab === 'qa' && (
               <VideoQualityInspector

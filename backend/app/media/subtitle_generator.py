@@ -4,6 +4,7 @@ Generates compliant SRT and styled ASS (SubStation Alpha) subtitle files
 aligned with storyboard scene timestamps, including dynamic active-word highlights.
 """
 
+import textwrap
 from pathlib import Path
 from typing import List, Dict, Any
 
@@ -27,21 +28,52 @@ class SubtitleGenerator:
             centis = 99
         return f"{hours:d}:{minutes:02d}:{secs:02d}.{centis:02d}"
 
+    @staticmethod
+    def _wrap_cue_chunks(text: str, max_line_chars: int = 46, max_lines_per_cue: int = 2) -> List[str]:
+        """Wraps narration into balanced 2-line subtitle cues under safe margin width."""
+        cleaned = " ".join((text or "").split())
+        if not cleaned:
+            return []
+        wrapped_lines = textwrap.wrap(cleaned, width=max_line_chars, break_long_words=True, break_on_hyphens=True)
+        return [
+            "\n".join(wrapped_lines[i:i + max_lines_per_cue])
+            for i in range(0, len(wrapped_lines), max_lines_per_cue)
+        ]
+
     @classmethod
     def generate_srt(cls, scenes: List[Dict[str, Any]], output_path: str | Path) -> Path:
         out_p = Path(output_path)
         out_p.parent.mkdir(parents=True, exist_ok=True)
 
         current_time = 0.0
+        cue_index = 1
         lines = []
 
-        for idx, scene in enumerate(scenes, start=1):
+        for scene in scenes:
             duration = float(scene.get("duration", 5.0))
-            start_str = cls.format_timestamp_srt(current_time)
-            end_str = cls.format_timestamp_srt(current_time + duration)
             text = scene.get("narration", scene.get("title", ""))
+            cues = cls._wrap_cue_chunks(text)
 
-            lines.append(f"{idx}\n{start_str} --> {end_str}\n{text}\n\n")
+            if not cues:
+                current_time += duration
+                continue
+
+            # Distribute scene duration proportionally by cue length so cues stay aligned and non-overlapping
+            total_chars = max(1, sum(len(c) for c in cues))
+            cue_start = current_time
+            for c_idx, cue_text in enumerate(cues):
+                if c_idx == len(cues) - 1:
+                    cue_end = current_time + duration
+                else:
+                    cue_dur = duration * (len(cue_text) / total_chars)
+                    cue_end = min(current_time + duration, cue_start + max(0.4, cue_dur))
+
+                start_str = cls.format_timestamp_srt(cue_start)
+                end_str = cls.format_timestamp_srt(cue_end)
+                lines.append(f"{cue_index}\n{start_str} --> {end_str}\n{cue_text}\n\n")
+                cue_index += 1
+                cue_start = cue_end
+
             current_time += duration
 
         out_p.write_text("".join(lines), encoding="utf-8")
