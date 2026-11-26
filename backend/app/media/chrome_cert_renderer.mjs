@@ -182,6 +182,13 @@ function buildDefaultCertHtml(item, meta, logos) {
     text-align: center;
     padding-bottom: 4px;
   }
+  .sig-img {
+    height: 72px;
+    width: auto;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto -4px;
+  }
   .sig-line {
     border-top: 2px solid #0b0f19;
     padding-top: 7px;
@@ -255,6 +262,7 @@ function buildDefaultCertHtml(item, meta, logos) {
         <div class="meta-value">${issueDate}</div>
       </div>
       <div class="sig-block">
+        ${logos.signature ? `<img class="sig-img" src="${logos.signature}" alt="Signature" />` : ''}
         <div class="sig-line">${issuerName}</div>
         <div class="sig-sub">${issuerRole}</div>
       </div>
@@ -342,7 +350,8 @@ async function main() {
     ajiet: loadDataUrl(path.join(brandingDir, 'ajiet_logo.png')),
     communityWhite: loadDataUrl(path.join(brandingDir, 'uipath_community_ajiet_white.png')),
     uipathCommunity: loadDataUrl(path.join(brandingDir, 'uipath_community_lockup.png')),
-    studentDev: loadDataUrl(path.join(brandingDir, 'uipath_student_developer.png'))
+    studentDev: loadDataUrl(path.join(brandingDir, 'uipath_student_developer.png')),
+    signature: loadDataUrl(path.join(brandingDir, 'arjun_signature.png'))
   };
 
   let templateDataUrl = loadDataUrl(templatePath);
