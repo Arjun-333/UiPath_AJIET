@@ -287,7 +287,6 @@ function buildDefaultCertHtml(item, meta, logos) {
         <div class="sig-sub">${issuerRole}</div>
       </div>
       <div class="sig-block-hod">
-        ${logos.antonySignature ? `<img class="sig-img-hod" src="${logos.antonySignature}" alt="Dr. Antony P J Signature" />` : ''}
         <div class="sig-line">Dr. Antony P J</div>
         <div class="sig-sub">Vice Principal &amp; CSE HOD</div>
       </div>
@@ -374,8 +373,7 @@ async function main() {
     communityWhite: loadDataUrl(path.join(brandingDir, 'uipath_community_ajiet_white.png')),
     uipathCommunity: loadDataUrl(path.join(brandingDir, 'uipath_community_lockup.png')),
     studentDev: loadDataUrl(path.join(brandingDir, 'uipath_student_developer.png')),
-    signature: loadDataUrl(path.join(brandingDir, 'arjun_signature.png')),
-    antonySignature: loadDataUrl(path.join(brandingDir, 'antony_signature.svg'))
+    signature: loadDataUrl(path.join(brandingDir, 'arjun_signature.png'))
   };
 
   let templateDataUrl = loadDataUrl(templatePath);
