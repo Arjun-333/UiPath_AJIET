@@ -8,6 +8,7 @@ from backend.app.certificates.service import (
     normalize_google_sheet_csv_url,
     parse_csv_roster,
     parse_excel_roster,
+    parse_excel_with_columns,
     generate_certificates_batch,
 )
 from backend.app.media.subtitle_generator import SubtitleGenerator
@@ -53,6 +54,55 @@ def test_parse_excel_roster_normalizes_columns():
     students = parse_excel_roster(buf.getvalue())
     assert len(students) == 1
     assert students[0] == {"name": "Rohan Hegde", "email": "rohan@ajiet.edu.in", "department": "AIML"}
+
+
+def test_parse_excel_with_columns_matches_registration_sheet():
+    import io
+    import openpyxl
+
+    headers = [
+        "Timestamp",
+        "Full Name",
+        "USN (University Seat Number)",
+        "Email Address",
+        "Phone Number (WhatsApp)",
+        "Branch",
+        "Year of Study",
+        "Section",
+        "Prior Experience with UiPath / RPA?",
+        "Will you bring a Windows laptop for the session?",
+    ]
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(headers)
+    ws.append([
+        "2026-11-26 10:00:00",
+        "Ananya Rao",
+        "4JK23CS012",
+        "ananya@ajiet.edu.in",
+        "9876543210",
+        "Computer Science & Engineering",
+        "3rd Year",
+        "A",
+        "No",
+        "Yes",
+    ])
+    ws.append([None] * len(headers))
+    buf = io.BytesIO()
+    wb.save(buf)
+
+    parsed = parse_excel_with_columns(buf.getvalue())
+    assert parsed["columns"] == headers
+    assert parsed["suggested_mapping"] == {
+        "name_col": "Full Name",
+        "email_col": "Email Address",
+        "dept_col": "Branch",
+    }
+    assert parsed["students"] == [{
+        "name": "Ananya Rao",
+        "email": "ananya@ajiet.edu.in",
+        "department": "Computer Science & Engineering",
+    }]
 
 
 def test_generate_certificates_batch_creates_pdfs_and_zip(tmp_path, monkeypatch):
