@@ -226,12 +226,12 @@ function buildDefaultCertHtml(item, meta, logos) {
   }
   .logo-ajiet {
     height: 78px;
-    width: 78px;
+    width: auto;
     object-fit: contain;
   }
   .logo-enigma {
     height: 78px;
-    width: 78px;
+    width: auto;
     object-fit: contain;
   }
   .logo-community-white {
