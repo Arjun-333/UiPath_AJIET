@@ -84,11 +84,16 @@ function buildDefaultCertHtml(item, meta, logos) {
   }
   .top-bar {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
   }
   .logo-uipath-community {
     height: 40px;
+    width: auto;
+    object-fit: contain;
+  }
+  .logo-ieee-mangalore {
+    height: 48px;
     width: auto;
     object-fit: contain;
   }
@@ -205,16 +210,21 @@ function buildDefaultCertHtml(item, meta, logos) {
   .campus-badges {
     display: flex;
     align-items: center;
-    gap: 18px;
+    gap: 16px;
   }
   .logo-ajiet {
-    height: 96px;
-    width: 96px;
+    height: 88px;
+    width: 88px;
+    object-fit: contain;
+  }
+  .logo-enigma {
+    height: 88px;
+    width: 88px;
     object-fit: contain;
   }
   .logo-community-white {
-    height: 96px;
-    width: 96px;
+    height: 88px;
+    width: 88px;
     object-fit: contain;
     border-radius: 50%;
   }
@@ -234,6 +244,9 @@ function buildDefaultCertHtml(item, meta, logos) {
     <div class="top-bar">
       <div>
         ${logos.uipathCommunity ? `<img class="logo-uipath-community" src="${logos.uipathCommunity}" alt="UiPath Community" />` : ''}
+      </div>
+      <div>
+        ${logos.ieeeMangalore ? `<img class="logo-ieee-mangalore" src="${logos.ieeeMangalore}" alt="IEEE Mangalore Subsection" />` : ''}
       </div>
       <div>
         ${logos.studentDev ? `<img class="logo-student-dev" src="${logos.studentDev}" alt="UiPath Student Developer" />` : ''}
@@ -268,6 +281,7 @@ function buildDefaultCertHtml(item, meta, logos) {
       </div>
       <div class="campus-badges">
         ${logos.ajiet ? `<img class="logo-ajiet" src="${logos.ajiet}" alt="AJIET" />` : ''}
+        ${logos.enigmaBranch ? `<img class="logo-enigma" src="${logos.enigmaBranch}" alt="ENIGMA Branch" />` : ''}
         ${logos.communityWhite ? `<img class="logo-community-white" src="${logos.communityWhite}" alt="UiPath Community AJIET" />` : ''}
       </div>
     </div>
@@ -348,6 +362,8 @@ async function main() {
   const brandingDir = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../../frontend/public/assets/branding');
   const logos = {
     ajiet: loadDataUrl(path.join(brandingDir, 'ajiet_logo.png')),
+    enigmaBranch: loadDataUrl(path.join(brandingDir, 'enigma_branch_logo.png')),
+    ieeeMangalore: loadDataUrl(path.join(brandingDir, 'ieee_mangalore_subsection.png')),
     communityWhite: loadDataUrl(path.join(brandingDir, 'uipath_community_ajiet_white.png')),
     uipathCommunity: loadDataUrl(path.join(brandingDir, 'uipath_community_lockup.png')),
     studentDev: loadDataUrl(path.join(brandingDir, 'uipath_student_developer.png')),
