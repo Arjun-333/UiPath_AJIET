@@ -433,16 +433,6 @@ export const Floor2IsometricRoom: React.FC<Props> = ({
   };
 
   const handleClick = () => {
-    if (hoveredStairsDown && onNavigateFloor) {
-      onNavigateFloor(1);
-      return;
-    }
-
-    if (hoveredStairsUp && onNavigateFloor) {
-      onNavigateFloor(3);
-      return;
-    }
-
     if (hoveredAgent) {
       const realAgent = agents.find(a => a.agent_id === hoveredAgent.id || (a as any).id === hoveredAgent.id) || {
         id: hoveredAgent.id,
@@ -457,6 +447,16 @@ export const Floor2IsometricRoom: React.FC<Props> = ({
         tools: ['YouTube Studio Analytics', 'Reels Scheduling Pipeline', 'Outreach CRM']
       };
       onSelectAgent(realAgent as Agent);
+      return;
+    }
+
+    if (hoveredStairsDown && onNavigateFloor) {
+      onNavigateFloor(1);
+      return;
+    }
+
+    if (hoveredStairsUp && onNavigateFloor) {
+      onNavigateFloor(3);
     }
   };
 

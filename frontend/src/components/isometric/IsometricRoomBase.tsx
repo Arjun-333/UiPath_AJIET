@@ -330,14 +330,6 @@ export const IsometricRoomBase: React.FC<IsometricRoomBaseProps> = ({
   };
 
   const handleClick = () => {
-    if (stairsDown && hoveredStairsDown && onNavigateFloor) {
-      onNavigateFloor(stairsDown.targetFloor);
-      return;
-    }
-    if (stairsUp && hoveredStairsUp && onNavigateFloor) {
-      onNavigateFloor(stairsUp.targetFloor);
-      return;
-    }
     if (hoveredAgent) {
       const realAgent = agents.find(a => a.agent_id === hoveredAgent.id || a.id === hoveredAgent.id) || {
         id: hoveredAgent.id,
@@ -351,6 +343,14 @@ export const IsometricRoomBase: React.FC<IsometricRoomBaseProps> = ({
         tools: defaultTools
       };
       onSelectAgent(realAgent as Agent);
+      return;
+    }
+    if (stairsDown && hoveredStairsDown && onNavigateFloor) {
+      onNavigateFloor(stairsDown.targetFloor);
+      return;
+    }
+    if (stairsUp && hoveredStairsUp && onNavigateFloor) {
+      onNavigateFloor(stairsUp.targetFloor);
     }
   };
 

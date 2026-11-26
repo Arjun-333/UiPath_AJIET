@@ -418,11 +418,6 @@ export const Floor0IsometricRoom: React.FC<Props> = ({
   };
 
   const handleClick = () => {
-    if (hoveredStairs && onNavigateFloor) {
-      onNavigateFloor(1);
-      return;
-    }
-
     if (hoveredAgent) {
       const realAgent = agents.find(a => a.agent_id === hoveredAgent.id || (a as any).id === hoveredAgent.id) || {
         id: hoveredAgent.id,
@@ -437,6 +432,11 @@ export const Floor0IsometricRoom: React.FC<Props> = ({
         tools: ['CEO Command Terminal', 'Approval Gate', 'Company Strategy']
       };
       onSelectAgent(realAgent as Agent);
+      return;
+    }
+
+    if (hoveredStairs && onNavigateFloor) {
+      onNavigateFloor(1);
     }
   };
 

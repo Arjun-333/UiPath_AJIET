@@ -469,16 +469,6 @@ export const Floor1IsometricRoom: React.FC<Props> = ({
   };
 
   const handleClick = () => {
-    if (hoveredStairsDown && onNavigateFloor) {
-      onNavigateFloor(0);
-      return;
-    }
-
-    if (hoveredStairsUp && onNavigateFloor) {
-      onNavigateFloor(2);
-      return;
-    }
-
     if (hoveredAgent) {
       const realAgent = agents.find(a => a.agent_id === hoveredAgent.id || (a as any).id === hoveredAgent.id) || {
         id: hoveredAgent.id,
@@ -493,6 +483,16 @@ export const Floor1IsometricRoom: React.FC<Props> = ({
         tools: ['FFmpeg Suite', 'Canvas Artboard', 'Script Hook Engine']
       };
       onSelectAgent(realAgent as Agent);
+      return;
+    }
+
+    if (hoveredStairsDown && onNavigateFloor) {
+      onNavigateFloor(0);
+      return;
+    }
+
+    if (hoveredStairsUp && onNavigateFloor) {
+      onNavigateFloor(2);
     }
   };
 
