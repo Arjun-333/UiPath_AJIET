@@ -11,10 +11,10 @@ from pydantic import BaseModel
 from backend.app.certificates.service import (
     CERTIFICATES_DIR,
     TEMPLATES_DIR,
-    fetch_google_sheet_students,
+    fetch_google_sheet_with_columns,
     generate_certificates_batch,
-    parse_csv_roster,
-    parse_excel_roster,
+    parse_csv_with_columns,
+    parse_excel_with_columns,
 )
 
 router = APIRouter(prefix="/api/certificates", tags=["certificates"])
@@ -25,7 +25,7 @@ class ImportSheetRequest(BaseModel):
 
 
 class GenerateCertificatesRequest(BaseModel):
-    event_title: str
+    event_title: str = "Discovering UiPath & RPA"
     subtitle: str = "Certificate of Participation"
     issue_date: Optional[str] = None
     issuer_name: str = "Arjun R"
@@ -38,8 +38,8 @@ class GenerateCertificatesRequest(BaseModel):
 @router.post("/import-sheet")
 async def import_google_sheet(payload: ImportSheetRequest):
     try:
-        students = fetch_google_sheet_students(payload.sheet_url)
-        return {"students": students, "count": len(students)}
+        parsed = fetch_google_sheet_with_columns(payload.sheet_url)
+        return {**parsed, "count": len(parsed["students"])}
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
@@ -50,11 +50,11 @@ async def import_csv_file(file: UploadFile = File(...)):
         raw = await file.read()
         ext = Path(file.filename or "").suffix.lower()
         if ext in (".xlsx", ".xlsm"):
-            students = parse_excel_roster(raw)
+            parsed = parse_excel_with_columns(raw)
         else:
             text = raw.decode("utf-8-sig", errors="replace")
-            students = parse_csv_roster(text)
-        return {"students": students, "count": len(students)}
+            parsed = parse_csv_with_columns(text)
+        return {**parsed, "count": len(parsed["students"])}
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Spreadsheet parse error: {exc}")
 

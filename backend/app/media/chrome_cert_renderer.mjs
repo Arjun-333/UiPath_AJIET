@@ -22,7 +22,7 @@ function loadDataUrl(filePath) {
 function buildDefaultCertHtml(item, meta, logos) {
   const name = escapeHtml(item.name);
   const dept = escapeHtml(item.department || '');
-  const eventTitle = escapeHtml(meta.eventTitle || 'UiPath Community AJIET Automation Workshop');
+  const eventTitle = escapeHtml(meta.eventTitle || 'Discovering UiPath & RPA');
   const rawSubtitle = String(meta.subtitle || 'Certificate of Participation').trim();
   const words = rawSubtitle.split(/\s+/);
   const lastWord = words.length > 1 ? escapeHtml(words.pop()) : '';

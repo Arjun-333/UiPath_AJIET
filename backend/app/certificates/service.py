@@ -34,11 +34,9 @@ def normalize_google_sheet_csv_url(sheet_url: str) -> str:
     return f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}"
 
 
-def _normalize_roster_rows(fieldnames: List[str], rows: List[Dict[str, Any]]) -> List[Dict[str, str]]:
-    """Normalizes tabular rows into student records (`name`, `email`, `department`)."""
-    headers = {str(h).strip().lower(): str(h) for h in fieldnames if h is not None and str(h).strip()}
-    if not headers:
-        return []
+def _detect_roster_columns(fieldnames: List[str]) -> Dict[str, Optional[str]]:
+    """Detects likely name, email, and department columns from header names."""
+    headers = {str(h).strip().lower(): str(h).strip() for h in fieldnames if h is not None and str(h).strip()}
 
     def pick_key(candidates: List[str]) -> Optional[str]:
         for c in candidates:
@@ -47,9 +45,23 @@ def _normalize_roster_rows(fieldnames: List[str], rows: List[Dict[str, Any]]) ->
                     return orig
         return None
 
-    name_col = pick_key(["full name", "student name", "participant", "name"])
-    email_col = pick_key(["email", "e-mail", "mail"])
-    dept_col = pick_key(["department", "branch", "usn", "college", "section"])
+    return {
+        "name_col": pick_key(["full name", "student name", "participant", "name"]),
+        "email_col": pick_key(["email", "e-mail", "mail"]),
+        "dept_col": pick_key(["department", "branch", "usn", "college", "section"]),
+    }
+
+
+def _normalize_roster_rows(fieldnames: List[str], rows: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+    """Normalizes tabular rows into student records (`name`, `email`, `department`)."""
+    clean_cols = [str(h).strip() for h in fieldnames if h is not None and str(h).strip()]
+    if not clean_cols:
+        return []
+
+    detected = _detect_roster_columns(clean_cols)
+    name_col = detected["name_col"]
+    email_col = detected["email_col"]
+    dept_col = detected["dept_col"]
 
     students: List[Dict[str, str]] = []
     for row in rows:
@@ -71,19 +83,34 @@ def _normalize_roster_rows(fieldnames: List[str], rows: List[Dict[str, Any]]) ->
     return students
 
 
-def parse_csv_roster(csv_text: str) -> List[Dict[str, str]]:
-    """
-    Parses a CSV string into normalized student records (`name`, `email`, `department`).
-    Matches common header variations (e.g. 'Full Name', 'Student Name', 'Name', 'Email', 'USN').
-    """
+def _build_roster_payload(fieldnames: List[str], rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Returns columns, raw stringified rows, suggested column mapping, and normalized students."""
+    clean_cols = [str(h).strip() for h in fieldnames if h is not None and str(h).strip()]
+    clean_rows = [
+        {col: ("" if row.get(col) is None else str(row.get(col)).strip()) for col in clean_cols}
+        for row in rows
+        if any(row.get(col) is not None and str(row.get(col)).strip() for col in clean_cols)
+    ]
+    detected = _detect_roster_columns(clean_cols)
+    if not detected["name_col"] and clean_cols:
+        detected["name_col"] = clean_cols[0]
+    students = _normalize_roster_rows(clean_cols, clean_rows)
+    return {
+        "columns": clean_cols,
+        "rows": clean_rows,
+        "suggested_mapping": detected,
+        "students": students,
+    }
+
+
+def _read_csv_raw(csv_text: str) -> tuple[List[str], List[Dict[str, Any]]]:
     reader = csv.DictReader(io.StringIO(csv_text.strip()))
     if not reader.fieldnames:
-        return []
-    return _normalize_roster_rows(list(reader.fieldnames), list(reader))
+        return [], []
+    return [str(h).strip() for h in reader.fieldnames if h is not None and str(h).strip()], list(reader)
 
 
-def parse_excel_roster(raw_bytes: bytes) -> List[Dict[str, str]]:
-    """Parses an Excel (.xlsx/.xlsm) workbook into normalized student records."""
+def _read_excel_raw(raw_bytes: bytes) -> tuple[List[str], List[Dict[str, Any]]]:
     import openpyxl
 
     wb = openpyxl.load_workbook(io.BytesIO(raw_bytes), read_only=True, data_only=True)
@@ -94,31 +121,65 @@ def parse_excel_roster(raw_bytes: bytes) -> List[Dict[str, str]]:
         wb.close()
 
     if not all_rows:
-        return []
+        return [], []
     fieldnames = [str(c).strip() if c is not None else f"col_{i}" for i, c in enumerate(all_rows[0])]
     dict_rows = [
         {fieldnames[i]: (row[i] if i < len(row) else None) for i in range(len(fieldnames))}
         for row in all_rows[1:]
     ]
+    return fieldnames, dict_rows
+
+
+def parse_csv_roster(csv_text: str) -> List[Dict[str, str]]:
+    """
+    Parses a CSV string into normalized student records (`name`, `email`, `department`).
+    Matches common header variations (e.g. 'Full Name', 'Student Name', 'Name', 'Email', 'USN').
+    """
+    fieldnames, rows = _read_csv_raw(csv_text)
+    return _normalize_roster_rows(fieldnames, rows)
+
+
+def parse_csv_with_columns(csv_text: str) -> Dict[str, Any]:
+    fieldnames, rows = _read_csv_raw(csv_text)
+    return _build_roster_payload(fieldnames, rows)
+
+
+def parse_excel_roster(raw_bytes: bytes) -> List[Dict[str, str]]:
+    """Parses an Excel (.xlsx/.xlsm) workbook into normalized student records."""
+    fieldnames, dict_rows = _read_excel_raw(raw_bytes)
     return _normalize_roster_rows(fieldnames, dict_rows)
 
 
-def fetch_google_sheet_students(sheet_url: str) -> List[Dict[str, str]]:
-    """Fetches a shared Google Sheet as CSV and parses registered student rows."""
+def parse_excel_with_columns(raw_bytes: bytes) -> Dict[str, Any]:
+    fieldnames, dict_rows = _read_excel_raw(raw_bytes)
+    return _build_roster_payload(fieldnames, dict_rows)
+
+
+def _fetch_google_sheet_csv_text(sheet_url: str) -> str:
     export_url = normalize_google_sheet_csv_url(sheet_url)
     req = urllib.request.Request(export_url, headers={"User-Agent": "AutonomiaCertImporter/1.0"})
     with urllib.request.urlopen(req, timeout=15) as resp:
         raw = resp.read().decode("utf-8-sig", errors="replace")
     if "<html" in raw[:300].lower():
         raise ValueError(
-            "Google Sheet is private or requires sign-in. Set sharing to 'Anyone with the link can view' or upload a CSV."
+            "Google Sheet is private or requires sign-in. Set sharing to 'Anyone with the link can view' or upload an Excel/CSV file."
         )
-    return parse_csv_roster(raw)
+    return raw
+
+
+def fetch_google_sheet_students(sheet_url: str) -> List[Dict[str, str]]:
+    """Fetches a shared Google Sheet as CSV and parses registered student rows."""
+    return parse_csv_roster(_fetch_google_sheet_csv_text(sheet_url))
+
+
+def fetch_google_sheet_with_columns(sheet_url: str) -> Dict[str, Any]:
+    """Fetches a shared Google Sheet and returns columns, raw rows, and suggested mapping."""
+    return parse_csv_with_columns(_fetch_google_sheet_csv_text(sheet_url))
 
 
 def generate_certificates_batch(
     students: List[Dict[str, str]],
-    event_title: str,
+    event_title: str = "Discovering UiPath & RPA",
     subtitle: str = "Certificate of Participation",
     issue_date: Optional[str] = None,
     issuer_name: str = "Arjun R",

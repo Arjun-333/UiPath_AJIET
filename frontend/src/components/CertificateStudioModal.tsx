@@ -27,9 +27,17 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
   const [manualName, setManualName] = useState('');
   const [manualDept, setManualDept] = useState('');
 
-  const [eventTitle, setEventTitle] = useState('Automate Campus Quest: UiPath RPA Workshop');
+  const [eventTitle, setEventTitle] = useState('Discovering UiPath & RPA');
   const [subtitle, setSubtitle] = useState('Certificate of Participation');
   const [issueDate, setIssueDate] = useState('November 28, 2026');
+
+  const [importedColumns, setImportedColumns] = useState<string[]>([]);
+  const [importedRows, setImportedRows] = useState<Record<string, string>[]>([]);
+  const [colMapping, setColMapping] = useState<{ nameCol: string; deptCol: string; emailCol: string }>({
+    nameCol: '',
+    deptCol: '',
+    emailCol: ''
+  });
 
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [templateFilename, setTemplateFilename] = useState<string | null>(null);
@@ -41,6 +49,41 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [result, setResult] = useState<GeneratedResult | null>(null);
+
+  const applyColumnMapping = (
+    rows: Record<string, string>[],
+    mapping: { nameCol: string; deptCol: string; emailCol: string }
+  ) => {
+    const mapped = rows
+      .map((r) => ({
+        name: (mapping.nameCol ? r[mapping.nameCol] : '')?.trim() || '',
+        department: (mapping.deptCol ? r[mapping.deptCol] : '')?.trim() || '',
+        email: (mapping.emailCol ? r[mapping.emailCol] : '')?.trim() || ''
+      }))
+      .filter((st) => st.name.length > 0);
+    setStudents(mapped);
+  };
+
+  const ingestImportedSheet = (data: any) => {
+    const cols: string[] = Array.isArray(data.columns) ? data.columns : [];
+    const rows: Record<string, string>[] = Array.isArray(data.rows) ? data.rows : [];
+    if (cols.length > 0 && rows.length > 0) {
+      const sug = data.suggested_mapping || {};
+      const nextMap = {
+        nameCol: sug.name_col || cols[0] || '',
+        deptCol: sug.dept_col || '',
+        emailCol: sug.email_col || ''
+      };
+      setImportedColumns(cols);
+      setImportedRows(rows);
+      setColMapping(nextMap);
+      applyColumnMapping(rows, nextMap);
+    } else {
+      setImportedColumns([]);
+      setImportedRows([]);
+      setStudents(data.students || []);
+    }
+  };
 
   const handleImportGoogleSheet = async () => {
     if (!sheetUrl.trim()) return;
@@ -54,8 +97,8 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Failed to import Google Sheet.');
-      if (!data.students?.length) throw new Error('No student rows found in that sheet.');
-      setStudents(data.students);
+      if (!data.rows?.length && !data.students?.length) throw new Error('No student rows found in that sheet.');
+      ingestImportedSheet(data);
     } catch (err: any) {
       setErrorMsg(err.message || 'Google Sheet import failed.');
     } finally {
@@ -73,13 +116,14 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
       fd.append('file', file);
       const res = await fetch('/api/certificates/import-csv', { method: 'POST', body: fd });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Failed to parse CSV.');
-      if (!data.students?.length) throw new Error('No student rows found in CSV.');
-      setStudents(data.students);
+      if (!res.ok) throw new Error(data.detail || 'Failed to parse spreadsheet.');
+      if (!data.rows?.length && !data.students?.length) throw new Error('No student rows found in spreadsheet.');
+      ingestImportedSheet(data);
     } catch (err: any) {
-      setErrorMsg(err.message || 'CSV upload failed.');
+      setErrorMsg(err.message || 'Spreadsheet upload failed.');
     } finally {
       setIsImporting(false);
+      e.target.value = '';
     }
   };
 
@@ -194,6 +238,67 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
                   {isImporting ? 'Loading...' : 'Fetch Sheet'}
                 </button>
               </div>
+
+              {/* Column Mapping Prompt (shown when Excel/CSV/Sheet is imported) */}
+              {importedColumns.length > 0 && (
+                <div className="p-2.5 bg-slate-900/90 border border-cyan-500/30 rounded-lg space-y-2">
+                  <div className="text-[11px] font-mono text-cyan-300 font-semibold">
+                    Which columns should be used for the certificates?
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-mono text-slate-400 mb-1">Student Name *</label>
+                      <select
+                        value={colMapping.nameCol}
+                        onChange={(e) => {
+                          const next = { ...colMapping, nameCol: e.target.value };
+                          setColMapping(next);
+                          applyColumnMapping(importedRows, next);
+                        }}
+                        className="w-full px-2 py-1 bg-slate-950 border border-slate-700 rounded text-[11px] text-slate-200 focus:outline-none focus:border-orange-500"
+                      >
+                        {importedColumns.map((col) => (
+                          <option key={col} value={col}>{col}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-mono text-slate-400 mb-1">Dept / USN</label>
+                      <select
+                        value={colMapping.deptCol}
+                        onChange={(e) => {
+                          const next = { ...colMapping, deptCol: e.target.value };
+                          setColMapping(next);
+                          applyColumnMapping(importedRows, next);
+                        }}
+                        className="w-full px-2 py-1 bg-slate-950 border border-slate-700 rounded text-[11px] text-slate-200 focus:outline-none focus:border-orange-500"
+                      >
+                        <option value="">(None)</option>
+                        {importedColumns.map((col) => (
+                          <option key={col} value={col}>{col}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-mono text-slate-400 mb-1">Email</label>
+                      <select
+                        value={colMapping.emailCol}
+                        onChange={(e) => {
+                          const next = { ...colMapping, emailCol: e.target.value };
+                          setColMapping(next);
+                          applyColumnMapping(importedRows, next);
+                        }}
+                        className="w-full px-2 py-1 bg-slate-950 border border-slate-700 rounded text-[11px] text-slate-200 focus:outline-none focus:border-orange-500"
+                      >
+                        <option value="">(None)</option>
+                        {importedColumns.map((col) => (
+                          <option key={col} value={col}>{col}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Manual Add */}
               <div className="flex space-x-2 pt-1">
