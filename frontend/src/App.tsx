@@ -4,6 +4,8 @@ import { VirtualHeadquarters } from './components/VirtualHeadquarters';
 import { EmployeeInspector } from './components/EmployeeInspector';
 import { Header } from './components/Header';
 import { CommandPalette } from './components/CommandPalette';
+import { ToastProvider, useToast } from './components/Toast';
+import { ShortcutsModal } from './components/ShortcutsModal';
 
 class TabErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   state = { hasError: false };
@@ -56,7 +58,8 @@ const getInitialTab = (): 'hq' | 'command' | 'vault' | 'qa' | 'workforce' => {
   return 'hq';
 };
 
-export const App: React.FC = () => {
+const AppInner: React.FC = () => {
+  const { addToast } = useToast();
   const [activeTab, setActiveTabState] = useState<'hq' | 'command' | 'vault' | 'qa' | 'workforce'>(getInitialTab);
 
   const setActiveTab = (tab: 'hq' | 'command' | 'vault' | 'qa' | 'workforce') => {
@@ -101,6 +104,7 @@ export const App: React.FC = () => {
   const [showApprovalsModal, setShowApprovalsModal] = useState<boolean>(false);
   const [showCommsModal, setShowCommsModal] = useState<boolean>(false);
   const [showCommandPalette, setShowCommandPalette] = useState<boolean>(false);
+  const [showShortcuts, setShowShortcuts] = useState<boolean>(false);
   const [pendingTransit, setPendingTransit] = useState<AgentTransitEvent | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'reconnecting' | 'disconnected'>('disconnected');
 
@@ -179,14 +183,29 @@ export const App: React.FC = () => {
             setOrbiState(msg.data.state || 'idle');
           } else if (msg.event === 'task_started') {
             setOrbiState('working');
+            addToast({
+              type: 'info',
+              title: 'Pipeline Task Started',
+              message: msg.data?.title || msg.data?.agent_id || 'Agent began executing a workflow step.'
+            });
             fetchData();
           } else if (msg.event === 'task_completed') {
             fetchData();
           } else if (msg.event === 'project_completed') {
             setOrbiState('celebrating');
+            addToast({
+              type: 'success',
+              title: 'Production Pipeline Completed',
+              message: msg.data?.title || 'Media assets are ready in Media Vault.'
+            });
             fetchData();
           } else if (msg.event === 'approval_requested') {
             setOrbiState('waiting');
+            addToast({
+              type: 'approval',
+              title: 'Approval Required (Level 3)',
+              message: msg.data?.description || 'A release or workforce gate awaits your review.'
+            });
             fetchData();
           } else if (msg.event === 'agent_message') {
             setMessages(prev => {
@@ -200,6 +219,13 @@ export const App: React.FC = () => {
           } else if (msg.event === 'agent_transit') {
             setPendingTransit(msg.data);
           } else if (msg.event === 'employee_lifecycle_changed' || msg.event === 'workforce_alert') {
+            if (msg.event === 'workforce_alert') {
+              addToast({
+                type: 'warning',
+                title: 'Workforce Alert',
+                message: msg.data?.message || 'Check Workforce & Talent Advisor for details.'
+              });
+            }
             fetchData();
           }
         } catch (e) {
@@ -309,6 +335,17 @@ export const App: React.FC = () => {
         return;
       }
 
+      if (e.key === '?') {
+        e.preventDefault();
+        setShowShortcuts(prev => !prev);
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        setShowShortcuts(false);
+        return;
+      }
+
       if (['0', '1', '2', '3', '4', '5'].includes(e.key)) {
         e.preventDefault();
         setActiveTab('hq');
@@ -394,7 +431,16 @@ export const App: React.FC = () => {
         onNavigateTab={(tab) => setActiveTab(tab)}
         onSelectFloor={(floor) => setActiveFloor(floor)}
         onSelectAgent={(agent) => setSelectedAgent(agent)}
+        onSelectProject={(id) => setSelectedProjectId(id)}
+        onOpenApprovals={() => setShowApprovalsModal(true)}
+        onOpenComms={() => setShowCommsModal(true)}
         agents={agents}
+        projects={projects}
+      />
+
+      <ShortcutsModal
+        isOpen={showShortcuts}
+        onClose={() => setShowShortcuts(false)}
       />
 
       {/* Modals */}
@@ -430,3 +476,9 @@ export const App: React.FC = () => {
     </div>
   );
 };
+
+export const App: React.FC = () => (
+  <ToastProvider>
+    <AppInner />
+  </ToastProvider>
+);

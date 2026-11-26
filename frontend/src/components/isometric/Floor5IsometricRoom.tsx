@@ -22,7 +22,7 @@ interface Props {
   onNavigateFloor?: (floor: number) => void;
   zoom?: number;
   pan?: { x: number; y: number };
-  pacingMode?: 'calm' | 'break' | 'active';
+  pacingMode?: 'calm' | 'break' | 'active' | 'paused';
   skipBakedLabels?: boolean;
   onAgentPositionsUpdate?: (positions: AgentPositionInfo[]) => void;
 }

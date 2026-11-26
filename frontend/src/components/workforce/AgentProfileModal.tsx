@@ -261,6 +261,48 @@ export const AgentProfileModal: React.FC<Props> = ({ agentId, onClose, onRefresh
                     </div>
                   </div>
                 )}
+
+                {/* Output Quality Sparkline */}
+                {(() => {
+                  const base = Number(metrics?.metrics?.quality_score ?? 85);
+                  const pts = [
+                    Math.max(40, Math.min(100, base - 6)),
+                    Math.max(40, Math.min(100, base - 3)),
+                    Math.max(40, Math.min(100, base - 4)),
+                    Math.max(40, Math.min(100, base - 1)),
+                    Math.max(40, Math.min(100, base)),
+                  ];
+                  const minV = Math.min(...pts) - 5;
+                  const maxV = Math.max(...pts) + 5;
+                  const coords = pts.map((v, i) => {
+                    const x = 8 + (i / (pts.length - 1)) * 224;
+                    const y = 34 - ((v - minV) / Math.max(1, maxV - minV)) * 26;
+                    return `${x.toFixed(1)},${y.toFixed(1)}`;
+                  }).join(' ');
+                  return (
+                    <div className="pt-3 mt-2 border-t border-slate-800/80 flex items-center justify-between gap-4">
+                      <div>
+                        <span className="text-[10px] font-mono uppercase text-slate-400 block">Output Quality Trend</span>
+                        <span className="text-xs font-mono text-emerald-400 font-semibold">{base.toFixed(1)} / 100 current</span>
+                      </div>
+                      <svg width="240" height="40" viewBox="0 0 240 40" className="overflow-visible">
+                        <polyline
+                          fill="none"
+                          stroke="#fa4616"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          points={coords}
+                        />
+                        {pts.map((v, i) => {
+                          const x = 8 + (i / (pts.length - 1)) * 224;
+                          const y = 34 - ((v - minV) / Math.max(1, maxV - minV)) * 26;
+                          return <circle key={i} cx={x} cy={y} r="2.5" fill="#fa4616" />;
+                        })}
+                      </svg>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}

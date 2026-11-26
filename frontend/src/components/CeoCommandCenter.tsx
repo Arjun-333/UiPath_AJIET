@@ -292,7 +292,11 @@ export const CeoCommandCenter: React.FC<Props> = ({
         </div>
 
         {filteredProjects.length === 0 ? (
-          <div className="p-8 text-center bg-slate-900/40 border border-dashed border-slate-800 rounded-xl">
+          <div className="p-8 text-center bg-slate-900/40 border border-dashed border-slate-800 rounded-xl flex flex-col items-center gap-3">
+            <svg width="44" height="44" viewBox="0 0 44 44" fill="none" className="text-[#fa4616]/70">
+              <rect x="6" y="10" width="32" height="24" rx="4" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" />
+              <path d="M18 17L28 22L18 27V17Z" fill="currentColor" fillOpacity="0.35" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+            </svg>
             <p className="text-sm text-slate-400">
               {filter === 'running'
                 ? 'No actively running pipelines right now. Dispatch an instruction above to begin.'

@@ -3,7 +3,7 @@ import { LeaderboardItem, WorkforceEmployee } from '../../types';
 import { 
   Award, TrendingUp, AlertTriangle, ShieldCheck, UserCheck, 
   Clock, DollarSign, CheckCircle2, ChevronRight, Filter, 
-  Sparkles, Layers, Zap, Info, UserPlus
+  Sparkles, Layers, Zap, Info, UserPlus, Search
 } from 'lucide-react';
 
 interface Props {
@@ -22,6 +22,7 @@ export const TalentDashboard: React.FC<Props> = ({
   const [periodDays, setPeriodDays] = useState<number>(30);
   const [selectedDept, setSelectedDept] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('composite_score');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -120,8 +121,19 @@ export const TalentDashboard: React.FC<Props> = ({
           ))}
         </div>
 
-        {/* Evaluation Period Selector */}
-        <div className="flex items-center space-x-2 bg-slate-900 border border-slate-800 rounded-lg p-1 text-xs">
+        {/* Search & Evaluation Period Selector */}
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search agent or role..."
+              className="pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#fa4616] w-48"
+            />
+          </div>
+          <div className="flex items-center space-x-2 bg-slate-900 border border-slate-800 rounded-lg p-1 text-xs">
           <span className="text-slate-500 px-2 font-mono text-[11px]">Period:</span>
           {[7, 30, 90].map((days) => (
             <button
@@ -136,6 +148,7 @@ export const TalentDashboard: React.FC<Props> = ({
               {days}d
             </button>
           ))}
+          </div>
         </div>
       </div>
 
@@ -213,7 +226,18 @@ export const TalentDashboard: React.FC<Props> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                {leaderboard.map((item, index) => {
+                {leaderboard
+                  .filter((item) => {
+                    const q = searchQuery.trim().toLowerCase();
+                    if (!q) return true;
+                    return (
+                      item.name.toLowerCase().includes(q) ||
+                      item.title.toLowerCase().includes(q) ||
+                      item.department.toLowerCase().includes(q) ||
+                      item.agent_id.toLowerCase().includes(q)
+                    );
+                  })
+                  .map((item, index) => {
                   const isInsufficient = item.is_insufficient_data;
                   return (
                     <tr

@@ -29,6 +29,10 @@ interface SimAgentRuntime extends SimAgentConfig {
   isWalking: boolean;
   facing: 'SW' | 'SE' | 'NW' | 'NE';
   isAuri: boolean;
+  targetGx?: number;
+  targetGy?: number;
+  state?: string;
+  pauseTimer?: number;
 }
 
 export interface StairConfig {
@@ -46,7 +50,7 @@ export interface IsometricRoomBaseProps {
   onNavigateFloor?: (floor: number) => void;
   zoom?: number;
   pan?: { x: number; y: number };
-  pacingMode?: 'calm' | 'break' | 'active';
+  pacingMode?: 'calm' | 'break' | 'active' | 'paused';
   skipBakedLabels?: boolean;
   onAgentPositionsUpdate?: (positions: AgentPositionInfo[]) => void;
   initialAgents: SimAgentConfig[];
@@ -331,7 +335,7 @@ export const IsometricRoomBase: React.FC<IsometricRoomBaseProps> = ({
 
   const handleClick = () => {
     if (hoveredAgent) {
-      const realAgent = agents.find(a => a.agent_id === hoveredAgent.id || a.id === hoveredAgent.id) || {
+      const realAgent = agents.find(a => a.agent_id === hoveredAgent.id || (a as any).id === hoveredAgent.id) || {
         id: hoveredAgent.id,
         agent_id: hoveredAgent.id,
         name: hoveredAgent.name,

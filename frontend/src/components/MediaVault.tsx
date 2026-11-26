@@ -93,6 +93,57 @@ export const MediaVault: React.FC<MediaVaultProps> = ({ projectId }) => {
         </div>
       </div>
 
+      {/* Project Gallery Strip */}
+      {projects.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold">
+              Production Gallery ({projects.length})
+            </span>
+            <span className="text-[11px] font-mono text-slate-500">
+              Active: <span className="text-[#fa4616] font-bold">{selectedId}</span>
+            </span>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
+            {projects.map((p) => {
+              const isSelected = p.id === selectedId;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setSelectedId(p.id)}
+                  className={`shrink-0 w-56 text-left rounded-xl border p-2.5 transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-[#141414] border-[#fa4616] ring-1 ring-[#fa4616]/40 shadow-lg shadow-[#fa4616]/10'
+                      : 'bg-slate-900/80 border-slate-800 hover:border-slate-600'
+                  }`}
+                >
+                  <div className="relative aspect-video rounded-lg overflow-hidden bg-black border border-slate-800 mb-2">
+                    <img
+                      src={`/media/${p.id}/thumbnail.png`}
+                      alt={p.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                    <span className={`absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase ${
+                      p.status === 'completed'
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                        : 'bg-[#fa4616]/20 text-[#fa4616] border border-[#fa4616]/40'
+                    }`}>
+                      {p.status || 'ready'}
+                    </span>
+                  </div>
+                  <div className="text-xs font-semibold text-white truncate">{p.title}</div>
+                  <div className="text-[10px] font-mono text-slate-400 truncate mt-0.5">{p.id}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Rendered Project Showcase */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 16:9 Master Video */}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Building2, Terminal, Film, ShieldAlert, Users, Layers, User, X, CornerDownLeft } from 'lucide-react';
-import { Agent } from '../types';
+import { Search, Building2, Terminal, Film, ShieldAlert, Users, Layers, User, X, CornerDownLeft, FolderGit2, CheckSquare, MessageSquare } from 'lucide-react';
+import { Agent, Project } from '../types';
 
 interface Props {
   isOpen: boolean;
@@ -9,7 +9,11 @@ interface Props {
   onNavigateTab: (tab: 'hq' | 'command' | 'vault' | 'qa' | 'workforce') => void;
   onSelectFloor: (floor: number) => void;
   onSelectAgent: (agent: Agent) => void;
+  onSelectProject?: (projectId: string) => void;
+  onOpenApprovals?: () => void;
+  onOpenComms?: () => void;
   agents: Agent[];
+  projects?: Project[];
 }
 
 export const CommandPalette: React.FC<Props> = ({
@@ -18,7 +22,11 @@ export const CommandPalette: React.FC<Props> = ({
   onNavigateTab,
   onSelectFloor,
   onSelectAgent,
-  agents
+  onSelectProject,
+  onOpenApprovals,
+  onOpenComms,
+  agents,
+  projects = []
 }) => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -53,7 +61,16 @@ export const CommandPalette: React.FC<Props> = ({
 
   const q = query.toLowerCase().trim();
 
+  const quickActions = [
+    ...(onOpenApprovals ? [{ id: 'approvals', name: 'Open Approvals Queue', subtitle: 'Review pending Level 3 release & workforce gates', icon: CheckSquare }] : []),
+    ...(onOpenComms ? [{ id: 'comms', name: 'Open Workforce Comms', subtitle: 'View inter-agent messages & send dispatches', icon: MessageSquare }] : []),
+  ];
+
+  const filteredActions = quickActions.filter(a => a.name.toLowerCase().includes(q) || a.subtitle.toLowerCase().includes(q));
   const filteredPages = pages.filter(p => p.name.toLowerCase().includes(q));
+  const filteredProjects = projects.filter(p =>
+    (p.title || '').toLowerCase().includes(q) || p.id.toLowerCase().includes(q)
+  );
   const filteredFloors = floors.filter(f => f.name.toLowerCase().includes(q) || f.subtitle.toLowerCase().includes(q));
   const filteredAgents = agents.filter(a =>
     a.name.toLowerCase().includes(q) ||
@@ -62,19 +79,35 @@ export const CommandPalette: React.FC<Props> = ({
   );
 
   const allResults: Array<{
-    type: 'page' | 'floor' | 'agent';
+    type: 'action' | 'page' | 'project' | 'floor' | 'agent';
     id: string;
     title: string;
     subtitle?: string;
     icon: any;
     data: any;
   }> = [
+    ...filteredActions.map(a => ({
+      type: 'action' as const,
+      id: `action-${a.id}`,
+      title: a.name,
+      subtitle: a.subtitle,
+      icon: a.icon,
+      data: a.id
+    })),
     ...filteredPages.map(p => ({
       type: 'page' as const,
       id: `page-${p.id}`,
       title: p.name,
       subtitle: 'Primary Navigation Page',
       icon: p.icon,
+      data: p.id
+    })),
+    ...filteredProjects.map(p => ({
+      type: 'project' as const,
+      id: `project-${p.id}`,
+      title: p.title || p.id,
+      subtitle: `Project ${p.id} • ${p.status} (Open in Media Vault)`,
+      icon: FolderGit2,
       data: p.id
     })),
     ...filteredFloors.map(f => ({
@@ -98,8 +131,14 @@ export const CommandPalette: React.FC<Props> = ({
   const handleSelect = (index: number) => {
     const item = allResults[index];
     if (!item) return;
-    if (item.type === 'page') {
+    if (item.type === 'action') {
+      if (item.data === 'approvals') onOpenApprovals?.();
+      if (item.data === 'comms') onOpenComms?.();
+    } else if (item.type === 'page') {
       onNavigateTab(item.data);
+    } else if (item.type === 'project') {
+      onSelectProject?.(item.data);
+      onNavigateTab('vault');
     } else if (item.type === 'floor') {
       onNavigateTab('hq');
       onSelectFloor(item.data);

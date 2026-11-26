@@ -36,7 +36,7 @@ interface Props {
   onNavigateFloor?: (floor: number) => void;
   zoom?: number;
   pan?: { x: number; y: number };
-  pacingMode?: 'calm' | 'break' | 'active';
+  pacingMode?: 'calm' | 'break' | 'active' | 'paused';
   skipBakedLabels?: boolean;
   onAgentPositionsUpdate?: (positions: AgentPositionInfo[]) => void;
 }
@@ -49,6 +49,8 @@ interface AgentSimState {
   gy: number;
   targetGx: number;
   targetGy: number;
+  state?: string;
+  pauseTimer?: number;
   isSeated: boolean;
   isWalking: boolean;
   facing: 'SW' | 'SE' | 'NW' | 'NE';

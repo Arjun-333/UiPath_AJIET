@@ -1820,7 +1820,7 @@ export function createStaircaseUpAlongLeftWall(
 export function createStudioCamera(
   gx: number,
   gy: number,
-  facing: 'SE' | 'SW' = 'SE'
+  facing: 'SE' | 'SW' | 'NE' | 'NW' = 'SE'
 ): RenderItem {
   return {
     depth: (gx + gy) * 100 + 45,
@@ -1920,7 +1920,7 @@ export function createStudioCamera(
 export function createStudioSoftboxLight(
   gx: number,
   gy: number,
-  lightAngle: 'SE' | 'SW' = 'SE'
+  lightAngle: 'SE' | 'SW' | 'NE' | 'NW' = 'SE'
 ): RenderItem {
   return {
     depth: (gx + gy) * 100 + 75,

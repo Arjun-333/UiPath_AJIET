@@ -4,11 +4,11 @@ import { screenToGrid } from './isoEngine';
 export interface DraggableSimAgent {
   gx: number;
   gy: number;
-  targetGx: number;
-  targetGy: number;
+  targetGx?: number;
+  targetGy?: number;
   isSeated: boolean;
-  state: string;
-  pauseTimer: number;
+  state?: string;
+  pauseTimer?: number;
 }
 
 export function useIsoAgentDrag<T extends DraggableSimAgent>(

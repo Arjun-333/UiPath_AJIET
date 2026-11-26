@@ -277,11 +277,34 @@ export const VirtualHeadquarters: React.FC<Props> = ({
   const [isPanning, setIsPanning] = useState<boolean>(false);
   const panStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const [viewMode, setViewMode] = useState<'multi_tower' | 'floor_focus'>('floor_focus');
-  const [pacingMode, setPacingMode] = useState<'calm' | 'break' | 'active'>('calm');
+  const [pacingMode, setPacingMode] = useState<'calm' | 'break' | 'active' | 'paused'>('calm');
   const [hoveredAgent, setHoveredAgent] = useState<HoveredAgentInfo | null>(null);
   const [agentPositions, setAgentPositions] = useState<AgentPositionInfo[]>([]);
   const [hoveredLabelId, setHoveredLabelId] = useState<string | null>(null);
+  const [liveBubbles, setLiveBubbles] = useState<Record<string, string>>({});
+  const lastMsgCountRef = useRef<number>(recentMessages.length);
   const [mobileFloorMenuOpen, setMobileFloorMenuOpen] = useState<boolean>(false);
+
+  // Show speech bubble in isometric view when a new comms message arrives
+  useEffect(() => {
+    if (recentMessages.length > lastMsgCountRef.current) {
+      const latest = recentMessages[recentMessages.length - 1];
+      if (latest?.sender_id && latest?.content) {
+        const text = latest.content.length > 44 ? `${latest.content.slice(0, 44)}…` : latest.content;
+        setLiveBubbles(prev => ({ ...prev, [latest.sender_id]: text }));
+        const senderId = latest.sender_id;
+        setTimeout(() => {
+          setLiveBubbles(prev => {
+            if (prev[senderId] !== text) return prev;
+            const next = { ...prev };
+            delete next[senderId];
+            return next;
+          });
+        }, 4000);
+      }
+    }
+    lastMsgCountRef.current = recentMessages.length;
+  }, [recentMessages]);
   const simRef = useRef<CharacterSim[]>([]);
   const animFrameRef = useRef<number>(0);
   const [activeActionLog, setActiveActionLog] = useState<string>("Calm focus mode active: Employees performing deep departmental tasks.");
@@ -1754,13 +1777,13 @@ export const VirtualHeadquarters: React.FC<Props> = ({
                   tabIndex={0}
                   aria-label={`${item.name}, ${item.role}. Status: ${item.statusText || item.status}`}
                   onClick={() => {
-                    const real = agents.find(a => a.agent_id === item.id || a.id === item.id);
+                    const real = agents.find(a => a.agent_id === item.id);
                     if (real) onSelectAgent(real);
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      const real = agents.find(a => a.agent_id === item.id || a.id === item.id);
+                      const real = agents.find(a => a.agent_id === item.id);
                       if (real) onSelectAgent(real);
                     }
                   }}
@@ -1781,6 +1804,13 @@ export const VirtualHeadquarters: React.FC<Props> = ({
                     {item.name}
                   </span>
                 </div>
+
+                {/* Live Speech Bubble (when agent sends Comms message) */}
+                {liveBubbles[item.id] && !isHovered && (
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 max-w-[200px] px-2.5 py-1 rounded-xl bg-[#0d0d0d]/95 border border-[#fa4616]/60 text-[10px] font-mono text-white shadow-xl whitespace-nowrap truncate pointer-events-none z-20 animate-toast-in">
+                    💬 {liveBubbles[item.id]}
+                  </div>
+                )}
 
                 {/* Hover / Tap Reveal Card per Spec 7.B */}
                 {isHovered && (
@@ -1835,7 +1865,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
               <div className="flex items-center pl-2 ml-1 border-l border-slate-800 space-x-1">
                 {floorAgents.slice(0, 5).map(agent => (
                   <button
-                    key={agent.agent_id || agent.id}
+                    key={agent.agent_id}
                     onClick={() => onSelectAgent(agent)}
                     className="relative group p-0.5 rounded-full hover:ring-2 hover:ring-orange-500 transition-all"
                     title={`${agent.name} (${agent.role}) - Status: ${agent.status}`}
@@ -1858,8 +1888,8 @@ export const VirtualHeadquarters: React.FC<Props> = ({
                     </div>
                     {/* Real status dot matching agent current state */}
                     <span className={`absolute bottom-0 right-0 w-2 h-2 rounded-full border border-slate-950 ${
-                      agent.status === 'active' || agent.status === 'working' ? 'bg-emerald-500' :
-                      agent.status === 'waiting_approval' || agent.status === 'blocked' || agent.status === 'error' ? 'bg-amber-500' :
+                      agent.status === 'working' ? 'bg-emerald-500' :
+                      agent.status === 'waiting_approval' || agent.status === 'error' ? 'bg-amber-500' :
                       'bg-blue-400'
                     }`} />
                   </button>
@@ -1882,7 +1912,7 @@ export const VirtualHeadquarters: React.FC<Props> = ({
           {[5, 4, 3, 2, 1, 0].map(fl => {
             const isActive = activeFloor === fl && viewMode === 'floor_focus';
             const hasAlert = agents.some(
-              a => a.floor === fl && (a.status === 'error' || a.status === 'waiting_approval' || a.status === 'blocked')
+              a => a.floor === fl && (a.status === 'error' || a.status === 'waiting_approval')
             );
             const flConfig = FLOOR_CONFIG.find(c => c.floor === fl);
             return (

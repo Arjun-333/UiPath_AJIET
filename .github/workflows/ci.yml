@@ -36,4 +36,5 @@ jobs:
         working-directory: frontend
         run: |
           npm ci
+          npx tsc --noEmit
           npm run build
