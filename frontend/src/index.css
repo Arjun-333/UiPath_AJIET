@@ -1,10 +1,23 @@
 @import "tailwindcss";
 
+@theme {
+  --color-slate-950: #050505;
+  --color-slate-900: #0d0d0d;
+  --color-slate-800: #1e1e1e;
+  --color-slate-700: #2e2e2e;
+  --color-slate-600: #454545;
+  --color-slate-500: #737373;
+  --color-slate-400: #a3a3a3;
+  --color-slate-300: #d4d4d4;
+  --color-slate-200: #ececec;
+  --color-slate-100: #ffffff;
+}
+
 body {
   margin: 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: #0b0f17;
-  color: #f1f5f9;
+  background-color: #050505;
+  color: #ffffff;
 }
 
 .pixelated {
@@ -21,14 +34,14 @@ body {
   font-family: 'JetBrains Mono', monospace;
 }
 
-/* Pixel-Inspired Fluid Backdrop & Motion System */
+/* Pixel-Inspired Fluid Backdrop & Motion System (Black + UiPath Orange + White) */
 .pixel-grid-bg {
-  background-color: #0b0f17;
+  background-color: #050505;
   background-image:
-    radial-gradient(circle at 12% 0%, rgba(250, 70, 22, 0.08) 0%, transparent 42%),
-    radial-gradient(circle at 88% 0%, rgba(6, 182, 212, 0.07) 0%, transparent 42%),
-    linear-gradient(to right, rgba(148, 163, 184, 0.045) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(148, 163, 184, 0.045) 1px, transparent 1px);
+    radial-gradient(circle at 12% 0%, rgba(250, 70, 22, 0.11) 0%, transparent 40%),
+    radial-gradient(circle at 88% 0%, rgba(255, 255, 255, 0.04) 0%, transparent 38%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
   background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
 }
 
@@ -129,14 +142,14 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #050505;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #2e2e2e;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #ff6600;
+  background: #fa4616;
 }
 
 /* Accessibility: prefers-reduced-motion support */
