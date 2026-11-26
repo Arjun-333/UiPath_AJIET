@@ -14,7 +14,7 @@ function escapeHtml(str) {
 function loadDataUrl(filePath) {
   if (!filePath || !fs.existsSync(filePath)) return null;
   const ext = path.extname(filePath).toLowerCase().replace('.', '') || 'png';
-  const mime = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : 'image/png';
+  const mime = ext === 'svg' ? 'image/svg+xml' : (ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : 'image/png');
   const b64 = fs.readFileSync(filePath).toString('base64');
   return `data:${mime};base64,${b64}`;
 }
@@ -385,7 +385,7 @@ async function main() {
     uipathCommunity: loadDataUrl(path.join(brandingDir, 'uipath_community_lockup.png')),
     studentDev: loadDataUrl(path.join(brandingDir, 'uipath_student_developer.png')),
     signature: loadDataUrl(path.join(brandingDir, 'arjun_signature.png')),
-    antonySignature: loadDataUrl(path.join(brandingDir, 'antony_signature.png'))
+    antonySignature: loadDataUrl(path.join(brandingDir, 'antony_signature.svg'))
   };
 
   let templateDataUrl = loadDataUrl(templatePath);
