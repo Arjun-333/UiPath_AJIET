@@ -33,6 +33,7 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
 
   const [importedColumns, setImportedColumns] = useState<string[]>([]);
   const [importedRows, setImportedRows] = useState<Record<string, string>[]>([]);
+  const [mappingConfirmed, setMappingConfirmed] = useState(false);
   const [colMapping, setColMapping] = useState<{ nameCol: string; deptCol: string; emailCol: string }>({
     nameCol: '',
     deptCol: '',
@@ -70,17 +71,19 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
     if (cols.length > 0 && rows.length > 0) {
       const sug = data.suggested_mapping || {};
       const nextMap = {
-        nameCol: sug.name_col || cols[0] || '',
+        nameCol: sug.name_col || '',
         deptCol: sug.dept_col || '',
         emailCol: sug.email_col || ''
       };
       setImportedColumns(cols);
       setImportedRows(rows);
       setColMapping(nextMap);
-      applyColumnMapping(rows, nextMap);
+      setMappingConfirmed(false);
+      setStudents([]);
     } else {
       setImportedColumns([]);
       setImportedRows([]);
+      setMappingConfirmed(true);
       setStudents(data.students || []);
     }
   };
@@ -239,11 +242,16 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
                 </button>
               </div>
 
-              {/* Column Mapping Prompt (shown when Excel/CSV/Sheet is imported) */}
+              {/* Column Mapping Prompt (asks user which column is Name & Branch) */}
               {importedColumns.length > 0 && (
-                <div className="p-2.5 bg-slate-900/90 border border-cyan-500/30 rounded-lg space-y-2">
-                  <div className="text-[11px] font-mono text-cyan-300 font-semibold">
-                    Which columns should be used for the certificates?
+                <div className="p-3 bg-slate-900/95 border border-cyan-500/40 rounded-lg space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-mono text-cyan-300 font-semibold">
+                      Detected {importedColumns.length} columns ({importedRows.length} rows) — select Name &amp; Branch:
+                    </span>
+                    {mappingConfirmed && (
+                      <span className="text-[10px] font-mono text-emerald-400">Loaded</span>
+                    )}
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     <div>
@@ -253,23 +261,24 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
                         onChange={(e) => {
                           const next = { ...colMapping, nameCol: e.target.value };
                           setColMapping(next);
-                          applyColumnMapping(importedRows, next);
+                          if (mappingConfirmed) applyColumnMapping(importedRows, next);
                         }}
                         className="w-full px-2 py-1 bg-slate-950 border border-slate-700 rounded text-[11px] text-slate-200 focus:outline-none focus:border-orange-500"
                       >
+                        <option value="">-- Select column --</option>
                         {importedColumns.map((col) => (
                           <option key={col} value={col}>{col}</option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-mono text-slate-400 mb-1">Dept / USN</label>
+                      <label className="block text-[10px] font-mono text-slate-400 mb-1">Branch / Dept</label>
                       <select
                         value={colMapping.deptCol}
                         onChange={(e) => {
                           const next = { ...colMapping, deptCol: e.target.value };
                           setColMapping(next);
-                          applyColumnMapping(importedRows, next);
+                          if (mappingConfirmed) applyColumnMapping(importedRows, next);
                         }}
                         className="w-full px-2 py-1 bg-slate-950 border border-slate-700 rounded text-[11px] text-slate-200 focus:outline-none focus:border-orange-500"
                       >
@@ -280,13 +289,13 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-mono text-slate-400 mb-1">Email</label>
+                      <label className="block text-[10px] font-mono text-slate-400 mb-1">Email (optional)</label>
                       <select
                         value={colMapping.emailCol}
                         onChange={(e) => {
                           const next = { ...colMapping, emailCol: e.target.value };
                           setColMapping(next);
-                          applyColumnMapping(importedRows, next);
+                          if (mappingConfirmed) applyColumnMapping(importedRows, next);
                         }}
                         className="w-full px-2 py-1 bg-slate-950 border border-slate-700 rounded text-[11px] text-slate-200 focus:outline-none focus:border-orange-500"
                       >
@@ -297,6 +306,19 @@ export const CertificateStudioModal: React.FC<Props> = ({ onClose }) => {
                       </select>
                     </div>
                   </div>
+                  {!mappingConfirmed && (
+                    <button
+                      onClick={() => {
+                        if (!colMapping.nameCol) return;
+                        setMappingConfirmed(true);
+                        applyColumnMapping(importedRows, colMapping);
+                      }}
+                      disabled={!colMapping.nameCol}
+                      className="w-full py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold disabled:opacity-50"
+                    >
+                      Confirm Columns &amp; Load {importedRows.length} Students
+                    </button>
+                  )}
                 </div>
               )}
 
