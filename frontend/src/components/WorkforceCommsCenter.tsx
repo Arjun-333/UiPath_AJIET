@@ -47,7 +47,7 @@ export const WorkforceCommsCenter: React.FC<Props> = ({
   // Deduplicate and filter messages for current channel or DM
   const seenKeys = new Set<string>();
   const filteredMessages = messages.filter(m => {
-    const dedupKey = `${m.timestamp}-${m.sender_id}-${m.content}`;
+    const dedupKey = `${m.created_at}-${m.sender_id}-${m.content}`;
     if (seenKeys.has(dedupKey)) return false;
     seenKeys.add(dedupKey);
     if (activeChannel.startsWith('#')) {
@@ -271,7 +271,7 @@ export const WorkforceCommsCenter: React.FC<Props> = ({
           </div>
 
           {/* Message Input Box & Cross-Floor Escalator Switch */}
-          <form onSubmit={handleSend} className="p-4 bg-[#090e1a] border-t border-slate-800 space-y-3">
+          <form onSubmit={handleSend} className="p-4 bg-slate-900 border-t border-slate-800 space-y-3">
             <div className="flex items-center justify-between text-xs font-mono text-slate-400">
               <div className="flex items-center space-x-2">
                 <span>Send As:</span>

@@ -105,19 +105,21 @@ export const App: React.FC = () => {
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'reconnecting' | 'disconnected'>('disconnected');
 
   // Generic View Mode Setting (stored in localStorage)
-  const [viewMode, setViewMode] = useState<string>(() => {
+  const [viewMode, setViewMode] = useState<'isometric' | 'legacy'>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       if (params.get('view') === 'legacy') return 'legacy';
-      return localStorage.getItem('autonomia_preferences_view_mode') || 'isometric';
+      const saved = localStorage.getItem('autonomia_preferences_view_mode');
+      return saved === 'legacy' ? 'legacy' : 'isometric';
     }
     return 'isometric';
   });
 
   const handleViewModeChange = (mode: string) => {
-    setViewMode(mode);
+    const normalized: 'isometric' | 'legacy' = mode === 'legacy' ? 'legacy' : 'isometric';
+    setViewMode(normalized);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('autonomia_preferences_view_mode', mode);
+      localStorage.setItem('autonomia_preferences_view_mode', normalized);
     }
   };
 
@@ -189,8 +191,8 @@ export const App: React.FC = () => {
           } else if (msg.event === 'agent_message') {
             setMessages(prev => {
               const incoming = msg.data;
-              const key = incoming?.id || `${incoming?.timestamp}-${incoming?.sender_id}-${incoming?.content}`;
-              if (prev.some(m => (m.id || `${m.timestamp}-${m.sender_id}-${m.content}`) === key)) {
+              const key = incoming?.id || `${incoming?.created_at}-${incoming?.sender_id}-${incoming?.content}`;
+              if (prev.some(m => (m.id || `${m.created_at}-${m.sender_id}-${m.content}`) === key)) {
                 return prev;
               }
               return [...prev, incoming];
