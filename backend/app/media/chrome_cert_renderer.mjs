@@ -233,10 +233,10 @@ function buildDefaultCertHtml(item, meta, logos) {
     margin-bottom: 2px;
   }
   .sig-img-hod {
-    height: 48px;
+    height: 58px;
     width: auto;
     object-fit: contain;
-    margin-bottom: 2px;
+    margin-bottom: 0px;
   }
   .sig-line {
     border-top: 2px solid #0b0f19;
