@@ -86,19 +86,38 @@ function buildDefaultCertHtml(item, meta, logos) {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1.5px solid #e2edf3;
   }
   .logo-uipath-community {
-    height: 40px;
+    height: 30px;
     width: auto;
     object-fit: contain;
   }
   .logo-ieee-mangalore {
-    height: 48px;
+    height: 40px;
     width: auto;
     object-fit: contain;
   }
+  .logo-ajiet {
+    height: 60px;
+    width: auto;
+    object-fit: contain;
+  }
+  .logo-enigma {
+    height: 60px;
+    width: auto;
+    object-fit: contain;
+  }
+  .logo-community-white {
+    height: 60px;
+    width: 60px;
+    object-fit: contain;
+    border-radius: 50%;
+  }
   .logo-student-dev {
-    height: 76px;
+    height: 62px;
     width: auto;
     object-fit: contain;
   }
@@ -160,11 +179,11 @@ function buildDefaultCertHtml(item, meta, logos) {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    padding-top: 14px;
+    padding: 14px 16px 0;
     border-top: 1.5px solid #cbd5e1;
   }
   .meta-block {
-    width: 145px;
+    width: 220px;
     font-size: 14px;
     color: #1e293b;
     text-align: left;
@@ -178,17 +197,17 @@ function buildDefaultCertHtml(item, meta, logos) {
     margin-bottom: 2px;
   }
   .meta-value {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
     color: #0b0f19;
   }
   .sig-block {
-    width: 270px;
+    width: 280px;
     text-align: center;
     padding-bottom: 4px;
   }
   .sig-block-hod {
-    width: 205px;
+    width: 240px;
     text-align: center;
     padding-bottom: 4px;
   }
@@ -219,27 +238,6 @@ function buildDefaultCertHtml(item, meta, logos) {
     color: #475569;
     margin-top: 2px;
   }
-  .campus-badges {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .logo-ajiet {
-    height: 78px;
-    width: auto;
-    object-fit: contain;
-  }
-  .logo-enigma {
-    height: 78px;
-    width: auto;
-    object-fit: contain;
-  }
-  .logo-community-white {
-    height: 78px;
-    width: 78px;
-    object-fit: contain;
-    border-radius: 50%;
-  }
 </style>
 </head>
 <body>
@@ -254,15 +252,12 @@ function buildDefaultCertHtml(item, meta, logos) {
 
   <div class="content-layer">
     <div class="top-bar">
-      <div>
-        ${logos.uipathCommunity ? `<img class="logo-uipath-community" src="${logos.uipathCommunity}" alt="UiPath Community" />` : ''}
-      </div>
-      <div>
-        ${logos.ieeeMangalore ? `<img class="logo-ieee-mangalore" src="${logos.ieeeMangalore}" alt="IEEE Mangalore Subsection" />` : ''}
-      </div>
-      <div>
-        ${logos.studentDev ? `<img class="logo-student-dev" src="${logos.studentDev}" alt="UiPath Student Developer" />` : ''}
-      </div>
+      ${logos.uipathCommunity ? `<img class="logo-uipath-community" src="${logos.uipathCommunity}" alt="UiPath Community" />` : ''}
+      ${logos.ieeeMangalore ? `<img class="logo-ieee-mangalore" src="${logos.ieeeMangalore}" alt="IEEE Mangalore Subsection" />` : ''}
+      ${logos.ajiet ? `<img class="logo-ajiet" src="${logos.ajiet}" alt="AJIET" />` : ''}
+      ${logos.enigmaBranch ? `<img class="logo-enigma" src="${logos.enigmaBranch}" alt="ENIGMA Branch" />` : ''}
+      ${logos.communityWhite ? `<img class="logo-community-white" src="${logos.communityWhite}" alt="UiPath Community AJIET" />` : ''}
+      ${logos.studentDev ? `<img class="logo-student-dev" src="${logos.studentDev}" alt="UiPath Student Developer" />` : ''}
     </div>
 
     <div class="center-stage">
@@ -295,11 +290,6 @@ function buildDefaultCertHtml(item, meta, logos) {
         ${logos.antonySignature ? `<img class="sig-img-hod" src="${logos.antonySignature}" alt="Dr. Antony P J Signature" />` : ''}
         <div class="sig-line">Dr. Antony P J</div>
         <div class="sig-sub">Vice Principal &amp; CSE HOD</div>
-      </div>
-      <div class="campus-badges">
-        ${logos.ajiet ? `<img class="logo-ajiet" src="${logos.ajiet}" alt="AJIET" />` : ''}
-        ${logos.enigmaBranch ? `<img class="logo-enigma" src="${logos.enigmaBranch}" alt="ENIGMA Branch" />` : ''}
-        ${logos.communityWhite ? `<img class="logo-community-white" src="${logos.communityWhite}" alt="UiPath Community AJIET" />` : ''}
       </div>
     </div>
   </div>
