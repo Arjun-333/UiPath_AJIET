@@ -361,26 +361,6 @@ export const VideoQualityInspector: React.FC<Props> = ({ projectId, projects, on
                 );
               })}
             </div>
-
-            {/* Jump to Defect Buttons */}
-            {defects.length > 0 && (
-              <div className="flex items-center space-x-2 overflow-x-auto pt-1">
-                <span className="text-[11px] font-mono text-slate-500 shrink-0">Click to Inspect Defect:</span>
-                {defects.map((def, idx) => (
-                  <button
-                    key={def.defect_id}
-                    onClick={() => jumpToTimestamp(def.timestamp_range[0])}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold flex items-center space-x-1 shrink-0 ${
-                      def.severity === 'CRITICAL' ? 'bg-rose-600 text-white' :
-                      def.severity === 'HIGH' ? 'bg-amber-600 text-white' :
-                      'bg-slate-800 text-slate-300'
-                    }`}
-                  >
-                    <span>#{idx + 1} {def.category.toUpperCase()} ({def.timestamp_range[0].toFixed(1)}s)</span>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Collapsible CEO Manual Correction Dispatch Box */}
@@ -487,7 +467,7 @@ export const VideoQualityInspector: React.FC<Props> = ({ projectId, projects, on
           </div>
 
           {/* Detected Defects List */}
-          <div className="flex-1 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 overflow-y-auto">
+          <div className="pixel-card flex-1 bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-mono font-bold text-slate-300">
                 DETECTED DEFECTS ({defects.length})
@@ -504,15 +484,15 @@ export const VideoQualityInspector: React.FC<Props> = ({ projectId, projects, on
                 <span className="text-[11px] text-slate-500">All technical, visual, audio and subtitle checks passed.</span>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
                 {defects.map(def => (
                   <div
                     key={def.defect_id}
                     onClick={() => jumpToTimestamp(def.timestamp_range[0])}
-                    className="p-3.5 bg-slate-950 border border-slate-800 hover:border-orange-500/50 rounded-xl cursor-pointer transition-all space-y-1.5"
+                    className="p-2.5 bg-slate-950 border border-slate-800 hover:border-[#fa4616]/60 rounded-xl cursor-pointer transition-all space-y-1"
                   >
                     <div className="flex items-center justify-between">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
                         def.severity === 'CRITICAL' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40' :
                         def.severity === 'HIGH' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' :
                         'bg-slate-800 text-slate-300'
@@ -524,10 +504,10 @@ export const VideoQualityInspector: React.FC<Props> = ({ projectId, projects, on
                       </span>
                     </div>
 
-                    <p className="text-xs text-white font-medium">{def.explanation}</p>
-                    <div className="text-[11px] font-mono text-slate-400 flex items-center justify-between">
-                      <span>Assigned: <strong className="text-orange-400">{def.responsible_agent}</strong></span>
-                      <span className="text-emerald-400">Fix: {def.recommended_correction}</span>
+                    <p className="text-xs text-white font-medium truncate" title={def.explanation}>{def.explanation}</p>
+                    <div className="text-[10px] font-mono text-slate-400 flex items-center justify-between gap-2">
+                      <span className="shrink-0">Agent: <strong className="text-[#fa4616]">{def.responsible_agent}</strong></span>
+                      <span className="text-emerald-400 truncate" title={def.recommended_correction}>{def.recommended_correction}</span>
                     </div>
                   </div>
                 ))}
