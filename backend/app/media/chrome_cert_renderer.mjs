@@ -91,33 +91,33 @@ function buildDefaultCertHtml(item, meta, logos) {
     border-bottom: 1.5px solid #e2edf3;
   }
   .logo-uipath-community {
-    height: 30px;
+    height: 36px;
     width: auto;
     object-fit: contain;
   }
   .logo-ieee-mangalore {
-    height: 40px;
+    height: 46px;
     width: auto;
     object-fit: contain;
   }
   .logo-ajiet {
-    height: 60px;
+    height: 72px;
     width: auto;
     object-fit: contain;
   }
   .logo-enigma {
-    height: 60px;
+    height: 72px;
     width: auto;
     object-fit: contain;
   }
   .logo-community-white {
-    height: 60px;
-    width: 60px;
+    height: 72px;
+    width: 72px;
     object-fit: contain;
     border-radius: 50%;
   }
   .logo-student-dev {
-    height: 62px;
+    height: 72px;
     width: auto;
     object-fit: contain;
   }
