@@ -67,6 +67,7 @@ export const VideoQualityInspector: React.FC<Props> = ({ projectId, projects, on
   const [selectedScene, setSelectedScene] = useState<Scene | null>(null);
   const [manualRequest, setManualRequest] = useState<string>('');
   const [manualType, setManualType] = useState<string>('visual');
+  const [showManualBox, setShowManualBox] = useState<boolean>(false);
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -382,146 +383,105 @@ export const VideoQualityInspector: React.FC<Props> = ({ projectId, projects, on
             )}
           </div>
 
-          {/* CEO Manual Correction Dispatch Box */}
-          <div className="pixel-card bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono font-bold text-orange-400 flex items-center space-x-2">
+          {/* Collapsible CEO Manual Correction Dispatch Box */}
+          <div className="pixel-card bg-slate-900 border border-slate-800 rounded-xl p-3.5">
+            <button
+              type="button"
+              onClick={() => setShowManualBox((v) => !v)}
+              className="w-full flex items-center justify-between text-left"
+            >
+              <span className="text-xs font-mono font-bold text-[#fa4616] flex items-center space-x-2">
                 <MessageSquare className="w-4 h-4" />
-                <span>CEO MANUAL SCENE CORRECTION:</span>
+                <span>MANUAL SCENE CORRECTION</span>
               </span>
-              <span className="text-xs text-slate-400 font-mono">
-                Target: {selectedScene ? `${selectedScene.scene_id} (${selectedScene.title})` : 'Select a Scene'}
+              <span className="text-[11px] text-slate-400 font-mono">
+                {selectedScene ? `${selectedScene.scene_id} • ` : ''}{showManualBox ? 'Hide' : 'Open'}
               </span>
-            </div>
+            </button>
 
-            <form onSubmit={handleManualCorrection} className="space-y-3">
-              <div className="flex items-center space-x-2">
-                {['visual', 'narration', 'subtitle', 'transition'].map(t => (
+            {showManualBox && (
+              <form onSubmit={handleManualCorrection} className="space-y-2.5 pt-3 mt-3 border-t border-slate-800 animate-pixel-enter">
+                <div className="flex items-center space-x-2">
+                  {['visual', 'narration', 'subtitle', 'transition'].map(t => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setManualType(t)}
+                      className={`pixel-btn px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold capitalize ${
+                        manualType === t ? 'bg-[#fa4616] text-white' : 'bg-slate-950 text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={manualRequest}
+                    onChange={(e) => setManualRequest(e.target.value)}
+                    placeholder="Instruct agents on this scene..."
+                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-[#fa4616]"
+                  />
                   <button
-                    key={t}
-                    type="button"
-                    onClick={() => setManualType(t)}
-                    className={`px-3 py-1 rounded-lg text-xs font-mono font-bold capitalize transition-all ${
-                      manualType === t ? 'bg-orange-600 text-white' : 'bg-slate-950 text-slate-400 hover:text-white'
-                    }`}
+                    type="submit"
+                    disabled={!manualRequest.trim()}
+                    className="pixel-btn px-3.5 py-2 rounded-xl text-xs font-mono font-bold bg-[#fa4616] hover:bg-orange-500 text-white disabled:opacity-50"
                   >
-                    {t}
+                    Send
                   </button>
-                ))}
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input
-                  type="text"
-                  value={manualRequest}
-                  onChange={(e) => setManualRequest(e.target.value)}
-                  placeholder="e.g. 'Replace this visual', 'Make narration clearer', 'Correct subtitle alignment'..."
-                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
-                />
-                <button
-                  type="submit"
-                  disabled={!manualRequest.trim()}
-                  className="px-4 py-2 rounded-xl text-xs font-mono font-bold bg-orange-600 hover:bg-orange-500 text-white disabled:opacity-50"
-                >
-                  Send to Agents
-                </button>
-              </div>
-            </form>
+                </div>
+              </form>
+            )}
           </div>
         </div>
 
         {/* Right Column: Quality Score Gauge & Defect Breakdown (5 cols) */}
         <div className="lg:col-span-5 flex flex-col space-y-4">
-          {/* Quality Scorecard */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+          {/* Compact 2x3 Quality Scorecard */}
+          <div className="pixel-card bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Award className="w-5 h-5 text-orange-400" />
-                <h3 className="text-sm font-bold text-white">Quality Inspection Score</h3>
+                <Award className="w-4 h-4 text-[#fa4616]" />
+                <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-white">Quality Score</h3>
               </div>
-              <div className="text-right">
+              <div>
                 <span className="text-2xl font-mono font-black text-white">{score}</span>
                 <span className="text-xs text-slate-400"> / 100</span>
               </div>
             </div>
 
-            {/* Score Weights Breakdown */}
-            <div className="space-y-2 text-xs font-mono">
-              <div className="flex items-center justify-between text-slate-300">
-                <span className="flex items-center space-x-2">
-                  <Eye className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Visual Quality (25%)</span>
-                </span>
-                <span className="font-bold">{breakdown.visual_quality}</span>
-              </div>
-              <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden">
-                <div className="bg-cyan-400 h-full" style={{ width: `${breakdown.visual_quality}%` }} />
-              </div>
-
-              <div className="flex items-center justify-between text-slate-300 pt-1">
-                <span className="flex items-center space-x-2">
-                  <Volume2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Audio & Narration (20%)</span>
-                </span>
-                <span className="font-bold">{breakdown.audio_quality}</span>
-              </div>
-              <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden">
-                <div className="bg-emerald-400 h-full" style={{ width: `${breakdown.audio_quality}%` }} />
-              </div>
-
-              <div className="flex items-center justify-between text-slate-300 pt-1">
-                <span className="flex items-center space-x-2">
-                  <Layers className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Story Alignment (20%)</span>
-                </span>
-                <span className="font-bold">{breakdown.story_alignment}</span>
-              </div>
-              <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden">
-                <div className="bg-purple-400 h-full" style={{ width: `${breakdown.story_alignment}%` }} />
-              </div>
-
-              <div className="flex items-center justify-between text-slate-300 pt-1">
-                <span className="flex items-center space-x-2">
-                  <FileText className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Subtitle Precision (15%)</span>
-                </span>
-                <span className="font-bold">{breakdown.subtitle_quality}</span>
-              </div>
-              <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden">
-                <div className="bg-amber-400 h-full" style={{ width: `${breakdown.subtitle_quality}%` }} />
-              </div>
-
-              <div className="flex items-center justify-between text-slate-300 pt-1">
-                <span className="flex items-center space-x-2">
-                  <Film className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Technical & Codec (10%)</span>
-                </span>
-                <span className="font-bold">{breakdown.technical_quality}</span>
-              </div>
-              <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden">
-                <div className="bg-blue-400 h-full" style={{ width: `${breakdown.technical_quality}%` }} />
-              </div>
-
-              <div className="flex items-center justify-between text-slate-300 pt-1">
-                <span className="flex items-center space-x-2">
-                  <Sparkles className="w-3.5 h-3.5 text-pink-400" />
-                  <span>Branding & Presentation (10%)</span>
-                </span>
-                <span className="font-bold">{breakdown.branding_presentation}</span>
-              </div>
-              <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden">
-                <div className="bg-pink-400 h-full" style={{ width: `${breakdown.branding_presentation}%` }} />
-              </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] font-mono">
+              {[
+                { label: 'Visual', val: breakdown.visual_quality },
+                { label: 'Audio', val: breakdown.audio_quality },
+                { label: 'Story', val: breakdown.story_alignment },
+                { label: 'Subtitles', val: breakdown.subtitle_quality },
+                { label: 'Codec', val: breakdown.technical_quality },
+                { label: 'Branding', val: breakdown.branding_presentation },
+              ].map((m) => (
+                <div key={m.label} className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400">{m.label}</span>
+                    <span className="font-bold text-white">{m.val}</span>
+                  </div>
+                  <div className="w-full bg-slate-800 rounded-full h-1 overflow-hidden">
+                    <div
+                      className={`h-full ${m.val >= 85 ? 'bg-emerald-400' : m.val >= 70 ? 'bg-[#fa4616]' : 'bg-rose-500'}`}
+                      style={{ width: `${m.val}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
 
-            {/* Critical Defect Release Gate Warning */}
             {criticalDefects.length > 0 && (
-              <div className="p-3 bg-rose-950/60 border border-rose-500/50 rounded-xl text-rose-300 text-xs font-mono flex items-start space-x-2">
+              <div className="p-2.5 bg-rose-950/60 border border-rose-500/50 rounded-xl text-rose-300 text-[11px] font-mono flex items-start space-x-2">
                 <AlertOctagon className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                <div>
-                  <span className="font-bold block">RELEASE GATE BLOCKED:</span>
-                  <span>{criticalDefects.length} critical defect(s) detected. High scores cannot override critical failures. Autonomous scene repair required.</span>
-                </div>
+                <span>
+                  <strong>GATE BLOCKED:</strong> {criticalDefects.length} critical defect(s). Run Auto Repair.
+                </span>
               </div>
             )}
           </div>
