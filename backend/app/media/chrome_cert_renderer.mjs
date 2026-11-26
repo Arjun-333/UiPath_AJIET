@@ -288,7 +288,7 @@ function buildDefaultCertHtml(item, meta, logos) {
       </div>
       <div class="sig-block-hod">
         <div class="sig-line">Dr. Antony P J</div>
-        <div class="sig-sub">Vice Principal &amp; CSE HOD</div>
+        <div class="sig-sub">Vice Principal &amp; HOD</div>
       </div>
     </div>
   </div>
