@@ -164,7 +164,7 @@ function buildDefaultCertHtml(item, meta, logos) {
     border-top: 1.5px solid #cbd5e1;
   }
   .meta-block {
-    width: 240px;
+    width: 145px;
     font-size: 14px;
     color: #1e293b;
     text-align: left;
@@ -178,31 +178,43 @@ function buildDefaultCertHtml(item, meta, logos) {
     margin-bottom: 2px;
   }
   .meta-value {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
     color: #0b0f19;
   }
   .sig-block {
-    width: 330px;
+    width: 270px;
+    text-align: center;
+    padding-bottom: 4px;
+  }
+  .sig-block-hod {
+    width: 205px;
     text-align: center;
     padding-bottom: 4px;
   }
   .sig-img {
-    height: 72px;
+    height: 68px;
     width: auto;
     object-fit: contain;
     display: block;
     margin: 0 auto -4px;
   }
+  .sig-img-hod {
+    height: 46px;
+    width: auto;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 6px;
+  }
   .sig-line {
     border-top: 2px solid #0b0f19;
     padding-top: 7px;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     color: #0b0f19;
   }
   .sig-sub {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
     color: #475569;
     margin-top: 2px;
@@ -210,21 +222,21 @@ function buildDefaultCertHtml(item, meta, logos) {
   .campus-badges {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
   }
   .logo-ajiet {
-    height: 88px;
-    width: 88px;
+    height: 78px;
+    width: 78px;
     object-fit: contain;
   }
   .logo-enigma {
-    height: 88px;
-    width: 88px;
+    height: 78px;
+    width: 78px;
     object-fit: contain;
   }
   .logo-community-white {
-    height: 88px;
-    width: 88px;
+    height: 78px;
+    width: 78px;
     object-fit: contain;
     border-radius: 50%;
   }
@@ -278,6 +290,11 @@ function buildDefaultCertHtml(item, meta, logos) {
         ${logos.signature ? `<img class="sig-img" src="${logos.signature}" alt="Signature" />` : ''}
         <div class="sig-line">${issuerName}</div>
         <div class="sig-sub">${issuerRole}</div>
+      </div>
+      <div class="sig-block-hod">
+        ${logos.antonySignature ? `<img class="sig-img-hod" src="${logos.antonySignature}" alt="Dr. Antony P J Signature" />` : ''}
+        <div class="sig-line">Dr. Antony P J</div>
+        <div class="sig-sub">Vice Principal &amp; CSE HOD</div>
       </div>
       <div class="campus-badges">
         ${logos.ajiet ? `<img class="logo-ajiet" src="${logos.ajiet}" alt="AJIET" />` : ''}
@@ -367,7 +384,8 @@ async function main() {
     communityWhite: loadDataUrl(path.join(brandingDir, 'uipath_community_ajiet_white.png')),
     uipathCommunity: loadDataUrl(path.join(brandingDir, 'uipath_community_lockup.png')),
     studentDev: loadDataUrl(path.join(brandingDir, 'uipath_student_developer.png')),
-    signature: loadDataUrl(path.join(brandingDir, 'arjun_signature.png'))
+    signature: loadDataUrl(path.join(brandingDir, 'arjun_signature.png')),
+    antonySignature: loadDataUrl(path.join(brandingDir, 'antony_signature.png'))
   };
 
   let templateDataUrl = loadDataUrl(templatePath);
