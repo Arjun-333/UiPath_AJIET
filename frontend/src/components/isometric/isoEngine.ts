@@ -19,6 +19,15 @@ export function toScreen(gx: number, gy: number, gz: number, originX: number, or
   };
 }
 
+export function screenToGrid(cx: number, cy: number, originX: number, originY: number): { gx: number; gy: number } {
+  const dx = (cx - originX) / (TILE_W / 2);
+  const dy = (cy - originY) / (TILE_H / 2);
+  return {
+    gx: Math.max(0.8, Math.min(13.0, (dx + dy) / 2)),
+    gy: Math.max(0.8, Math.min(13.0, (dy - dx) / 2))
+  };
+}
+
 export interface BoxColors {
   top: string;
   left: string;

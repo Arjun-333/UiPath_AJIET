@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Agent } from '../../types';
+import { useIsoAgentDrag } from './useIsoAgentDrag';
 import { ISO_PALETTE } from '../../theme/isoPalette';
 import {
   toScreen,
@@ -69,6 +70,12 @@ export const Floor2IsometricRoom: React.FC<Props> = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [dimensions, setDimensions] = useState({ width: 1360, height: 680 });
   const [hoveredAgent, setHoveredAgent] = useState<AgentSimState | null>(null);
+  const { isDragging, handleMouseDown, handleDragMove, handleMouseUp, consumeJustDragged } = useIsoAgentDrag(
+    canvasRef,
+    pan,
+    zoom,
+    hoveredAgent
+  );
   const [hoveredStairsDown, setHoveredStairsDown] = useState<boolean>(false);
   const [hoveredStairsUp, setHoveredStairsUp] = useState<boolean>(false);
 
@@ -457,12 +464,15 @@ export const Floor2IsometricRoom: React.FC<Props> = ({
         ref={canvasRef}
         width={dimensions.width}
         height={dimensions.height}
-        onMouseMove={handleMouseMove}
-        onClick={handleClick}
+        onMouseDown={handleMouseDown}
+        onMouseMove={(e) => { if (!handleDragMove(e)) handleMouseMove(e); }}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onClick={() => { if (!consumeJustDragged()) handleClick(); }}
         style={{
           imageRendering: 'pixelated',
           display: 'block',
-          cursor: (hoveredAgent || hoveredStairsDown || hoveredStairsUp) ? 'pointer' : 'default'
+          cursor: isDragging ? 'grabbing' : hoveredAgent ? 'grab' : (hoveredStairsDown || hoveredStairsUp) ? 'pointer' : 'default'
         }}
       />
     </div>

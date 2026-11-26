@@ -83,10 +83,16 @@ export const AgentProfileModal: React.FC<Props> = ({ agentId, onClose, onRefresh
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center p-1">
               <img
-                src={`/assets/sprites/employees/${employee.avatar_file}`}
+                src={
+                  employee.avatar_file?.startsWith('/')
+                    ? employee.avatar_file
+                    : employee.avatar_file?.startsWith('orbi_')
+                    ? `/assets/sprites/auri/${employee.avatar_file}`
+                    : `/assets/sprites/employees/${employee.avatar_file || `${employee.agent_id}.png`}`
+                }
                 alt={employee.name}
                 className="w-8 h-8 pixelated object-contain"
-                onError={(e: any) => { e.target.src = '/assets/sprites/employees/default.png'; }}
+                onError={(e: any) => { e.target.src = '/assets/sprites/auri/orbi_idle_f0.png'; }}
               />
             </div>
             <div>
